@@ -14,6 +14,11 @@ import type { Benchmark } from './benchmark.interface';
 import type { Coupon } from './coupon.interface';
 import type { DataProviderInfo } from './data-provider-info.interface';
 import type { EnhancedAssetProfile } from './enhanced-asset-profile.interface';
+import type {
+  ExternalCashFlowExportIssue,
+  ExternalCashFlowExportItem,
+  ExternalCashFlowExportSection
+} from './external-cash-flow-export.interface';
 import type { FilterGroup } from './filter-group.interface';
 import type { Filter } from './filter.interface';
 import type { FireCalculationCompleteEvent } from './fire-calculation-complete-event.interface';
@@ -152,6 +157,9 @@ export {
   Holding,
   HoldingWithParents,
   ImportResponse,
+  ExternalCashFlowExportIssue,
+  ExternalCashFlowExportItem,
+  ExternalCashFlowExportSection,
   InfoItem,
   InfoResponse,
   InvestmentItem,

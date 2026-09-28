@@ -1,5 +1,9 @@
 import { PortfolioChangedEvent } from '@ghostfolio/api/events/portfolio-changed.event';
 import { PrismaService } from '@ghostfolio/api/services/prisma/prisma.service';
+import type {
+  ExternalCashFlowExportItem,
+  ExternalCashFlowExportSection
+} from '@ghostfolio/common/interfaces';
 
 import {
   BadRequestException,
@@ -8,13 +12,17 @@ import {
   NotFoundException
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { ExternalCashFlowType, Prisma } from '@prisma/client';
+import { ExternalCashFlow, ExternalCashFlowType, Prisma } from '@prisma/client';
 import { Big } from 'big.js';
 import { ClassConstructor, plainToInstance } from 'class-transformer';
 import { validateSync } from 'class-validator';
 import { parseISO } from 'date-fns';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
+import {
+  ExternalCashFlowImportItemDto,
+  ExternalCashFlowImportSectionDto
+} from './external-cash-flow-import.dto';
 import {
   CreateExternalCashFlowDto,
   GetExternalCashFlowsDto,
@@ -26,6 +34,17 @@ import { validateTransferPair } from './transfer.helper';
 
 export function accountingDate(date: string) {
   return parseISO(`${date}T00:00:00.000Z`);
+}
+
+function importUuid(userId: string, kind: 'flow' | 'group', sourceId: string) {
+  const bytes = createHash('sha256')
+    .update(`ghostfolio:external-cash-flow:${kind}:${userId}:${sourceId}`)
+    .digest()
+    .subarray(0, 16);
+  bytes[6] = (bytes[6] % 16) + 80;
+  bytes[8] = (bytes[8] % 64) + 128;
+  const hex = bytes.toString('hex');
+  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
 
 @Injectable()
@@ -224,10 +243,288 @@ export class ExternalCashFlowService {
     });
   }
 
+  public async exportSection({
+    accountIds,
+    endDate,
+    startDate,
+    userId
+  }: {
+    accountIds: string[];
+    endDate?: Date;
+    startDate?: Date;
+    userId: string;
+  }): Promise<ExternalCashFlowExportSection | undefined> {
+    const candidates = await this.prismaService.externalCashFlow.findMany({
+      where: {
+        userId,
+        accountId: { in: accountIds },
+        date: { gte: startDate, lte: endDate }
+      },
+      orderBy: [{ date: 'asc' }, { id: 'asc' }]
+    });
+    if (!candidates.length) {
+      return undefined;
+    }
+    const groupIds = [
+      ...new Set(
+        candidates
+          .map(({ transferGroupId }) => transferGroupId)
+          .filter((id): id is string => Boolean(id))
+      )
+    ];
+    const completeGroupRows = groupIds.length
+      ? await this.prismaService.externalCashFlow.findMany({
+          where: { userId, transferGroupId: { in: groupIds } }
+        })
+      : [];
+    const candidateIds = new Set(candidates.map(({ id }) => id));
+    const items = candidates.filter(({ transferGroupId }) => !transferGroupId);
+    const incompleteTransferGroups: NonNullable<
+      ExternalCashFlowExportSection['incompleteTransferGroups']
+    > = [];
+
+    for (const transferGroupId of groupIds) {
+      const rows = completeGroupRows.filter(
+        (flow) => flow.transferGroupId === transferGroupId
+      );
+      try {
+        const pair = validateTransferPair(rows, userId);
+        if (
+          candidateIds.has(pair.outgoing.id) &&
+          candidateIds.has(pair.incoming.id)
+        ) {
+          items.push(pair.outgoing, pair.incoming);
+        } else {
+          incompleteTransferGroups.push({
+            transferGroupId,
+            reason: 'COUNTERPART_OUTSIDE_EXPORT_SCOPE',
+            selectedFlowIds: rows
+              .filter(({ id }) => candidateIds.has(id))
+              .map(({ id }) => id)
+              .sort()
+          });
+        }
+      } catch {
+        incompleteTransferGroups.push({
+          transferGroupId,
+          reason: 'MALFORMED_TRANSFER_PAIR',
+          selectedFlowIds: rows
+            .filter(({ id }) => candidateIds.has(id))
+            .map(({ id }) => id)
+            .sort()
+        });
+      }
+    }
+
+    return {
+      version: 1,
+      items: items
+        .sort(
+          (a, b) =>
+            a.date.getTime() - b.date.getTime() || a.id.localeCompare(b.id)
+        )
+        .map((flow): ExternalCashFlowExportItem => this.serializeExport(flow)),
+      incompleteTransferGroups: incompleteTransferGroups.length
+        ? incompleteTransferGroups
+        : undefined
+    };
+  }
+
+  public validateImportSection(
+    input: ExternalCashFlowImportSectionDto,
+    sourceAccountIds: string[]
+  ) {
+    const data = this.validate(ExternalCashFlowImportSectionDto, input);
+    if (data.incompleteTransferGroups?.length) {
+      throw new BadRequestException(
+        'External cash-flow export contains incomplete transfer groups'
+      );
+    }
+    const accounts = new Set(sourceAccountIds);
+    const ids = new Set<string>();
+    const groups = new Map<string, ExternalCashFlowImportItemDto[]>();
+    for (const item of data.items) {
+      if (!accounts.has(item.accountId) || ids.has(item.id)) {
+        throw new BadRequestException(
+          'Invalid external cash-flow account or duplicate id'
+        );
+      }
+      ids.add(item.id);
+      if (new Date(item.updatedAt) < new Date(item.createdAt)) {
+        throw new BadRequestException('Invalid external cash-flow audit dates');
+      }
+      const isTransfer = item.type.startsWith('TRANSFER_');
+      if (isTransfer !== Boolean(item.transferGroupId)) {
+        throw new BadRequestException(
+          'Invalid external cash-flow transfer grouping'
+        );
+      }
+      if (item.transferGroupId) {
+        const group = groups.get(item.transferGroupId) ?? [];
+        group.push(item);
+        groups.set(item.transferGroupId, group);
+      }
+    }
+    for (const group of groups.values()) {
+      const outgoing = group.find(({ type }) => type === 'TRANSFER_OUT');
+      const incoming = group.find(({ type }) => type === 'TRANSFER_IN');
+      if (
+        group.length !== 2 ||
+        !outgoing ||
+        !incoming ||
+        outgoing.accountId === incoming.accountId ||
+        outgoing.date > incoming.date ||
+        (outgoing.currency === incoming.currency &&
+          !new Big(outgoing.amount).eq(incoming.amount))
+      ) {
+        throw new BadRequestException(
+          'Invalid or incomplete external cash-flow transfer pair'
+        );
+      }
+    }
+    return data;
+  }
+
+  public async importSection({
+    accountIdMapping,
+    input,
+    isDryRun,
+    ownedAccountIds,
+    sourceAccountIds,
+    userId
+  }: {
+    accountIdMapping: Record<string, string>;
+    input: ExternalCashFlowImportSectionDto;
+    isDryRun: boolean;
+    ownedAccountIds: string[];
+    sourceAccountIds: string[];
+    userId: string;
+  }) {
+    const data = this.validateImportSection(input, sourceAccountIds);
+    const ownedAccounts = new Set(ownedAccountIds);
+    const mapped = data.items.map((item) => {
+      const accountId = accountIdMapping[item.accountId] ?? item.accountId;
+      if (!ownedAccounts.has(accountId) && !isDryRun) {
+        throw new BadRequestException('Invalid imported cash-flow account');
+      }
+      return {
+        accountId,
+        userId,
+        amount: new Prisma.Decimal(item.amount),
+        comment: item.comment ?? null,
+        createdAt: new Date(item.createdAt),
+        currency: item.currency,
+        date: accountingDate(item.date),
+        id: importUuid(userId, 'flow', item.id),
+        source: item.source ?? null,
+        transferGroupId: item.transferGroupId
+          ? importUuid(userId, 'group', item.transferGroupId)
+          : null,
+        type: item.type,
+        updatedAt: new Date(item.updatedAt)
+      } satisfies Prisma.ExternalCashFlowUncheckedCreateInput;
+    });
+    if (isDryRun || !mapped.length) {
+      return { created: mapped.length, skipped: 0, version: 1 as const };
+    }
+
+    const result = await this.prismaService.$transaction(
+      async (tx) => {
+        const ids = mapped.map(({ id }) => id);
+        const groupIds = mapped
+          .map(({ transferGroupId }) => transferGroupId)
+          .filter((id): id is string => Boolean(id));
+        const existing = await tx.externalCashFlow.findMany({
+          where: {
+            userId,
+            OR: [{ id: { in: ids } }, { transferGroupId: { in: groupIds } }]
+          }
+        });
+        const existingById = new Map(existing.map((flow) => [flow.id, flow]));
+        for (const transferGroupId of new Set(groupIds)) {
+          const importedGroup = mapped.filter(
+            (flow) => flow.transferGroupId === transferGroupId
+          );
+          const existingGroup = existing.filter(
+            (flow) => flow.transferGroupId === transferGroupId
+          );
+          if (
+            existingGroup.length > 0 &&
+            existingGroup.length !== importedGroup.length
+          ) {
+            throw new ConflictException(
+              'External cash-flow import id or group collision'
+            );
+          }
+        }
+        for (const flow of existing) {
+          const expected = mapped.find(({ id }) => id === flow.id);
+          if (!expected || !this.sameImportedFlow(flow, expected)) {
+            throw new ConflictException(
+              'External cash-flow import id or group collision'
+            );
+          }
+        }
+        const toCreate = mapped.filter(({ id }) => !existingById.has(id));
+        if (toCreate.length) {
+          await tx.externalCashFlow.createMany({ data: toCreate });
+        }
+        return {
+          created: toCreate.length,
+          skipped: mapped.length - toCreate.length,
+          version: 1 as const
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
+    );
+    if (result.created) {
+      this.eventEmitter.emit(
+        PortfolioChangedEvent.getName(),
+        new PortfolioChangedEvent({ userId })
+      );
+    }
+    return result;
+  }
+
   private dateFilter(from?: string, to?: string) {
     return {
       gte: from ? accountingDate(from) : undefined,
       lte: to ? accountingDate(to) : undefined
+    };
+  }
+
+  private sameImportedFlow(
+    actual: ExternalCashFlow,
+    expected: Prisma.ExternalCashFlowUncheckedCreateInput
+  ) {
+    return (
+      actual.userId === expected.userId &&
+      actual.accountId === expected.accountId &&
+      actual.amount.equals(expected.amount as Prisma.Decimal) &&
+      actual.comment === expected.comment &&
+      actual.createdAt.getTime() === (expected.createdAt as Date).getTime() &&
+      actual.currency === expected.currency &&
+      actual.date.getTime() === (expected.date as Date).getTime() &&
+      actual.source === expected.source &&
+      actual.transferGroupId === expected.transferGroupId &&
+      actual.type === expected.type &&
+      actual.updatedAt.getTime() === (expected.updatedAt as Date).getTime()
+    );
+  }
+
+  private serializeExport(flow: ExternalCashFlow): ExternalCashFlowExportItem {
+    return {
+      id: flow.id,
+      accountId: flow.accountId,
+      amount: flow.amount.toFixed(),
+      comment: flow.comment,
+      createdAt: flow.createdAt.toISOString(),
+      currency: flow.currency,
+      date: flow.date.toISOString().slice(0, 10),
+      source: flow.source,
+      transferGroupId: flow.transferGroupId,
+      type: flow.type,
+      updatedAt: flow.updatedAt.toISOString()
     };
   }
 
