@@ -17,6 +17,25 @@
         [totalValueInBaseCurrency]="totalValueInBaseCurrency"
         (accountDeleted)="onDeleteAccount($event)"
       />
+
+      @if (accounts) {
+        <gf-external-cash-flow-ledger
+          [accounts]="accounts"
+          [canCreate]="
+            hasPermissionToCreateExternalCashFlow &&
+            !user.settings.isRestrictedView
+          "
+          [canDelete]="
+            hasPermissionToDeleteExternalCashFlow &&
+            !user.settings.isRestrictedView
+          "
+          [canUpdate]="
+            hasPermissionToUpdateExternalCashFlow &&
+            !user.settings.isRestrictedView
+          "
+          [locale]="user?.settings?.locale ?? DEFAULT_LOCALE"
+        />
+      }
     </div>
   </div>
 

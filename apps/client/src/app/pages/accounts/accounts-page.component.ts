@@ -22,10 +22,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterModule } from '@angular/router';
 import { filter, switchMap, tap } from 'rxjs';
 
+import { GfExternalCashFlowLedgerComponent } from './external-cash-flows/external-cash-flow-ledger.component';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'page' },
-  imports: [GfAccountsTableComponent, GfFabComponent, RouterModule],
+  imports: [
+    GfAccountsTableComponent,
+    GfExternalCashFlowLedgerComponent,
+    GfFabComponent,
+    RouterModule
+  ],
   selector: 'gf-accounts-page',
   styleUrls: ['./accounts-page.scss'],
   templateUrl: './accounts-page.html'
@@ -36,8 +43,11 @@ export class GfAccountsPageComponent implements OnInit {
   protected accounts: AccountWithValue[] | undefined;
   protected activitiesCount = 0;
   protected hasPermissionToCreateAccount: boolean;
+  protected hasPermissionToCreateExternalCashFlow: boolean;
   protected hasPermissionToDeleteAccount: boolean;
+  protected hasPermissionToDeleteExternalCashFlow: boolean;
   protected hasPermissionToUpdateAccount: boolean;
+  protected hasPermissionToUpdateExternalCashFlow: boolean;
   protected readonly internalRoutes = internalRoutes;
   protected totalBalanceInBaseCurrency = 0;
   protected totalValueInBaseCurrency = 0;
@@ -74,11 +84,27 @@ export class GfAccountsPageComponent implements OnInit {
             hasPermission(this.user.permissions, permissions.createAccount) &&
             hasScope(this.user.scopes, scopes.accountCreate);
 
+          this.hasPermissionToCreateExternalCashFlow =
+            hasPermission(
+              this.user.permissions,
+              permissions.createAccountBalance
+            ) && hasScope(this.user.scopes, scopes.accountUpdate);
+
           this.hasPermissionToDeleteAccount =
             hasPermission(this.user.permissions, permissions.deleteAccount) &&
             hasScope(this.user.scopes, scopes.accountDelete);
 
+          this.hasPermissionToDeleteExternalCashFlow =
+            hasPermission(
+              this.user.permissions,
+              permissions.deleteAccountBalance
+            ) && hasScope(this.user.scopes, scopes.accountUpdate);
+
           this.hasPermissionToUpdateAccount =
+            hasPermission(this.user.permissions, permissions.updateAccount) &&
+            hasScope(this.user.scopes, scopes.accountUpdate);
+
+          this.hasPermissionToUpdateExternalCashFlow =
             hasPermission(this.user.permissions, permissions.updateAccount) &&
             hasScope(this.user.scopes, scopes.accountUpdate);
 

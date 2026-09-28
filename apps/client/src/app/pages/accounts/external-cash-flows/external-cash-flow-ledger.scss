@@ -1,0 +1,54 @@
+.filter-grid {
+  align-items: start;
+  display: grid;
+  gap: 0 1rem;
+  grid-template-columns: minmax(12rem, 2fr) repeat(2, minmax(10rem, 1fr)) auto;
+}
+
+.filter-button {
+  margin-top: 0.25rem;
+}
+
+.loading-state,
+.empty-state {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 10rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+table {
+  min-width: 52rem;
+  width: 100%;
+}
+
+.metadata {
+  max-width: 18rem;
+}
+
+.transfer-link {
+  font-size: 0.8rem;
+}
+
+@media (max-width: 767.98px) {
+  .filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-button {
+    margin-bottom: 1rem;
+    margin-top: 0;
+  }
+
+  mat-card-header {
+    display: block !important;
+  }
+
+  .action-buttons {
+    justify-content: flex-start !important;
+    margin-top: 1rem;
+  }
+}

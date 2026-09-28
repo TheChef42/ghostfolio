@@ -1,0 +1,187 @@
+<mat-card appearance="outlined" class="mt-4">
+  <mat-card-header class="align-items-start d-flex justify-content-between">
+    <div>
+      <mat-card-title i18n>External cash flows</mat-card-title>
+      <mat-card-subtitle i18n
+        >Money entering or leaving your investment scope. Trades and
+        account-balance snapshots are not included.</mat-card-subtitle
+      >
+    </div>
+    @if (canCreate) {
+      <div class="action-buttons d-flex flex-wrap justify-content-end">
+        <button
+          i18n
+          mat-stroked-button
+          type="button"
+          (click)="onCreateTransfer()"
+        >
+          Transfer
+        </button>
+        <button
+          class="ml-2"
+          color="primary"
+          i18n
+          mat-flat-button
+          type="button"
+          (click)="onCreateOrdinary()"
+        >
+          Add cash flow
+        </button>
+      </div>
+    }
+  </mat-card-header>
+
+  <mat-card-content class="pt-3">
+    <form class="filter-grid" (ngSubmit)="applyFilters()">
+      <mat-form-field appearance="outline">
+        <mat-label i18n>Account</mat-label>
+        <mat-select [formControl]="accountFilter">
+          <mat-option i18n value="">All accounts</mat-option>
+          @for (account of accounts; track account.id) {
+            <mat-option [value]="account.id">{{ account.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label i18n>From date</mat-label>
+        <input matInput type="date" [formControl]="fromFilter" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label i18n>To date</mat-label>
+        <input matInput type="date" [formControl]="toFilter" />
+      </mat-form-field>
+      <button class="filter-button" i18n mat-stroked-button type="submit">
+        Apply filters
+      </button>
+    </form>
+
+    @if (isLoading) {
+      <div class="loading-state" role="status">
+        <mat-spinner [diameter]="36" />
+        <span class="sr-only" i18n>Loading external cash flows</span>
+      </div>
+    } @else if (errorMessage) {
+      <div class="empty-state" role="alert">
+        <p>{{ errorMessage }}</p>
+        <button i18n mat-stroked-button type="button" (click)="applyFilters()">
+          Retry
+        </button>
+      </div>
+    } @else if (!items.length) {
+      <div class="empty-state">
+        <p class="mb-1 font-weight-bold" i18n>No external cash flows</p>
+        <p class="mb-0 text-muted" i18n>
+          Add deposits, withdrawals or account-to-account transfers to maintain
+          the capital-movement ledger.
+        </p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table mat-table [dataSource]="items">
+          <ng-container matColumnDef="date">
+            <th *matHeaderCellDef i18n mat-header-cell>Date</th>
+            <td *matCellDef="let flow" mat-cell>{{ formatDate(flow.date) }}</td>
+          </ng-container>
+          <ng-container matColumnDef="type">
+            <th *matHeaderCellDef i18n mat-header-cell>Type</th>
+            <td *matCellDef="let flow" mat-cell>
+              <strong>{{ typeLabel(flow.type) }}</strong>
+              @if (flow.transferGroupId) {
+                <div class="text-muted transfer-link">
+                  @if (flow.type === 'TRANSFER_OUT') {
+                    <ng-container i18n>To {{ counterpart(flow) }}</ng-container>
+                  } @else {
+                    <ng-container i18n
+                      >From {{ counterpart(flow) }}</ng-container
+                    >
+                  }
+                </div>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="account">
+            <th *matHeaderCellDef i18n mat-header-cell>Account</th>
+            <td *matCellDef="let flow" mat-cell>
+              {{ accountName(flow.accountId) }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="amount">
+            <th *matHeaderCellDef i18n mat-header-cell>Native amount</th>
+            <td *matCellDef="let flow" class="text-nowrap" mat-cell>
+              {{ formatAmount(flow.amount) }}
+              @if (flow.amount !== null) {
+                {{ flow.currency }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="metadata">
+            <th *matHeaderCellDef i18n mat-header-cell>Details</th>
+            <td *matCellDef="let flow" mat-cell>
+              @if (flow.source) {
+                <div>{{ flow.source }}</div>
+              }
+              @if (flow.comment) {
+                <div class="text-muted text-truncate metadata">
+                  {{ flow.comment }}
+                </div>
+              }
+              @if (!flow.source && !flow.comment) {
+                <span aria-hidden="true">—</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="actions">
+            <th *matHeaderCellDef mat-header-cell>
+              <span class="sr-only" i18n>Actions</span>
+            </th>
+            <td *matCellDef="let flow" class="text-right text-nowrap" mat-cell>
+              @if (canUpdate) {
+                <button
+                  i18n
+                  i18n-aria-label
+                  mat-button
+                  type="button"
+                  [attr.aria-label]="
+                    flow.transferGroupId
+                      ? 'Edit linked transfer'
+                      : 'Edit external cash flow'
+                  "
+                  (click)="onEdit(flow)"
+                >
+                  Edit
+                </button>
+              }
+              @if (canDelete) {
+                <button
+                  color="warn"
+                  i18n
+                  i18n-aria-label
+                  mat-button
+                  type="button"
+                  [attr.aria-label]="
+                    flow.transferGroupId
+                      ? 'Delete linked transfer'
+                      : 'Delete external cash flow'
+                  "
+                  (click)="onDelete(flow)"
+                >
+                  Delete
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr *matHeaderRowDef="displayedColumns" mat-header-row></tr>
+          <tr *matRowDef="let row; columns: displayedColumns" mat-row></tr>
+        </table>
+      </div>
+      <mat-paginator
+        [hidePageSize]="true"
+        [length]="totalItems"
+        [pageIndex]="pageIndex"
+        [pageSize]="pageSize"
+        (page)="onChangePage($event)"
+      />
+    }
+  </mat-card-content>
+</mat-card>

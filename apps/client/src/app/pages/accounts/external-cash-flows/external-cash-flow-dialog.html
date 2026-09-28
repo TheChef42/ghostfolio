@@ -1,0 +1,217 @@
+<form
+  class="d-flex flex-column h-100"
+  [formGroup]="isTransfer ? transferForm : ordinaryForm"
+  (ngSubmit)="onSubmit()"
+>
+  <h1 mat-dialog-title>
+    @if (isTransfer) {
+      <ng-container i18n>{{
+        isUpdate ? 'Edit transfer' : 'Add transfer'
+      }}</ng-container>
+    } @else {
+      <ng-container i18n>{{
+        isUpdate ? 'Edit external cash flow' : 'Add external cash flow'
+      }}</ng-container>
+    }
+  </h1>
+
+  <div class="flex-grow-1 py-3" mat-dialog-content>
+    <p class="text-muted" i18n>
+      External cash flows are money entering or leaving the investment scope.
+      They are not trades or account-balance snapshots.
+    </p>
+
+    @if (errorMessage) {
+      <div class="alert alert-danger" role="alert">{{ errorMessage }}</div>
+    }
+
+    @if (isTransfer) {
+      <p class="font-weight-bold mb-2" i18n>From</p>
+      <div class="form-grid" [formGroup]="transferForm">
+        <mat-form-field appearance="outline">
+          <mat-label i18n>From account</mat-label>
+          <mat-select
+            formControlName="fromAccountId"
+            (selectionChange)="onAccountChanged('from')"
+          >
+            @for (account of data.accounts; track account.id) {
+              <mat-option [value]="account.id">{{ account.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Departure date</mat-label>
+          <input formControlName="fromDate" matInput type="date" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Amount</mat-label>
+          <input
+            autocomplete="off"
+            formControlName="fromAmount"
+            inputmode="decimal"
+            matInput
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Currency</mat-label>
+          <mat-select formControlName="fromCurrency">
+            @for (currency of data.currencies; track currency) {
+              <mat-option [value]="currency">{{ currency }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <p class="font-weight-bold mb-2 mt-2" i18n>To</p>
+      <div class="form-grid" [formGroup]="transferForm">
+        <mat-form-field appearance="outline">
+          <mat-label i18n>To account</mat-label>
+          <mat-select
+            formControlName="toAccountId"
+            (selectionChange)="onAccountChanged('to')"
+          >
+            @for (account of data.accounts; track account.id) {
+              <mat-option [value]="account.id">{{ account.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Receipt date</mat-label>
+          <input formControlName="toDate" matInput type="date" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Amount</mat-label>
+          <input
+            autocomplete="off"
+            formControlName="toAmount"
+            inputmode="decimal"
+            matInput
+          />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Currency</mat-label>
+          <mat-select formControlName="toCurrency">
+            @for (currency of data.currencies; track currency) {
+              <mat-option [value]="currency">{{ currency }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (transferForm.hasError('sameAccount') && transferForm.touched) {
+        <p class="text-danger" i18n role="alert">
+          From and to accounts must be different.
+        </p>
+      }
+      @if (
+        transferForm.hasError('receiptBeforeDeparture') && transferForm.touched
+      ) {
+        <p class="text-danger" i18n role="alert">
+          Receipt date cannot be before departure date.
+        </p>
+      }
+      @if (
+        transferForm.hasError('sameCurrencyPrincipalMismatch') &&
+        transferForm.touched
+      ) {
+        <p class="text-danger" i18n role="alert">
+          Amounts must match when both legs use the same currency.
+        </p>
+      }
+      <p class="text-muted" i18n>
+        One logical transfer is stored as two linked ledger legs. Different
+        currencies retain their native amounts without calculating an exchange
+        rate.
+      </p>
+    } @else {
+      <div class="form-grid" [formGroup]="ordinaryForm">
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Type</mat-label>
+          <mat-select formControlName="type">
+            <mat-option i18n value="DEPOSIT">Deposit</mat-option>
+            <mat-option i18n value="WITHDRAWAL">Withdrawal</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Account</mat-label>
+          <mat-select formControlName="accountId">
+            @for (account of data.accounts; track account.id) {
+              <mat-option [value]="account.id">{{ account.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Date</mat-label>
+          <input formControlName="date" matInput type="date" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Amount</mat-label>
+          <input
+            autocomplete="off"
+            formControlName="amount"
+            inputmode="decimal"
+            matInput
+          />
+          @if (
+            ordinaryForm.controls.amount.invalid &&
+            ordinaryForm.controls.amount.touched
+          ) {
+            <mat-error i18n
+              >Enter a positive decimal with up to 18 decimal places.</mat-error
+            >
+          }
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label i18n>Currency</mat-label>
+          <mat-select formControlName="currency">
+            @for (currency of data.currencies; track currency) {
+              <mat-option [value]="currency">{{ currency }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+
+    <div
+      class="form-grid metadata-grid"
+      [formGroup]="isTransfer ? transferForm : ordinaryForm"
+    >
+      <mat-form-field appearance="outline">
+        <mat-label i18n>Source</mat-label>
+        <input formControlName="source" matInput maxlength="255" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label i18n>Comment</mat-label>
+        <textarea
+          formControlName="comment"
+          matInput
+          maxlength="2000"
+          rows="2"
+        ></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="justify-content-end" mat-dialog-actions>
+    <button
+      i18n
+      mat-button
+      type="button"
+      [disabled]="isSubmitting"
+      (click)="onCancel()"
+    >
+      Cancel
+    </button>
+    <button
+      color="primary"
+      mat-flat-button
+      type="submit"
+      [disabled]="
+        isSubmitting ||
+        (isTransfer ? transferForm.invalid : ordinaryForm.invalid)
+      "
+    >
+      <ng-container i18n>{{ isSubmitting ? 'Saving…' : 'Save' }}</ng-container>
+    </button>
+  </div>
+</form>
