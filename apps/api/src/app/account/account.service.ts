@@ -15,7 +15,7 @@ import {
 import { Filter } from '@ghostfolio/common/interfaces';
 import { AccountWithBalance } from '@ghostfolio/common/types';
 
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Account,
@@ -220,9 +220,22 @@ export class AccountService {
   public async deleteAccount(
     where: Prisma.AccountWhereUniqueInput
   ): Promise<Account> {
-    const account = await this.prismaService.account.delete({
-      where
-    });
+    let account: Account;
+    try {
+      account = await this.prismaService.account.delete({ where });
+    } catch (error) {
+      // The cash-flow FK also protects against a concurrent insertion after
+      // an application-level history check. Never cascade financial history.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2003'
+      ) {
+        throw new ConflictException(
+          'Account has financial history and cannot be deleted'
+        );
+      }
+      throw error;
+    }
 
     this.eventEmitter.emit(
       PortfolioChangedEvent.getName(),

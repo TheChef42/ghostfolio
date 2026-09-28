@@ -58,6 +58,7 @@ import { TagsModule } from './endpoints/tags/tags.module';
 import { WatchlistModule } from './endpoints/watchlist/watchlist.module';
 import { ExchangeRateModule } from './exchange-rate/exchange-rate.module';
 import { ExportModule } from './export/export.module';
+import { ExternalCashFlowModule } from './external-cash-flow/external-cash-flow.module';
 import { HealthModule } from './health/health.module';
 import { ImportModule } from './import/import.module';
 import { InfoModule } from './info/info.module';
@@ -123,6 +124,7 @@ import { UserModule } from './user/user.module';
     ExchangeRateModule,
     ExchangeRateDataModule,
     ExportModule,
+    ExternalCashFlowModule,
     GhostfolioModule,
     HealthModule,
     ImportModule,
