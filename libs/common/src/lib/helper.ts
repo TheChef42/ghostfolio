@@ -75,6 +75,8 @@ export const DATE_FORMAT_YEARLY = 'yyyy';
 const USER_SETTINGS_KEYS_OF_AUTHENTICATED_USER: (keyof UserSettings)[] = [
   'benchmark',
   'colorScheme',
+  'customDateRange',
+  'customDateRanges',
   'dateRange',
   'filters.accounts',
   'filters.assetClasses',

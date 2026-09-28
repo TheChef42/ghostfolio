@@ -4,6 +4,7 @@ import { Impersonation } from '@ghostfolio/api/decorators/impersonation.decorato
 import { CustomThrottlerGuard } from '@ghostfolio/api/guards/custom-throttler.guard';
 import { HasPermissionGuard } from '@ghostfolio/api/guards/has-permission.guard';
 import { ImpersonationGuard } from '@ghostfolio/api/guards/impersonation.guard';
+import { resolveCustomDateRangeQuery } from '@ghostfolio/api/helper/custom-date-range.helper';
 import { decodeDataSource } from '@ghostfolio/api/helper/data-source.helper';
 import { RedactValuesInResponseInterceptor } from '@ghostfolio/api/interceptors/redact-values-in-response/redact-values-in-response.interceptor';
 import { TransformDataSourceInResponseInterceptor } from '@ghostfolio/api/interceptors/transform-data-source-in-response/transform-data-source-in-response.interceptor';
@@ -14,6 +15,10 @@ import {
   THROTTLE_SIGNUP_LIMIT,
   THROTTLE_SIGNUP_TTL
 } from '@ghostfolio/common/config';
+import {
+  getValidSavedCustomDateRanges,
+  resolveSavedCustomDateRange
+} from '@ghostfolio/common/custom-date-range-helper';
 import {
   CreateUserDto,
   DeleteOwnUserDto,
@@ -220,6 +225,35 @@ export class UserController {
       this.request.user.settings.settings as UserSettings,
       data
     );
+
+    if (data.customDateRanges) {
+      const customDateRanges = getValidSavedCustomDateRanges(
+        data.customDateRanges
+      );
+
+      if (customDateRanges.length !== data.customDateRanges.length) {
+        throw new HttpException(
+          'Saved custom ranges are malformed or have duplicate ids',
+          StatusCodes.BAD_REQUEST
+        );
+      }
+
+      try {
+        for (const range of customDateRanges) {
+          resolveSavedCustomDateRange({ range });
+        }
+      } catch (error) {
+        throw new HttpException(error.message, StatusCodes.BAD_REQUEST);
+      }
+    }
+
+    if (userSettings.dateRange === 'custom') {
+      resolveCustomDateRangeQuery({
+        ...userSettings.customDateRange,
+        range: userSettings.dateRange,
+        userSettings
+      });
+    }
 
     if (userSettings['filters.dataSource']) {
       userSettings['filters.dataSource'] = decodeDataSource(

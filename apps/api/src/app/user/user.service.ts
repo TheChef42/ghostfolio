@@ -24,6 +24,11 @@ import {
   THROTTLE_DAILY_KEY,
   THROTTLE_DAILY_TTL
 } from '@ghostfolio/common/config';
+import {
+  getValidSavedCustomDateRanges,
+  resolveCustomDateRange,
+  resolveSavedCustomDateRange
+} from '@ghostfolio/common/custom-date-range-helper';
 import { SubscriptionType } from '@ghostfolio/common/enums';
 import { resolveUserSettings } from '@ghostfolio/common/helper';
 import {
@@ -357,6 +362,45 @@ export class UserService {
     }
 
     // Set default value for date range
+    const userSettings = user.settings.settings as UserSettings;
+    const customDateRanges = getValidSavedCustomDateRanges(
+      userSettings.customDateRanges
+    );
+
+    if (customDateRanges.length > 0) {
+      userSettings.customDateRanges = customDateRanges;
+    } else {
+      delete userSettings.customDateRanges;
+    }
+
+    if (userSettings.dateRange === 'custom') {
+      try {
+        const selection = userSettings.customDateRange;
+
+        if (selection?.savedRangeId) {
+          const savedRange = customDateRanges.find(
+            ({ id }) => id === selection.savedRangeId
+          );
+
+          if (!savedRange) {
+            throw new Error('Saved range not found');
+          }
+
+          resolveSavedCustomDateRange({ range: savedRange });
+        } else if (selection?.from && selection?.to) {
+          resolveCustomDateRange({
+            from: selection.from,
+            to: selection.to
+          });
+        } else {
+          throw new Error('Custom range selection is incomplete');
+        }
+      } catch {
+        delete userSettings.customDateRange;
+        userSettings.dateRange = DEFAULT_DATE_RANGE;
+      }
+    }
+
     (user.settings.settings as UserSettings).dateRange =
       (user.settings.settings as UserSettings).viewMode === 'ZEN'
         ? 'max'

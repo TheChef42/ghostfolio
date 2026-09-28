@@ -1,4 +1,9 @@
+import { ISO_ACCOUNTING_DATE_PATTERN } from '@ghostfolio/common/custom-date-range-helper';
 import { XRayRulesSettings } from '@ghostfolio/common/interfaces';
+import type {
+  CustomDateRangeSelection,
+  SavedCustomDateRange
+} from '@ghostfolio/common/interfaces';
 import type {
   ColorScheme,
   DateRange,
@@ -7,6 +12,7 @@ import type {
 } from '@ghostfolio/common/types';
 import { IsCurrencyCode } from '@ghostfolio/common/validators/is-currency-code';
 
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
@@ -14,9 +20,46 @@ import {
   IsIn,
   IsNumber,
   IsOptional,
-  IsString
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  ValidateNested
 } from 'class-validator';
 import { eachYearOfInterval, format } from 'date-fns';
+
+export class CustomDateRangeSelectionDto implements CustomDateRangeSelection {
+  @IsOptional()
+  @Matches(ISO_ACCOUNTING_DATE_PATTERN)
+  from?: string;
+
+  @IsOptional()
+  @IsUUID()
+  savedRangeId?: string;
+
+  @IsOptional()
+  @Matches(ISO_ACCOUNTING_DATE_PATTERN)
+  to?: string;
+}
+
+export class SavedCustomDateRangeDto implements SavedCustomDateRange {
+  @IsIn(['FIXED', 'TODAY'])
+  endMode: 'FIXED' | 'TODAY';
+
+  @Matches(ISO_ACCOUNTING_DATE_PATTERN)
+  from: string;
+
+  @IsUUID()
+  id: string;
+
+  @IsString()
+  @MaxLength(100)
+  name: string;
+
+  @IsOptional()
+  @Matches(ISO_ACCOUNTING_DATE_PATTERN)
+  to?: string;
+}
 
 export class UpdateUserSettingDto {
   @IsNumber()
@@ -35,10 +78,22 @@ export class UpdateUserSettingDto {
   @IsOptional()
   colorScheme?: ColorScheme;
 
+  @IsOptional()
+  @Type(() => CustomDateRangeSelectionDto)
+  @ValidateNested()
+  customDateRange?: CustomDateRangeSelectionDto | null;
+
+  @IsArray()
+  @IsOptional()
+  @Type(() => SavedCustomDateRangeDto)
+  @ValidateNested({ each: true })
+  customDateRanges?: SavedCustomDateRangeDto[];
+
   @IsIn([
     '1d',
     '1y',
     '5y',
+    'custom',
     'max',
     'mtd',
     'wtd',
