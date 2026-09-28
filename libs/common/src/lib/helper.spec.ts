@@ -620,6 +620,28 @@ describe('Helper', () => {
       expect(filtersAccounts).toEqual(['0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d']);
     });
 
+    it('Saved custom ranges stay private to the authenticated user', () => {
+      const authenticatedRange = {
+        endMode: 'TODAY' as const,
+        from: '2026-01-01',
+        id: '11111111-1111-4111-8111-111111111111',
+        name: 'Mine'
+      };
+      const impersonatedRange = {
+        ...authenticatedRange,
+        id: '22222222-2222-4222-8222-222222222222',
+        name: 'Owner private range'
+      };
+      const { customDateRanges } = resolveUserSettings({
+        impersonationUserSettings: {
+          customDateRanges: [impersonatedRange]
+        },
+        userSettings: { customDateRanges: [authenticatedRange] }
+      });
+
+      expect(customDateRanges).toEqual([authenticatedRange]);
+    });
+
     it('Presentation settings unset for the authenticated user do not leak', () => {
       // An unset presentation setting must not fall back to the impersonated
       // user, otherwise their appearance and language apply to the
