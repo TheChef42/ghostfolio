@@ -36,8 +36,10 @@ endpoint. The ledger reloads only after the backend confirms a mutation.
 A dedicated dialog presents FROM and TO together. Each side has an account,
 accounting date, exact amount and native currency; source/comment are shared.
 The client rejects equal accounts, receipt before departure and unequal principals
-for equal currencies. Different-currency principals may differ, and no exchange
-rate or FX attribution is inferred.
+for equal currencies. Departure and receipt have separate accounting dates: receipt
+may be later than departure, and only receipt-before-departure is invalid.
+Different-currency principals may differ, and no exchange rate or FX attribution is
+inferred.
 
 Storage remains two records. The ledger displays both legs as Transfer out/Transfer
 in with a counterpart label. Every edit/delete action is logical-pair scoped and
