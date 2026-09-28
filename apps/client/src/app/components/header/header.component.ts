@@ -15,7 +15,6 @@ import { UpdateUserSettingDto } from '@ghostfolio/common/dtos';
 import { Filter, InfoItem, User } from '@ghostfolio/common/interfaces';
 import { hasPermission, permissions } from '@ghostfolio/common/permissions';
 import { internalRoutes, publicRoutes } from '@ghostfolio/common/routes/routes';
-import { DateRange } from '@ghostfolio/common/types';
 import { GfAssistantComponent } from '@ghostfolio/ui/assistant/assistant.component';
 import { GfLogoComponent } from '@ghostfolio/ui/logo';
 import { NotificationService } from '@ghostfolio/ui/notifications';
@@ -55,7 +54,7 @@ import {
   radioButtonOnOutline
 } from 'ionicons/icons';
 import { EMPTY } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, finalize } from 'rxjs/operators';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -103,9 +102,12 @@ export class GfHeaderComponent implements OnChanges {
   protected hasPermissionToAccessAssistant: boolean;
   protected hasPermissionToAccessFearAndGreedIndex: boolean;
   protected hasPermissionToCreateUser: boolean;
+  protected hasPermissionToManageCustomRanges: boolean;
+  protected dateRangeError: string | undefined;
   protected impersonationId: string | null;
   protected readonly internalRoutes = internalRoutes;
   protected isMenuOpen: boolean;
+  protected isDateRangeSaving = false;
   protected readonly routeAbout = publicRoutes.about.path;
   protected readonly routeFeatures = publicRoutes.features.path;
   protected readonly routeMarkets = publicRoutes.markets.path;
@@ -143,6 +145,7 @@ export class GfHeaderComponent implements OnChanges {
       .subscribe((impersonationId) => {
         this.hasImpersonationId = !!impersonationId;
         this.impersonationId = impersonationId;
+        this.setHasPermissionToManageCustomRanges();
       });
 
     addIcons({
@@ -214,6 +217,8 @@ export class GfHeaderComponent implements OnChanges {
       this.info()?.globalPermissions,
       permissions.createUserAccount
     );
+
+    this.setHasPermissionToManageCustomRanges();
   }
 
   protected closeAssistant() {
@@ -230,16 +235,34 @@ export class GfHeaderComponent implements OnChanges {
     window.location.reload();
   }
 
-  protected onDateRangeChange(dateRange: DateRange) {
+  protected onDateRangeChange(userSetting: UpdateUserSettingDto) {
+    this.dateRangeError = undefined;
+    this.isDateRangeSaving = true;
+
     this.dataService
-      .putUserSetting({ dateRange })
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .putUserSetting(userSetting)
+      .pipe(
+        catchError(() => {
+          this.dateRangeError = $localize`The date range could not be saved.`;
+          return EMPTY;
+        }),
+        finalize(() => {
+          this.isDateRangeSaving = false;
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
       .subscribe(() => {
         this.userService
           .get(true)
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe();
       });
+  }
+
+  private setHasPermissionToManageCustomRanges() {
+    this.hasPermissionToManageCustomRanges =
+      !this.hasImpersonationId &&
+      hasPermission(this.user()?.permissions, permissions.updateUserSettings);
   }
 
   protected onFiltersChanged(filters: Filter[]) {

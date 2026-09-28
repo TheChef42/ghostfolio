@@ -1,5 +1,5 @@
 import { UserService } from '@ghostfolio/client/services/user/user.service';
-import { DEFAULT_LOCALE } from '@ghostfolio/common/config';
+import { DEFAULT_DATE_RANGE, DEFAULT_LOCALE } from '@ghostfolio/common/config';
 import {
   AssetProfileIdentifier,
   PortfolioPosition,
@@ -157,7 +157,10 @@ export class GfHomeHoldingsComponent implements OnInit {
 
     return this.dataService.fetchPortfolioHoldings({
       filters,
-      range: this.user?.settings?.dateRange
+      range:
+        this.user?.settings?.dateRange === 'custom'
+          ? DEFAULT_DATE_RANGE
+          : this.user?.settings?.dateRange
     });
   }
 

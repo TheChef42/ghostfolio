@@ -1,6 +1,14 @@
 <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2">
   <file source-language="en" target-language="de" datatype="plaintext" original="ng2.template">
     <body>
+      <trans-unit id="126074860850048964" datatype="html">
+        <source>End date</source>
+        <target state="new">End date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">201</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1267967133679326155" datatype="html">
         <source>Create Account</source>
         <target state="translated">Registrieren</target>
@@ -50,7 +58,7 @@
         <target state="new">Source</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">131</context>
+          <context context-type="linenumber">180</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8650499415827640724" datatype="html">
@@ -70,11 +78,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">93</context>
+          <context context-type="linenumber">129</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">60</context>
+          <context context-type="linenumber">86</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/create-or-update-activity-dialog/create-or-update-activity-dialog.html</context>
@@ -94,7 +102,7 @@
         <target state="new">From date</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">46</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5028777105388019087" datatype="html">
@@ -106,7 +114,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">86</context>
+          <context context-type="linenumber">118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="135077277733987408" datatype="html">
@@ -285,10 +293,6 @@
           <context context-type="linenumber">99</context>
         </context-group>
         <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">97</context>
-        </context-group>
-        <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/accounts-table/accounts-table.component.html</context>
           <context context-type="linenumber">348</context>
         </context-group>
@@ -334,11 +338,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">141</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">100</context>
+          <context context-type="linenumber">151</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/account-balances/account-balances.component.html</context>
@@ -351,6 +351,10 @@
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/activities-table/activities-table.component.html</context>
           <context context-type="linenumber">548</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">247</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/benchmark/benchmark.component.html</context>
@@ -477,6 +481,14 @@
           <context context-type="linenumber">141</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="3090149248828869138" datatype="html">
+        <source>Transfer</source>
+        <target state="new">Transfer</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
+          <context context-type="linenumber">18</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8530249987193962636" datatype="html">
         <source>Historical Market Data</source>
         <target state="translated">Historische Marktdaten</target>
@@ -534,7 +546,7 @@
         <target state="translated">Finde ein Konto...</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">450</context>
+          <context context-type="linenumber">511</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3973931101896534797" datatype="html">
@@ -550,11 +562,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">108</context>
+          <context context-type="linenumber">144</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">56</context>
+          <context context-type="linenumber">82</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/create-or-update-activity-dialog/create-or-update-activity-dialog.html</context>
@@ -798,7 +810,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">235</context>
+          <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2395205455607568422" datatype="html">
@@ -842,7 +854,7 @@
         <target state="translated">Über Ghostfolio</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">327</context>
+          <context context-type="linenumber">330</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/about/overview/about-overview-page.html</context>
@@ -854,7 +866,7 @@
         <target state="translated">Registrieren</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">437</context>
+          <context context-type="linenumber">440</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/features/features-page.html</context>
@@ -898,11 +910,11 @@
         <target state="translated">Einloggen</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">426</context>
+          <context context-type="linenumber">429</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.ts</context>
-          <context context-type="linenumber">307</context>
+          <context context-type="linenumber">333</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/login-with-access-token-dialog/login-with-access-token-dialog.html</context>
@@ -918,7 +930,7 @@
         <target state="translated">Ups! Falsches Sicherheits-Token.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.ts</context>
-          <context context-type="linenumber">326</context>
+          <context context-type="linenumber">352</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/user-account-access/user-account-access.component.ts</context>
@@ -1117,12 +1129,12 @@
           <context context-type="linenumber">165</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="4981420935732135177" datatype="html">
+      <trans-unit id="3452686096916623156" datatype="html">
         <source>Add deposits, withdrawals or account-to-account transfers to maintain the capital-movement ledger.</source>
         <target state="new">Add deposits, withdrawals or account-to-account transfers to maintain the capital-movement ledger.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">50</context>
+          <context context-type="linenumber">74</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4993097165849036956" datatype="html">
@@ -1217,6 +1229,14 @@
           <context context-type="linenumber">480</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="5377078063439833222" datatype="html">
+        <source>Edit</source>
+        <target state="new">Edit</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
+          <context context-type="linenumber">151</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8927080808898221200" datatype="html">
         <source>Allocation</source>
         <target state="translated">Allokation</target>
@@ -1262,7 +1282,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">368</context>
+          <context context-type="linenumber">408</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7377728350294749129" datatype="html">
@@ -1274,7 +1294,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">380</context>
+          <context context-type="linenumber">420</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8768104874317770689" datatype="html">
@@ -1286,7 +1306,15 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">390</context>
+          <context context-type="linenumber">430</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8786416735150153472" datatype="html">
+        <source>Saved range name</source>
+        <target state="new">Saved range name</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">231</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8793726805339626615" datatype="html">
@@ -1306,7 +1334,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">412</context>
+          <context context-type="linenumber">452</context>
         </context-group>
       </trans-unit>
       <trans-unit id="366169681580494481" datatype="html">
@@ -1326,7 +1354,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">418</context>
+          <context context-type="linenumber">458</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1579692722565712588" datatype="html">
@@ -1338,7 +1366,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">207</context>
+          <context context-type="linenumber">206</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1726363342938046830" datatype="html">
@@ -1354,7 +1382,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">374</context>
+          <context context-type="linenumber">377</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/about/overview/about-overview-page.routes.ts</context>
@@ -1386,7 +1414,7 @@
         <target state="translated">Mein Ghostfolio</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">280</context>
+          <context context-type="linenumber">283</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/user-account/user-account-page.routes.ts</context>
@@ -1622,7 +1650,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">271</context>
+          <context context-type="linenumber">274</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/holding-detail-dialog/holding-detail-dialog.html</context>
@@ -1690,15 +1718,15 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">43</context>
+          <context context-type="linenumber">56</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">71</context>
+          <context context-type="linenumber">92</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">119</context>
+          <context context-type="linenumber">165</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/create-or-update-activity-dialog/create-or-update-activity-dialog.html</context>
@@ -1770,7 +1798,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">291</context>
+          <context context-type="linenumber">294</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/common/src/lib/routes/routes.ts</context>
@@ -1950,7 +1978,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">361</context>
+          <context context-type="linenumber">364</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/features/features-page.html</context>
@@ -1978,7 +2006,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">251</context>
+          <context context-type="linenumber">254</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/holding-detail-dialog/holding-detail-dialog.html</context>
@@ -2014,7 +2042,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">408</context>
+          <context context-type="linenumber">411</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/markets/markets.html</context>
@@ -2046,7 +2074,7 @@
         <target state="new">Comment</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">135</context>
+          <context context-type="linenumber">184</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2666668717343771434" datatype="html">
@@ -2126,7 +2154,7 @@
         <target state="new">All accounts</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">20</context>
+          <context context-type="linenumber">39</context>
         </context-group>
       </trans-unit>
       <trans-unit id="699590710757792843" datatype="html">
@@ -2182,7 +2210,7 @@
         <target state="new">Transfer out</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">190</context>
+          <context context-type="linenumber">199</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3568940932272598597" datatype="html">
@@ -2362,7 +2390,7 @@
         <target state="new">To <x id="INTERPOLATION" equiv-text="{{ counterpart(flow) }}"/></target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">66</context>
+          <context context-type="linenumber">92</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4388879716045736175" datatype="html">
@@ -2446,7 +2474,7 @@
         <target state="translated">Daten importieren...</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">184</context>
+          <context context-type="linenumber">183</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7500216440144530775" datatype="html">
@@ -2454,7 +2482,7 @@
         <target state="translated">Der Import wurde abgeschlossen</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">196</context>
+          <context context-type="linenumber">195</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7500665368930738879" datatype="html">
@@ -2478,11 +2506,11 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">314</context>
+          <context context-type="linenumber">317</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">389</context>
+          <context context-type="linenumber">392</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/pricing/pricing-page.routes.ts</context>
@@ -2510,7 +2538,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">261</context>
+          <context context-type="linenumber">264</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/resources/personal-finance-tools/product-page.component.ts</context>
@@ -2565,12 +2593,12 @@
           <context context-type="linenumber">43</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3658527153969335111" datatype="html">
+      <trans-unit id="8931172224269281015" datatype="html">
         <source>Receipt date cannot be before departure date.</source>
         <target state="new">Receipt date cannot be before departure date.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">84</context>
+          <context context-type="linenumber">110</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8738732372986673558" datatype="html">
@@ -2598,7 +2626,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">301</context>
+          <context context-type="linenumber">304</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/resources/overview/resources-overview.component.html</context>
@@ -2701,12 +2729,12 @@
           <context context-type="linenumber">536</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="6704088225438410096" datatype="html">
+      <trans-unit id="5413356043532370192" datatype="html">
         <source>Apply filters</source>
         <target state="new">Apply filters</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">34</context>
+          <context context-type="linenumber">54</context>
         </context-group>
       </trans-unit>
       <trans-unit id="670983159637074283" datatype="html">
@@ -2790,7 +2818,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">206</context>
+          <context context-type="linenumber">205</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7224997887539831269" datatype="html">
@@ -2802,7 +2830,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">204</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2067863610333602482" datatype="html">
@@ -2889,12 +2917,12 @@
           <context context-type="linenumber">210</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="7934833136974560675" datatype="html">
+      <trans-unit id="5171192616638755303" datatype="html">
         <source>Retry</source>
         <target state="new">Retry</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">45</context>
+          <context context-type="linenumber">67</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6966271594418371336" datatype="html">
@@ -2942,11 +2970,11 @@
         <target state="translated">Einlage</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">95</context>
+          <context context-type="linenumber">131</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">188</context>
+          <context context-type="linenumber">197</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/fire-calculator/fire-calculator.component.ts</context>
@@ -3166,7 +3194,7 @@
         <target state="new">This external cash flow will be deleted.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">145</context>
+          <context context-type="linenumber">155</context>
         </context-group>
       </trans-unit>
       <trans-unit id="413116577994876478" datatype="html">
@@ -3230,15 +3258,15 @@
         <target state="translated">Konto</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">100</context>
+          <context context-type="linenumber">136</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">18</context>
+          <context context-type="linenumber">37</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">75</context>
+          <context context-type="linenumber">103</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/create-or-update-activity-dialog/create-or-update-activity-dialog.component.ts</context>
@@ -3474,7 +3502,7 @@
         <target state="new">Loading external cash flows</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">40</context>
+          <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8340410730497371637" datatype="html">
@@ -3541,16 +3569,24 @@
           <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="888341446683346521" datatype="html">
+        <source>Start date</source>
+        <target state="new">Start date</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">193</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8890553633144307762" datatype="html">
         <source>Back</source>
         <target state="translated">Zurück</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.html</context>
-          <context context-type="linenumber">158</context>
+          <context context-type="linenumber">160</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.html</context>
-          <context context-type="linenumber">198</context>
+          <context context-type="linenumber">200</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8894377483833272091" datatype="html">
@@ -3693,12 +3729,12 @@
           <context context-type="linenumber">13</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="7612448552800810478" datatype="html">
+      <trans-unit id="2246658841836355640" datatype="html">
         <source>Amounts must match when both legs use the same currency.</source>
         <target state="new">Amounts must match when both legs use the same currency.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">87</context>
+          <context context-type="linenumber">118</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3577962162959289117" datatype="html">
@@ -3714,7 +3750,7 @@
         <target state="translated">Daten validieren...</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">309</context>
+          <context context-type="linenumber">308</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1071721880474488785" datatype="html">
@@ -3722,11 +3758,11 @@
         <target state="translated">Importieren</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.html</context>
-          <context context-type="linenumber">169</context>
+          <context context-type="linenumber">171</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.html</context>
-          <context context-type="linenumber">206</context>
+          <context context-type="linenumber">208</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/historical-market-data-editor/historical-market-data-editor.component.html</context>
@@ -3818,7 +3854,7 @@
         <target state="translated">Dividenden importieren</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.component.ts</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">140</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/activities-table/activities-table.component.html</context>
@@ -4034,7 +4070,7 @@
         <target state="translated">Mitgliedschaft abschliessen</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">197</context>
+          <context context-type="linenumber">200</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/subscription-interstitial-dialog/subscription-interstitial-dialog.html</context>
@@ -4134,7 +4170,7 @@
         <target state="new">The cash flow could not be deleted. Reload and try again.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">159</context>
+          <context context-type="linenumber">169</context>
         </context-group>
       </trans-unit>
       <trans-unit id="420388803578883766" datatype="html">
@@ -4162,7 +4198,7 @@
         <target state="new">The cash flow is invalid. Review the highlighted fields.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.component.ts</context>
-          <context context-type="linenumber">201</context>
+          <context context-type="linenumber">207</context>
         </context-group>
       </trans-unit>
       <trans-unit id="332047587746771816" datatype="html">
@@ -4321,6 +4357,14 @@
           <context context-type="linenumber">32</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="9091215224208249494" datatype="html">
+        <source>Update saved range</source>
+        <target state="new">Update saved range</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">257</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="9099220454364126737" datatype="html">
         <source>This asset profile cannot be merged into <x id="PH" equiv-text="symbol"/> (<x id="PH_1" equiv-text="dataSource"/>).</source>
         <target state="translated">Dieses Anlageprofil kann nicht mit <x id="PH" equiv-text="symbol"/> (<x id="PH_1" equiv-text="dataSource"/>) zusammengeführt werden.</target>
@@ -4362,7 +4406,7 @@
         <target state="translated">Mitgliedschaft erneuern</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">195</context>
+          <context context-type="linenumber">198</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/user-account-membership/user-account-membership.html</context>
@@ -4513,6 +4557,14 @@
           <context context-type="linenumber">91</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="3035569942961550037" datatype="html">
+        <source>The date range could not be saved.</source>
+        <target state="new">The date range could not be saved.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/components/header/header.component.ts</context>
+          <context context-type="linenumber">246</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="3045345384616728418" datatype="html">
         <source>By Platform</source>
         <target state="translated">Nach Plattform</target>
@@ -4582,7 +4634,7 @@
         <target state="new">Departure date</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">35</context>
+          <context context-type="linenumber">43</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7920454040515046293" datatype="html">
@@ -4590,7 +4642,7 @@
         <target state="new">From <x id="INTERPOLATION" equiv-text="{{ counterpart(flow) }}"/></target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">68</context>
+          <context context-type="linenumber">95</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7172024491891757913" datatype="html">
@@ -4974,11 +5026,11 @@
         <target state="new">Withdrawal</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">96</context>
+          <context context-type="linenumber">132</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">191</context>
+          <context context-type="linenumber">200</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6694612857116205017" datatype="html">
@@ -4986,7 +5038,7 @@
         <target state="new">An account or cash flow is no longer available. Reload and try again.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.component.ts</context>
-          <context context-type="linenumber">205</context>
+          <context context-type="linenumber">211</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2702200797962830082" datatype="html">
@@ -5242,7 +5294,7 @@
         <target state="new">The cash flow could not be saved. Please try again.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.component.ts</context>
-          <context context-type="linenumber">212</context>
+          <context context-type="linenumber">218</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6333857424161463201" datatype="html">
@@ -5291,6 +5343,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/home-overview/home-overview.html</context>
           <context context-type="linenumber">16</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="209216571975137684" datatype="html">
+        <source>Save range</source>
+        <target state="new">Save range</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">259</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5052600162194883390" datatype="html">
@@ -5390,7 +5450,7 @@
         <target state="new">External cash flows could not be loaded.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">214</context>
+          <context context-type="linenumber">223</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6533788288574116238" datatype="html">
@@ -5406,15 +5466,15 @@
         <target state="new">Amount</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">39</context>
+          <context context-type="linenumber">47</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">67</context>
+          <context context-type="linenumber">83</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">112</context>
+          <context context-type="linenumber">148</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3627006945295714424" datatype="html">
@@ -5443,6 +5503,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/open/open-page.html</context>
           <context context-type="linenumber">104</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2330577642930707695" datatype="html">
+        <source>Cancel</source>
+        <target state="new">Cancel</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
+          <context context-type="linenumber">203</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2337173326993745452" datatype="html">
@@ -5498,7 +5566,7 @@
         <target state="new">Hidden</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">106</context>
+          <context context-type="linenumber">115</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8553089510720906567" datatype="html">
@@ -5666,7 +5734,7 @@
         <target state="new">Transfer in</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="linenumber">198</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8979523239907276515" datatype="html">
@@ -5674,7 +5742,7 @@
         <target state="new">The cash flow changed or conflicts with the ledger. Reload and try again.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.component.ts</context>
-          <context context-type="linenumber">209</context>
+          <context context-type="linenumber">215</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8982834794400749621" datatype="html">
@@ -6079,7 +6147,7 @@
         <target state="new">No external cash flows</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">49</context>
+          <context context-type="linenumber">72</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1509032395181307486" datatype="html">
@@ -6175,12 +6243,12 @@
           <context context-type="linenumber">368</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="3425653261723053075" datatype="html">
+      <trans-unit id="5095070063105429542" datatype="html">
         <source>Add cash flow</source>
         <target state="new">Add cash flow</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">10</context>
+          <context context-type="linenumber">28</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3430061313424019324" datatype="html">
@@ -6216,7 +6284,7 @@
         <target state="new">Receipt date</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">63</context>
+          <context context-type="linenumber">79</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4257439615478050183" datatype="html">
@@ -6268,7 +6336,7 @@
         <target state="new">External cash flows are money entering or leaving the investment scope. They are not trades or account-balance snapshots.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">16</context>
+          <context context-type="linenumber">20</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6075566839446502414" datatype="html">
@@ -6364,7 +6432,7 @@
         <target state="new">Enter a positive decimal with up to 18 decimal places.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="linenumber">160</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3653624484380347431" datatype="html">
@@ -6412,7 +6480,7 @@
         <target state="translated">Von</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">25</context>
+          <context context-type="linenumber">30</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/transfer-balance/transfer-balance-dialog.component.ts</context>
@@ -6424,7 +6492,7 @@
         <target state="translated">Nach</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">53</context>
+          <context context-type="linenumber">66</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/transfer-balance/transfer-balance-dialog.component.ts</context>
@@ -6434,10 +6502,6 @@
       <trans-unit id="8402696305361715603" datatype="html">
         <source>Transfer</source>
         <target state="translated">Transferieren</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">9</context>
-        </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/transfer-balance/transfer-balance-dialog.html</context>
           <context context-type="linenumber">44</context>
@@ -6712,15 +6776,15 @@
         <target state="new"><x id="INTERPOLATION" equiv-text="{{ isUpdate ? &apos;Edit transfer&apos; : &apos;Add transfer&apos; }}"/></target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">8</context>
+          <context context-type="linenumber">9</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">10</context>
+          <context context-type="linenumber">13</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">144</context>
+          <context context-type="linenumber">214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1189482335778578193" datatype="html">
@@ -6736,7 +6800,7 @@
         <target state="new">linked account</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">110</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2634398159221205491" datatype="html">
@@ -6847,6 +6911,14 @@
           <context context-type="linenumber">856</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4410559389294367987" datatype="html">
+        <source>Keep end date at today</source>
+        <target state="new">Keep end date at today</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">211</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="6563391987554512024" datatype="html">
         <source>Test</source>
         <target state="translated">Test</target>
@@ -6916,7 +6988,7 @@
         <target state="new">The linked transfer could not be loaded. Reload and try again.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">179</context>
+          <context context-type="linenumber">189</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7754789218064641822" datatype="html">
@@ -6992,7 +7064,7 @@
         <target state="new">Native amount</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">79</context>
+          <context context-type="linenumber">109</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3105754554141014845" datatype="html">
@@ -7000,7 +7072,7 @@
         <target state="translated">Seit Wochenbeginn</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">372</context>
+          <context context-type="linenumber">412</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7451343426685730864" datatype="html">
@@ -7012,7 +7084,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">372</context>
+          <context context-type="linenumber">412</context>
         </context-group>
       </trans-unit>
       <trans-unit id="358501326846847310" datatype="html">
@@ -7020,7 +7092,7 @@
         <target state="translated">Seit Monatsbeginn</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">376</context>
+          <context context-type="linenumber">416</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3987851135340699382" datatype="html">
@@ -7028,7 +7100,7 @@
         <target state="new">To account</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">55</context>
+          <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
       <trans-unit id="399380803601269035" datatype="html">
@@ -7040,7 +7112,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">376</context>
+          <context context-type="linenumber">416</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3995811497329884593" datatype="html">
@@ -7056,7 +7128,7 @@
         <target state="translated">Seit Jahresbeginn</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">380</context>
+          <context context-type="linenumber">420</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2509141182388535183" datatype="html">
@@ -7088,7 +7160,7 @@
         <target state="new">Both linked transfer legs will be deleted.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">144</context>
+          <context context-type="linenumber">154</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4602065467346820556" datatype="html">
@@ -7104,7 +7176,7 @@
         <target state="translated">Filter zurücksetzen</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
-          <context context-type="linenumber">205</context>
+          <context context-type="linenumber">285</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6479044529603381727" datatype="html">
@@ -7124,7 +7196,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">390</context>
+          <context context-type="linenumber">430</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7658073495909471632" datatype="html">
@@ -7136,7 +7208,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">412</context>
+          <context context-type="linenumber">452</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4252274043276232149" datatype="html">
@@ -7144,7 +7216,7 @@
         <target state="translated">Filter anwenden</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
-          <context context-type="linenumber">218</context>
+          <context context-type="linenumber">298</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2834021536645161016" datatype="html">
@@ -7164,7 +7236,7 @@
         <target state="translated">Finde eine Position...</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">451</context>
+          <context context-type="linenumber">512</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6439365426343089851" datatype="html">
@@ -7341,7 +7413,7 @@
         <target state="translated">Springe zu einer Seite...</target>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
-          <context context-type="linenumber">452</context>
+          <context context-type="linenumber">513</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8555430830140981847" datatype="html">
@@ -7408,12 +7480,12 @@
           <context context-type="linenumber">27</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5723689597559112881" datatype="html">
+      <trans-unit id="6285893814849456568" datatype="html">
         <source>External cash flows included</source>
         <target state="new">External cash flows included</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.html</context>
-          <context context-type="linenumber">126</context>
+          <context context-type="linenumber">127</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5724720497710437101" datatype="html">
@@ -7445,7 +7517,7 @@
         <target state="new"><x id="INTERPOLATION" equiv-text="{{ externalCashFlowPreview.created }}"/> to create · <x id="INTERPOLATION_1" equiv-text="{{ externalCashFlowPreview.skipped }}"/> already imported</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/activities/import-activities-dialog/import-activities-dialog.html</context>
-          <context context-type="linenumber">128</context>
+          <context context-type="linenumber">130</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1358239534403218079" datatype="html">
@@ -7493,7 +7565,7 @@
         <target state="new">Delete transfer?</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">147</context>
+          <context context-type="linenumber">157</context>
         </context-group>
       </trans-unit>
       <trans-unit id="2818570902941667477" datatype="html">
@@ -7609,7 +7681,7 @@
         <target state="new">Actions</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">94</context>
+          <context context-type="linenumber">135</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6984983607470794786" datatype="html">
@@ -7753,7 +7825,7 @@
         <target state="new">Delete external cash flow?</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">148</context>
+          <context context-type="linenumber">158</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1859131936150262113" datatype="html">
@@ -7798,10 +7870,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/create-or-update-account-dialog/create-or-update-account-dialog.html</context>
           <context context-type="linenumber">118</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">142</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/transfer-balance/transfer-balance-dialog.html</context>
@@ -7954,6 +8022,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/rule/rule-settings-dialog/rule-settings-dialog.html</context>
           <context context-type="linenumber">93</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6660925946511264619" datatype="html">
+        <source>Delete</source>
+        <target state="new">Delete</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
+          <context context-type="linenumber">168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6664504469290651320" datatype="html">
@@ -8407,7 +8483,7 @@
         <target state="new">Hidden account</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.component.ts</context>
-          <context context-type="linenumber">85</context>
+          <context context-type="linenumber">93</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6923918313254424829" datatype="html">
@@ -8471,7 +8547,7 @@
         <target state="translated">Ich</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">217</context>
+          <context context-type="linenumber">220</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/user-account-access/user-account-access.component.ts</context>
@@ -8515,7 +8591,7 @@
         <target state="new">Money entering or leaving your investment scope. Trades and account-balance snapshots are not included.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">5</context>
+          <context context-type="linenumber">6</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7825231215382064101" datatype="html">
@@ -8571,7 +8647,7 @@
         <target state="new">To date</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-ledger.html</context>
-          <context context-type="linenumber">31</context>
+          <context context-type="linenumber">50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1713271461473302108" datatype="html">
@@ -8802,12 +8878,12 @@
           <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="7569478701925687531" datatype="html">
+      <trans-unit id="8528346127264630927" datatype="html">
         <source>From and to accounts must be different.</source>
         <target state="new">From and to accounts must be different.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">81</context>
+          <context context-type="linenumber">103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7571375880734710634" datatype="html">
@@ -8882,6 +8958,10 @@
           <context context-type="sourcefile">apps/client/src/app/components/admin-market-data/asset-profile-dialog/asset-profile-dialog.html</context>
           <context context-type="linenumber">155</context>
         </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.html</context>
+          <context context-type="linenumber">225</context>
+        </context-group>
       </trans-unit>
       <trans-unit id="6806222370958348229" datatype="html">
         <source>with API access for</source>
@@ -8905,6 +8985,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/user-account-settings/user-account-settings.html</context>
           <context context-type="linenumber">36</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="7590013429208346303" datatype="html">
+        <source>Custom</source>
+        <target state="new">Custom</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
+          <context context-type="linenumber">463</context>
         </context-group>
       </trans-unit>
       <trans-unit id="322229249598827754" datatype="html">
@@ -8964,7 +9052,7 @@
         <target state="translated">Ausloggen</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/header/header.component.html</context>
-          <context context-type="linenumber">330</context>
+          <context context-type="linenumber">333</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5323883986770878166" datatype="html">
@@ -8975,12 +9063,12 @@
           <context context-type="linenumber">64</context>
         </context-group>
       </trans-unit>
-      <trans-unit id="5325920788983599861" datatype="html">
+      <trans-unit id="5606036128844445953" datatype="html">
         <source>One logical transfer is stored as two linked ledger legs. Different currencies retain their native amounts without calculating an exchange rate.</source>
         <target state="new">One logical transfer is stored as two linked ledger legs. Different currencies retain their native amounts without calculating an exchange rate.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">89</context>
+          <context context-type="linenumber">122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="routes.about.changelog" datatype="html">
@@ -9263,7 +9351,7 @@
         <target state="new">From account</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/accounts/external-cash-flows/external-cash-flow-dialog.html</context>
-          <context context-type="linenumber">27</context>
+          <context context-type="linenumber">32</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5643561794785412000" datatype="html">
@@ -9901,6 +9989,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/user-account-access/user-account-access.component.ts</context>
           <context context-type="linenumber">135</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="3394968141884094135" datatype="html">
+        <source>Delete this saved date range?</source>
+        <target state="new">Delete this saved date range?</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">libs/ui/src/lib/assistant/assistant.component.ts</context>
+          <context context-type="linenumber">609</context>
         </context-group>
       </trans-unit>
       <trans-unit id="339860602695747533" datatype="html">

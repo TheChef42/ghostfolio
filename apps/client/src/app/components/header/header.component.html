@@ -148,6 +148,8 @@
           >
             <gf-assistant
               #assistant
+              [canManageCustomRanges]="hasPermissionToManageCustomRanges"
+              [dateRangeError]="dateRangeError"
               [deviceType]="deviceType()"
               [hasPermissionToAccessAdminControl]="
                 hasPermissionToAccessAdminControl
@@ -156,6 +158,7 @@
                 hasPermissionToChangeDateRange()
               "
               [hasPermissionToChangeFilters]="hasPermissionToChangeFilters()"
+              [isDateRangeSaving]="isDateRangeSaving"
               [user]="user()"
               (closed)="closeAssistant()"
               (dateRangeChanged)="onDateRangeChange($event)"

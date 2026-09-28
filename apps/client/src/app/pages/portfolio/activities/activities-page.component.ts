@@ -296,6 +296,7 @@ export class GfActivitiesPageComponent implements OnInit {
         activityTypes: this.activityTypesFilter.length
           ? this.activityTypesFilter
           : undefined,
+        customDateRange: this.user?.settings?.customDateRange,
         filters: this.userService.getFilters(),
         range: this.getDateRange(),
         skip: this.pageIndex * this.pageSize,

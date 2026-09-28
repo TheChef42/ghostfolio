@@ -35,6 +35,7 @@ import {
   BenchmarkMarketDataDetailsResponse,
   BenchmarkResponse,
   CreateStripeCheckoutSessionResponse,
+  CustomDateRangeSelection,
   DataProviderHealthResponse,
   DataProviderHistoricalResponse,
   ExportResponse,
@@ -180,6 +181,33 @@ export class DataService {
     return params;
   }
 
+  public buildDateRangeQueryParams({
+    customDateRange,
+    params,
+    range
+  }: {
+    customDateRange?: CustomDateRangeSelection;
+    params: HttpParams;
+    range?: DateRange;
+  }) {
+    if (!range) {
+      return params;
+    }
+
+    params = params.append('range', range);
+
+    if (range === 'custom') {
+      if (customDateRange?.savedRangeId) {
+        params = params.append('savedRangeId', customDateRange.savedRangeId);
+      } else if (customDateRange?.from && customDateRange?.to) {
+        params = params.append('from', customDateRange.from);
+        params = params.append('to', customDateRange.to);
+      }
+    }
+
+    return params;
+  }
+
   public createStripeCheckoutSession({
     couponId,
     priceId
@@ -214,6 +242,7 @@ export class DataService {
 
   public fetchActivities({
     activityTypes,
+    customDateRange,
     filters,
     range,
     skip,
@@ -222,6 +251,7 @@ export class DataService {
     take
   }: {
     activityTypes?: string[];
+    customDateRange?: CustomDateRangeSelection;
     filters?: Filter[];
     range?: DateRange;
     skip?: number;
@@ -235,9 +265,7 @@ export class DataService {
       params = params.append('activityTypes', activityTypes.join(','));
     }
 
-    if (range) {
-      params = params.append('range', range);
-    }
+    params = this.buildDateRangeQueryParams({ customDateRange, params, range });
 
     if (skip) {
       params = params.append('skip', skip);
@@ -282,17 +310,19 @@ export class DataService {
   }
 
   public fetchDividends({
+    customDateRange,
     filters,
     groupBy = 'month',
     range
   }: {
+    customDateRange?: CustomDateRangeSelection;
     filters?: Filter[];
     groupBy?: GroupBy;
     range: DateRange;
   }) {
     let params = this.buildFiltersAsQueryParams({ filters });
     params = params.append('groupBy', groupBy);
-    params = params.append('range', range);
+    params = this.buildDateRangeQueryParams({ customDateRange, params, range });
 
     return this.http.get<PortfolioDividendsResponse>(
       '/api/v1/portfolio/dividends',
@@ -611,17 +641,19 @@ export class DataService {
   }
 
   public fetchInvestments({
+    customDateRange,
     filters,
     groupBy = 'month',
     range
   }: {
+    customDateRange?: CustomDateRangeSelection;
     filters?: Filter[];
     groupBy?: GroupBy;
     range: DateRange;
   }) {
     let params = this.buildFiltersAsQueryParams({ filters });
     params = params.append('groupBy', groupBy);
-    params = params.append('range', range);
+    params = this.buildDateRangeQueryParams({ customDateRange, params, range });
 
     return this.http.get<PortfolioInvestmentsResponse>(
       '/api/v1/portfolio/investments',
@@ -781,16 +813,18 @@ export class DataService {
   }
 
   public fetchPortfolioPerformance({
+    customDateRange,
     filters,
     range,
     withExcludedAccounts = false
   }: {
+    customDateRange?: CustomDateRangeSelection;
     filters?: Filter[];
     range: DateRange;
     withExcludedAccounts?: boolean;
   }): Observable<PortfolioPerformanceResponse> {
     let params = this.buildFiltersAsQueryParams({ filters });
-    params = params.append('range', range);
+    params = this.buildDateRangeQueryParams({ customDateRange, params, range });
 
     if (withExcludedAccounts) {
       params = params.append('withExcludedAccounts', withExcludedAccounts);

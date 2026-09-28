@@ -243,11 +243,13 @@ export class GfAnalysisPageComponent implements OnInit {
 
     forkJoin({
       dividends: this.dataService.fetchDividends({
+        customDateRange: this.user?.settings?.customDateRange,
         filters: this.userService.getFilters(),
         groupBy: this.mode(),
         range: this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE
       }),
       investments: this.dataService.fetchInvestments({
+        customDateRange: this.user?.settings?.customDateRange,
         filters: this.userService.getFilters(),
         groupBy: this.mode(),
         range: this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE
@@ -317,6 +319,7 @@ export class GfAnalysisPageComponent implements OnInit {
 
     this.dataService
       .fetchPortfolioPerformance({
+        customDateRange: this.user?.settings?.customDateRange,
         filters: this.userService.getFilters(),
         range: this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE
       })
@@ -383,7 +386,10 @@ export class GfAnalysisPageComponent implements OnInit {
           ...this.userService.getFilters(),
           { id: 'ACTIVE', type: 'HOLDING_TYPE' }
         ],
-        range: this.user?.settings?.dateRange
+        range:
+          this.user?.settings?.dateRange === 'custom'
+            ? DEFAULT_DATE_RANGE
+            : this.user?.settings?.dateRange
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(({ holdings }) => {
@@ -437,7 +443,10 @@ export class GfAnalysisPageComponent implements OnInit {
             dataSource,
             symbol,
             filters: this.userService.getFilters(),
-            range: this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE,
+            range:
+              this.user?.settings?.dateRange === 'custom'
+                ? DEFAULT_DATE_RANGE
+                : (this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE),
             startDate: this.dateOfFirstActivity
           })
           .pipe(takeUntilDestroyed(this.destroyRef))

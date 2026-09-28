@@ -1,8 +1,20 @@
 import { SEARCH_QUERY_MAXIMUM_LENGTH } from '@ghostfolio/common/config';
-import { Filter, PortfolioPosition, User } from '@ghostfolio/common/interfaces';
+import {
+  getUtcAccountingDate,
+  deleteSavedCustomDateRange,
+  resolveCustomDateRange,
+  upsertSavedCustomDateRange
+} from '@ghostfolio/common/custom-date-range-helper';
+import { UpdateUserSettingDto } from '@ghostfolio/common/dtos';
+import {
+  Filter,
+  PortfolioPosition,
+  SavedCustomDateRange,
+  User
+} from '@ghostfolio/common/interfaces';
 import { InternalRoute } from '@ghostfolio/common/routes/interfaces/internal-route.interface';
 import { internalRoutes } from '@ghostfolio/common/routes/routes';
-import { AccountWithPlatform, DateRange } from '@ghostfolio/common/types';
+import { AccountWithPlatform } from '@ghostfolio/common/types';
 import { DataService } from '@ghostfolio/ui/services';
 
 import { FocusKeyManager } from '@angular/cdk/a11y';
@@ -24,9 +36,16 @@ import {
   output
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormControl,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterModule } from '@angular/router';
@@ -78,7 +97,9 @@ import {
     GfPortfolioFilterFormComponent,
     IonIcon,
     MatButtonModule,
+    MatCheckboxModule,
     MatFormFieldModule,
+    MatInputModule,
     MatSelectModule,
     NgxSkeletonLoaderModule,
     ReactiveFormsModule,
@@ -94,8 +115,11 @@ export class GfAssistantComponent implements OnChanges, OnDestroy, OnInit {
 
   @Input() deviceType: string;
   @Input() hasPermissionToAccessAdminControl: boolean;
+  @Input() canManageCustomRanges = false;
+  @Input() dateRangeError: string | undefined;
   @Input() hasPermissionToChangeDateRange: boolean;
   @Input() hasPermissionToChangeFilters: boolean;
+  @Input() isDateRangeSaving = false;
   @Input() user: User;
 
   @ViewChild('menuTrigger') menuTriggerElement: MatMenuTrigger;
@@ -109,6 +133,22 @@ export class GfAssistantComponent implements OnChanges, OnDestroy, OnInit {
   public assetClasses: Filter[] = [];
   public dateRangeFormControl = new FormControl<string | null>(null);
   public dateRangeOptions: DateRangeOption[] = [];
+  public customEndTodayFormControl = new FormControl(false, {
+    nonNullable: true
+  });
+  public customFromFormControl = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]
+  });
+  public customNameFormControl = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.maxLength(100)]
+  });
+  public customToFormControl = new FormControl('', {
+    nonNullable: true,
+    validators: [Validators.required, Validators.pattern(/^\d{4}-\d{2}-\d{2}$/)]
+  });
+  public customDateRangeValidationError: string | undefined;
   public holdings: PortfolioPosition[] = [];
 
   public isLoading = {
@@ -143,7 +183,7 @@ export class GfAssistantComponent implements OnChanges, OnDestroy, OnInit {
   public tags: Filter[] = [];
 
   protected readonly closed = output<void>();
-  protected readonly dateRangeChanged = output<DateRange>();
+  protected readonly dateRangeChanged = output<UpdateUserSettingDto>();
   protected readonly filtersChanged = output<Filter[]>();
 
   private readonly PRESELECTION_DELAY = 100;
@@ -419,13 +459,34 @@ export class GfAssistantComponent implements OnChanges, OnDestroy, OnInit {
       value: 'max'
     });
 
+    this.dateRangeOptions.push({
+      label: $localize`Custom`,
+      value: 'custom'
+    });
+
+    for (const range of this.user?.settings?.customDateRanges ?? []) {
+      this.dateRangeOptions.push({
+        label: range.name,
+        value: `saved:${range.id}`
+      });
+    }
+
     this.dateRangeFormControl.disable({ emitEvent: false });
 
     if (this.hasPermissionToChangeDateRange) {
       this.dateRangeFormControl.enable({ emitEvent: false });
     }
 
-    this.dateRangeFormControl.setValue(this.user?.settings?.dateRange ?? null);
+    const activeCustomDateRange = this.user?.settings?.customDateRange;
+    const dateRangeValue =
+      this.user?.settings?.dateRange === 'custom'
+        ? activeCustomDateRange?.savedRangeId
+          ? `saved:${activeCustomDateRange.savedRangeId}`
+          : 'custom'
+        : (this.user?.settings?.dateRange ?? null);
+
+    this.dateRangeFormControl.setValue(dateRangeValue);
+    this.setCustomRangeFormValues(dateRangeValue);
 
     if (this.hasPermissionToChangeFilters) {
       this.portfolioFilterFormControl.enable({ emitEvent: false });
@@ -503,8 +564,95 @@ export class GfAssistantComponent implements OnChanges, OnDestroy, OnInit {
     this.onCloseAssistant();
   }
 
+  public onApplyCustomDateRange() {
+    const customDateRange = this.getValidatedCustomDateRange();
+
+    if (!customDateRange) {
+      return;
+    }
+
+    this.dateRangeChanged.emit({
+      customDateRange,
+      dateRange: 'custom'
+    });
+  }
+
   public onChangeDateRange(dateRangeString: string) {
-    this.dateRangeChanged.emit(dateRangeString);
+    this.customDateRangeValidationError = undefined;
+    this.setCustomRangeFormValues(dateRangeString);
+
+    if (dateRangeString === 'custom') {
+      return;
+    }
+
+    if (dateRangeString.startsWith('saved:')) {
+      this.dateRangeChanged.emit({
+        customDateRange: {
+          savedRangeId: dateRangeString.replace('saved:', '')
+        },
+        dateRange: 'custom'
+      });
+      return;
+    }
+
+    this.dateRangeChanged.emit({
+      customDateRange: null,
+      dateRange: dateRangeString
+    });
+  }
+
+  public onDeleteCustomDateRange() {
+    const selectedRange = this.getSelectedSavedRange();
+
+    if (
+      !selectedRange ||
+      !window.confirm($localize`Delete this saved date range?`)
+    ) {
+      return;
+    }
+
+    this.dateRangeFormControl.setValue('max');
+    this.dateRangeChanged.emit({
+      customDateRange: null,
+      customDateRanges: deleteSavedCustomDateRange({
+        id: selectedRange.id,
+        ranges: this.user?.settings?.customDateRanges ?? []
+      }),
+      dateRange: 'max'
+    });
+  }
+
+  public onSaveCustomDateRange() {
+    const customDateRange = this.getValidatedCustomDateRange();
+    const name = this.customNameFormControl.value.trim();
+
+    if (!customDateRange || !name || this.customNameFormControl.invalid) {
+      this.customNameFormControl.markAsTouched();
+      return;
+    }
+
+    const selectedRange = this.getSelectedSavedRange();
+    const id = selectedRange?.id ?? crypto.randomUUID();
+    const savedRange: SavedCustomDateRange = {
+      endMode: this.customEndTodayFormControl.value ? 'TODAY' : 'FIXED',
+      from: customDateRange.from,
+      id,
+      name,
+      ...(this.customEndTodayFormControl.value
+        ? {}
+        : { to: customDateRange.to })
+    };
+    const customDateRanges = upsertSavedCustomDateRange({
+      range: savedRange,
+      ranges: this.user?.settings?.customDateRanges ?? []
+    });
+
+    this.dateRangeFormControl.setValue(`saved:${id}`);
+    this.dateRangeChanged.emit({
+      customDateRange: { savedRangeId: id },
+      customDateRanges,
+      dateRange: 'custom'
+    });
   }
 
   public onCloseAssistant() {
@@ -765,5 +913,57 @@ export class GfAssistantComponent implements OnChanges, OnDestroy, OnInit {
     this.portfolioFilterFormControl.setValue(
       getPortfolioFilterFormValue(filters, this.holdings)
     );
+  }
+
+  private getSelectedSavedRange() {
+    const value = this.dateRangeFormControl.value;
+
+    if (!value?.startsWith('saved:')) {
+      return undefined;
+    }
+
+    const id = value.replace('saved:', '');
+
+    return this.user?.settings?.customDateRanges?.find(
+      ({ id: rangeId }) => rangeId === id
+    );
+  }
+
+  private getValidatedCustomDateRange() {
+    const from = this.customFromFormControl.value;
+    const to = this.customEndTodayFormControl.value
+      ? getUtcAccountingDate()
+      : this.customToFormControl.value;
+
+    this.customDateRangeValidationError = undefined;
+
+    try {
+      resolveCustomDateRange({ from, to });
+      return { from, to };
+    } catch (error) {
+      this.customDateRangeValidationError = error.message;
+      this.changeDetectorRef.markForCheck();
+      return undefined;
+    }
+  }
+
+  private setCustomRangeFormValues(value: string | null) {
+    const selectedRange = value?.startsWith('saved:')
+      ? this.user?.settings?.customDateRanges?.find(
+          ({ id }) => id === value.replace('saved:', '')
+        )
+      : undefined;
+    const activeRange = this.user?.settings?.customDateRange;
+
+    this.customFromFormControl.setValue(
+      selectedRange?.from ?? activeRange?.from ?? ''
+    );
+    this.customEndTodayFormControl.setValue(selectedRange?.endMode === 'TODAY');
+    this.customToFormControl.setValue(
+      selectedRange?.endMode === 'TODAY'
+        ? getUtcAccountingDate()
+        : (selectedRange?.to ?? activeRange?.to ?? getUtcAccountingDate())
+    );
+    this.customNameFormControl.setValue(selectedRange?.name ?? '');
   }
 }

@@ -183,6 +183,86 @@
           }
         </mat-select>
       </mat-form-field>
+      @if (
+        dateRangeFormControl.value === 'custom' ||
+        dateRangeFormControl.value?.startsWith('saved:')
+      ) {
+        <div class="custom-date-range mt-3">
+          <div class="d-flex flex-column flex-sm-row">
+            <mat-form-field appearance="outline" class="flex-grow-1 mr-sm-2">
+              <mat-label i18n>Start date</mat-label>
+              <input
+                matInput
+                type="date"
+                [formControl]="customFromFormControl"
+              />
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex-grow-1">
+              <mat-label i18n>End date</mat-label>
+              <input
+                matInput
+                type="date"
+                [formControl]="customToFormControl"
+                [readonly]="customEndTodayFormControl.value"
+              />
+            </mat-form-field>
+          </div>
+          <mat-checkbox [formControl]="customEndTodayFormControl">
+            <ng-container i18n>Keep end date at today</ng-container>
+          </mat-checkbox>
+          @if (customDateRangeValidationError || dateRangeError) {
+            <p class="mat-body-small text-danger mt-2" role="alert">
+              {{ customDateRangeValidationError || dateRangeError }}
+            </p>
+          }
+          <div class="d-flex justify-content-end mt-2">
+            <button
+              mat-flat-button
+              type="button"
+              [disabled]="isDateRangeSaving"
+              (click)="onApplyCustomDateRange()"
+            >
+              <ng-container i18n>Apply</ng-container>
+            </button>
+          </div>
+          @if (canManageCustomRanges) {
+            <hr />
+            <mat-form-field appearance="outline" class="w-100">
+              <mat-label i18n>Saved range name</mat-label>
+              <input
+                matInput
+                maxlength="100"
+                [formControl]="customNameFormControl"
+              />
+            </mat-form-field>
+            <div class="d-flex justify-content-end">
+              @if (dateRangeFormControl.value?.startsWith('saved:')) {
+                <button
+                  class="mr-2"
+                  mat-button
+                  type="button"
+                  [disabled]="isDateRangeSaving"
+                  (click)="onDeleteCustomDateRange()"
+                >
+                  <ng-container i18n>Delete</ng-container>
+                </button>
+              }
+              <button
+                mat-button
+                type="button"
+                [disabled]="isDateRangeSaving"
+                (click)="onSaveCustomDateRange()"
+              >
+                @if (dateRangeFormControl.value?.startsWith('saved:')) {
+                  <ng-container i18n>Update saved range</ng-container>
+                } @else {
+                  <ng-container i18n>Save range</ng-container>
+                }
+              </button>
+            </div>
+          }
+        </div>
+      }
     </div>
     <div class="p-3">
       <gf-portfolio-filter-form

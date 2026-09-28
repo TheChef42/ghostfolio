@@ -162,7 +162,10 @@ export class GfHomeOverviewComponent implements OnInit {
       this.dataService
         .fetchPortfolioHoldings({
           filters: [{ id: 'ACTIVE', type: 'HOLDING_TYPE' }],
-          range: this.user()?.settings?.dateRange
+          range:
+            this.user()?.settings?.dateRange === 'custom'
+              ? DEFAULT_DATE_RANGE
+              : this.user()?.settings?.dateRange
         })
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe(({ holdings }) => {
@@ -172,6 +175,7 @@ export class GfHomeOverviewComponent implements OnInit {
 
     this.dataService
       .fetchPortfolioPerformance({
+        customDateRange: this.user()?.settings?.customDateRange,
         range: this.user()?.settings?.dateRange ?? DEFAULT_DATE_RANGE
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
