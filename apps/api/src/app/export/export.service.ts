@@ -1,5 +1,6 @@
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { ActivitiesService } from '@ghostfolio/api/app/activities/activities.service';
+import { ExternalCashFlowService } from '@ghostfolio/api/app/external-cash-flow/external-cash-flow.service';
 import { environment } from '@ghostfolio/api/environments/environment';
 import { MarketDataService } from '@ghostfolio/api/services/market-data/market-data.service';
 import { TagService } from '@ghostfolio/api/services/tag/tag.service';
@@ -18,6 +19,7 @@ export class ExportService {
   public constructor(
     private readonly accountService: AccountService,
     private readonly activitiesService: ActivitiesService,
+    private readonly externalCashFlowService: ExternalCashFlowService,
     private readonly marketDataService: MarketDataService,
     private readonly tagService: TagService
   ) {}
@@ -80,24 +82,32 @@ export class ExportService {
       !!endDate ||
       !!startDate;
 
-    const accounts = (
-      await this.accountService.accounts({
-        where,
-        include: {
-          balances: true,
-          platform: true,
-          tags: true
-        },
-        orderBy: {
-          name: 'asc'
-        }
-      })
-    )
+    const accountRows = await this.accountService.accounts({
+      where,
+      include: {
+        balances: true,
+        platform: true,
+        tags: true
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+    const externalCashFlows = await this.externalCashFlowService.exportSection({
+      endDate,
+      startDate,
+      userId,
+      accountIds: accountRows.map(({ id }) => id)
+    });
+    const externalCashFlowAccountIds = new Set(
+      externalCashFlows?.items.map(({ accountId }) => accountId) ?? []
+    );
+    const accounts = accountRows
       .filter(({ id }) => {
         return isFilteredExport
           ? activities.some(({ accountId }) => {
               return accountId === id;
-            })
+            }) || externalCashFlowAccountIds.has(id)
           : true;
       })
       .map(
@@ -185,6 +195,7 @@ export class ExportService {
     return {
       meta: { date: new Date().toISOString(), version: environment.version },
       accounts,
+      ...(externalCashFlows ? { externalCashFlows } : {}),
       assetProfiles: customAssetProfiles.map(
         ({
           assetClass,
