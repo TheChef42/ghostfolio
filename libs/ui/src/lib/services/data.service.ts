@@ -38,6 +38,11 @@ import {
   DataProviderHealthResponse,
   DataProviderHistoricalResponse,
   ExportResponse,
+  ExternalCashFlowItem,
+  ExternalCashFlowMutation,
+  ExternalCashFlowsResponse,
+  ExternalCashFlowTransferMutation,
+  ExternalCashFlowTransferResponse,
   Filter,
   ImportResponse,
   InfoItem,
@@ -353,6 +358,18 @@ export class DataService {
     return this.http.delete<Order>(`/api/v1/activities/${aId}`);
   }
 
+  public deleteExternalCashFlow(aId: string) {
+    return this.http.delete<ExternalCashFlowItem>(
+      `/api/v1/external-cash-flow/${aId}`
+    );
+  }
+
+  public deleteExternalCashFlowTransfer(aTransferGroupId: string) {
+    return this.http.delete<ExternalCashFlowTransferResponse>(
+      `/api/v1/external-cash-flow/transfer/${aTransferGroupId}`
+    );
+  }
+
   public deleteBenchmark({ dataSource, symbol }: AssetProfileIdentifier) {
     return this.http.delete<Partial<SymbolProfile>>(
       `/api/v1/benchmarks/${dataSource}/${encodeURIComponent(symbol)}`
@@ -513,6 +530,45 @@ export class DataService {
           return exportResponse;
         })
       );
+  }
+
+  public fetchExternalCashFlowTransfer(aTransferGroupId: string) {
+    return this.http.get<ExternalCashFlowTransferResponse>(
+      `/api/v1/external-cash-flow/transfer/${aTransferGroupId}`
+    );
+  }
+
+  public fetchExternalCashFlows({
+    accounts,
+    from,
+    skip = 0,
+    take = 100,
+    to
+  }: {
+    accounts?: string[];
+    from?: string;
+    skip?: number;
+    take?: number;
+    to?: string;
+  } = {}) {
+    let params = new HttpParams().set('skip', skip).set('take', take);
+
+    if (accounts?.length) {
+      params = params.set('accounts', accounts.join(','));
+    }
+
+    if (from) {
+      params = params.set('from', from);
+    }
+
+    if (to) {
+      params = params.set('to', to);
+    }
+
+    return this.http.get<ExternalCashFlowsResponse>(
+      '/api/v1/external-cash-flow',
+      { params }
+    );
   }
 
   public fetchHoldingDetail({
@@ -875,6 +931,22 @@ export class DataService {
     return this.http.post<Order>('/api/v1/activities', aOrder);
   }
 
+  public postExternalCashFlow(aCashFlow: ExternalCashFlowMutation) {
+    return this.http.post<ExternalCashFlowItem>(
+      '/api/v1/external-cash-flow',
+      aCashFlow
+    );
+  }
+
+  public postExternalCashFlowTransfer(
+    aTransfer: ExternalCashFlowTransferMutation
+  ) {
+    return this.http.post<ExternalCashFlowTransferResponse>(
+      '/api/v1/external-cash-flow/transfer',
+      aTransfer
+    );
+  }
+
   public postApiKey() {
     return this.http.post<ApiKeyResponse>('/api/v1/api-keys', {});
   }
@@ -915,6 +987,26 @@ export class DataService {
 
   public putActivity(aOrder: UpdateOrderDto) {
     return this.http.put<UserItem>(`/api/v1/activities/${aOrder.id}`, aOrder);
+  }
+
+  public patchExternalCashFlow(
+    aId: string,
+    aCashFlow: ExternalCashFlowMutation
+  ) {
+    return this.http.patch<ExternalCashFlowItem>(
+      `/api/v1/external-cash-flow/${aId}`,
+      aCashFlow
+    );
+  }
+
+  public putExternalCashFlowTransfer(
+    aTransferGroupId: string,
+    aTransfer: ExternalCashFlowTransferMutation
+  ) {
+    return this.http.put<ExternalCashFlowTransferResponse>(
+      `/api/v1/external-cash-flow/transfer/${aTransferGroupId}`,
+      aTransfer
+    );
   }
 
   public putAdminSetting(key: string, aData: UpdatePropertyDto) {

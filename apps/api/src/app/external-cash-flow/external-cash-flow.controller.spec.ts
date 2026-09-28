@@ -68,6 +68,7 @@ describe('ExternalCashFlow HTTP access and serialization', () => {
   const service = {
     list: jest.fn(),
     get: jest.fn(),
+    getTransfer: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
@@ -129,6 +130,10 @@ describe('ExternalCashFlow HTTP access and serialization', () => {
     service.update.mockResolvedValue(flow);
     service.delete.mockResolvedValue(flow);
     service.createTransfer.mockResolvedValue({
+      items: [flow, flow],
+      transferGroupId: id
+    });
+    service.getTransfer.mockResolvedValue({
       items: [flow, flow],
       transferGroupId: id
     });
@@ -248,6 +253,8 @@ describe('ExternalCashFlow HTTP access and serialization', () => {
     expect(await response.json()).toMatchObject({
       items: [{ amount: null }, { amount: null }]
     });
+    expect((await request(`/transfer/${id}`)).status).toBe(200);
+    expect(service.getTransfer).toHaveBeenCalledWith('owner', id);
     expect(
       (await request(`/transfer/${id}`, 'PUT', { from: leg, to: leg })).status
     ).toBe(200);

@@ -51,6 +51,15 @@ export class ExternalCashFlowController {
     return this.service.get(userId, id);
   }
 
+  @Get('transfer/:id')
+  @RequiresScope(scopes.accountRead)
+  public getTransfer(
+    @Impersonation() { userId }: ImpersonationContext,
+    @Param('id', ParseUUIDPipe) id: string
+  ) {
+    return this.service.getTransfer(userId, id);
+  }
+
   @Post()
   @HasPermission(permissions.createAccountBalance)
   @RequiresScope(scopes.accountUpdate)

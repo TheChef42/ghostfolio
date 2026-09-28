@@ -84,6 +84,16 @@ export class ExternalCashFlowService {
     return this.requireFlow(this.prismaService, userId, id);
   }
 
+  public async getTransfer(userId: string, transferGroupId: string) {
+    const { incoming, outgoing } = await this.requirePair(
+      this.prismaService,
+      userId,
+      transferGroupId
+    );
+
+    return { transferGroupId, items: [outgoing, incoming] };
+  }
+
   public async resolveForScope(
     userId: string,
     input: GetExternalCashFlowsDto & { accounts: string[] }

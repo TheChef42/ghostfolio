@@ -19,6 +19,14 @@ import type {
   ExternalCashFlowExportItem,
   ExternalCashFlowExportSection
 } from './external-cash-flow-export.interface';
+import type {
+  ExternalCashFlowItem,
+  ExternalCashFlowMutation,
+  ExternalCashFlowsResponse,
+  ExternalCashFlowTransferLeg,
+  ExternalCashFlowTransferMutation,
+  ExternalCashFlowTransferResponse
+} from './external-cash-flow.interface';
 import type { FilterGroup } from './filter-group.interface';
 import type { Filter } from './filter.interface';
 import type { FireCalculationCompleteEvent } from './fire-calculation-complete-event.interface';
@@ -160,6 +168,12 @@ export {
   ExternalCashFlowExportIssue,
   ExternalCashFlowExportItem,
   ExternalCashFlowExportSection,
+  ExternalCashFlowItem,
+  ExternalCashFlowMutation,
+  ExternalCashFlowsResponse,
+  ExternalCashFlowTransferLeg,
+  ExternalCashFlowTransferMutation,
+  ExternalCashFlowTransferResponse,
   InfoItem,
   InfoResponse,
   InvestmentItem,
