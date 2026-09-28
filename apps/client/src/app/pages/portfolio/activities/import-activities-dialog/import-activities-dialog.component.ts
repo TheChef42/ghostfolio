@@ -7,7 +7,11 @@ import {
   CreatePlatformDto,
   CreateTagDto
 } from '@ghostfolio/common/dtos';
-import { Activity, PortfolioPosition } from '@ghostfolio/common/interfaces';
+import {
+  Activity,
+  ExternalCashFlowExportSection,
+  PortfolioPosition
+} from '@ghostfolio/common/interfaces';
 import { GfActivitiesTableComponent } from '@ghostfolio/ui/activities-table';
 import { GfDialogFooterComponent } from '@ghostfolio/ui/dialog-footer';
 import { GfDialogHeaderComponent } from '@ghostfolio/ui/dialog-header';
@@ -92,6 +96,8 @@ export class GfImportActivitiesDialogComponent {
   protected details: any[] = [];
   protected dialogTitle = $localize`Import Activities`;
   protected errorMessages: string[] = [];
+  protected externalCashFlowPreview:
+    { created: number; skipped: number; version: 1 } | undefined;
   protected holdings: PortfolioPosition[] = [];
   protected importStep: ImportStep = ImportStep.UPLOAD_FILE;
   protected isLoading = false;
@@ -108,6 +114,7 @@ export class GfImportActivitiesDialogComponent {
   private accounts: CreateAccountWithBalancesDto[] = [];
   private activities: Activity[] = [];
   private assetProfiles: CreateAssetProfileWithMarketDataDto[] = [];
+  private externalCashFlows: ExternalCashFlowExportSection | undefined;
   private platforms: CreatePlatformDto[] = [];
   private tags: CreateTagDto[] = [];
 
@@ -179,6 +186,7 @@ export class GfImportActivitiesDialogComponent {
         accounts: this.accounts,
         activities: this.selectedActivities,
         assetProfiles: this.assetProfiles,
+        externalCashFlows: this.externalCashFlows,
         platforms: this.platforms,
         tags: this.tags
       });
@@ -263,6 +271,8 @@ export class GfImportActivitiesDialogComponent {
   protected onReset(aStepper: MatStepper) {
     this.details = [];
     this.errorMessages = [];
+    this.externalCashFlowPreview = undefined;
+    this.externalCashFlows = undefined;
     this.importStep = ImportStep.SELECT_ACTIVITIES;
     this.pageIndex = 0;
     this.assetProfileForm.controls.assetProfileIdentifier.enable();
@@ -311,6 +321,7 @@ export class GfImportActivitiesDialogComponent {
 
           this.accounts = content.accounts;
           this.assetProfiles = content.assetProfiles;
+          this.externalCashFlows = content.externalCashFlows;
           this.platforms = content.platforms;
           this.tags = content.tags;
 
@@ -339,17 +350,19 @@ export class GfImportActivitiesDialogComponent {
           });
 
           try {
-            const { activities } =
+            const { activities, externalCashFlows } =
               await this.importActivitiesService.importJson({
                 accounts: content.accounts,
                 activities: content.activities,
                 assetProfiles: content.assetProfiles,
+                externalCashFlows: content.externalCashFlows,
                 isDryRun: true,
                 platforms: content.platforms,
                 tags: content.tags
               });
 
             this.activities = activities;
+            this.externalCashFlowPreview = externalCashFlows;
             this.dataSource = new MatTableDataSource(activities.reverse());
             this.pageIndex = 0;
             this.totalItems = activities.length;

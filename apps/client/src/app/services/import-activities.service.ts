@@ -10,7 +10,11 @@ import {
   isValidCustomAssetProfileSymbol,
   parseDate as parseDateHelper
 } from '@ghostfolio/common/helper';
-import { Activity } from '@ghostfolio/common/interfaces';
+import {
+  Activity,
+  ExternalCashFlowExportSection,
+  ImportResponse
+} from '@ghostfolio/common/interfaces';
 
 import { HttpClient } from '@angular/common/http';
 import { inject, Service } from '@angular/core';
@@ -139,6 +143,7 @@ export class ImportActivitiesService {
     accounts,
     activities,
     assetProfiles,
+    externalCashFlows,
     isDryRun = false,
     platforms,
     tags
@@ -146,18 +151,18 @@ export class ImportActivitiesService {
     activities: CreateOrderDto[];
     accounts?: CreateAccountWithBalancesDto[];
     assetProfiles?: CreateAssetProfileWithMarketDataDto[];
+    externalCashFlows?: ExternalCashFlowExportSection;
     isDryRun?: boolean;
     platforms?: CreatePlatformDto[];
     tags?: CreateTagDto[];
-  }): Promise<{
-    activities: Activity[];
-  }> {
+  }): Promise<ImportResponse> {
     return firstValueFrom(
       this.postImport(
         {
           accounts,
           activities,
           assetProfiles,
+          externalCashFlows,
           platforms,
           tags
         },
@@ -170,17 +175,17 @@ export class ImportActivitiesService {
     accounts,
     activities,
     assetProfiles,
+    externalCashFlows,
     platforms,
     tags
   }: {
     accounts?: CreateAccountWithBalancesDto[];
     activities: Activity[];
     assetProfiles?: CreateAssetProfileWithMarketDataDto[];
+    externalCashFlows?: ExternalCashFlowExportSection;
     platforms?: CreatePlatformDto[];
     tags?: CreateTagDto[];
-  }): Promise<{
-    activities: Activity[];
-  }> {
+  }): Promise<ImportResponse> {
     const importData = activities.map((activity) =>
       this.convertToCreateOrderDto(activity)
     );
@@ -188,6 +193,7 @@ export class ImportActivitiesService {
     return this.importJson({
       accounts,
       assetProfiles,
+      externalCashFlows,
       platforms,
       tags,
       activities: importData
@@ -488,12 +494,13 @@ export class ImportActivitiesService {
       accounts?: CreateAccountWithBalancesDto[];
       activities: CreateOrderDto[];
       assetProfiles?: CreateAssetProfileWithMarketDataDto[];
+      externalCashFlows?: ExternalCashFlowExportSection;
       platforms?: CreatePlatformDto[];
       tags?: CreateTagDto[];
     },
     aIsDryRun = false
   ) {
-    return this.http.post<{ activities: Activity[] }>(
+    return this.http.post<ImportResponse>(
       `/api/v1/import?dryRun=${aIsDryRun}`,
       aImportData
     );
