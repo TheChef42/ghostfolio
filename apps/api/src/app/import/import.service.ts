@@ -1,5 +1,6 @@
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { ActivitiesService } from '@ghostfolio/api/app/activities/activities.service';
+import { ExternalCashFlowService } from '@ghostfolio/api/app/external-cash-flow/external-cash-flow.service';
 import { PlatformService } from '@ghostfolio/api/app/platform/platform.service';
 import { PortfolioService } from '@ghostfolio/api/app/portfolio/portfolio.service';
 import { getTagsWithDraftTag } from '@ghostfolio/api/helper/activity.helper';
@@ -59,6 +60,7 @@ export class ImportService {
   public constructor(
     private readonly accountService: AccountService,
     private readonly activitiesService: ActivitiesService,
+    private readonly externalCashFlowService: ExternalCashFlowService,
     private readonly apiService: ApiService,
     private readonly configurationService: ConfigurationService,
     private readonly dataGatheringService: DataGatheringService,
@@ -199,7 +201,55 @@ export class ImportService {
     return this.configurationService.get('MAX_ACTIVITIES_TO_IMPORT');
   }
 
+  public async importData({
+    importData,
+    isDryRun,
+    user
+  }: {
+    importData: ImportDataDto;
+    isDryRun: boolean;
+    user: UserWithSettings;
+  }) {
+    const accounts = importData.accounts ?? [];
+    const sourceAccountIds = accounts
+      .map(({ id }) => id)
+      .filter((id): id is string => Boolean(id));
+    if (importData.externalCashFlows) {
+      this.externalCashFlowService.validateImportSection(
+        importData.externalCashFlows,
+        sourceAccountIds
+      );
+    }
+    const accountIdMapping: Record<string, string> = {};
+    const activities = await this.import({
+      accountIdMapping,
+      isDryRun,
+      accountsWithBalancesDto: accounts,
+      activitiesDto: importData.activities,
+      assetProfilesWithMarketDataDto: importData.assetProfiles ?? [],
+      platformsDto: importData.platforms ?? [],
+      tagsDto: importData.tags ?? [],
+      user
+    });
+    if (!importData.externalCashFlows) {
+      return { activities };
+    }
+    const ownedAccountIds = isDryRun
+      ? sourceAccountIds
+      : (await this.accountService.getAccounts(user.id)).map(({ id }) => id);
+    const externalCashFlows = await this.externalCashFlowService.importSection({
+      accountIdMapping,
+      input: importData.externalCashFlows,
+      isDryRun,
+      ownedAccountIds,
+      sourceAccountIds,
+      userId: user.id
+    });
+    return { activities, externalCashFlows };
+  }
+
   public async import({
+    accountIdMapping = {},
     accountsWithBalancesDto,
     activitiesDto,
     assetProfilesWithMarketDataDto,
@@ -208,6 +258,7 @@ export class ImportService {
     tagsDto,
     user
   }: {
+    accountIdMapping?: Record<string, string>;
     accountsWithBalancesDto: ImportDataDto['accounts'];
     activitiesDto: ImportDataDto['activities'];
     assetProfilesWithMarketDataDto: ImportDataDto['assetProfiles'];
@@ -216,7 +267,6 @@ export class ImportService {
     tagsDto: ImportDataDto['tags'];
     user: UserWithSettings;
   }): Promise<Activity[]> {
-    const accountIdMapping: { [oldAccountId: string]: string } = {};
     const assetProfileSymbolMapping: { [oldSymbol: string]: string } = {};
     const ghostfolioDataSources = this.configurationService.get(
       'DATA_SOURCES_GHOSTFOLIO_DATA_PROVIDER'

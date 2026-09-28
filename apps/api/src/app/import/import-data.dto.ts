@@ -1,3 +1,4 @@
+import { ExternalCashFlowImportSectionDto } from '@ghostfolio/api/app/external-cash-flow/external-cash-flow-import.dto';
 import {
   CreateAccountWithBalancesDto,
   CreateAssetProfileWithMarketDataDto,
@@ -26,6 +27,11 @@ export class ImportDataDto {
   @Type(() => CreateAssetProfileWithMarketDataDto)
   @ValidateNested({ each: true })
   assetProfiles?: CreateAssetProfileWithMarketDataDto[];
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ExternalCashFlowImportSectionDto)
+  externalCashFlows?: ExternalCashFlowImportSectionDto;
 
   @IsArray()
   @IsOptional()

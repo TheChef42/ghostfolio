@@ -55,19 +55,25 @@ export class ImportController {
         StatusCodes.FORBIDDEN
       );
     }
+    if (
+      importData.externalCashFlows &&
+      !hasPermission(
+        this.request.user.permissions,
+        permissions.createAccountBalance
+      )
+    ) {
+      throw new HttpException(
+        getReasonPhrase(StatusCodes.FORBIDDEN),
+        StatusCodes.FORBIDDEN
+      );
+    }
 
     try {
-      const activities = await this.importService.import({
+      return await this.importService.importData({
         isDryRun,
-        accountsWithBalancesDto: importData.accounts ?? [],
-        activitiesDto: importData.activities,
-        assetProfilesWithMarketDataDto: importData.assetProfiles ?? [],
-        platformsDto: importData.platforms ?? [],
-        tagsDto: importData.tags ?? [],
+        importData,
         user: this.request.user
       });
-
-      return { activities };
     } catch (error) {
       this.logger.error(error);
 
