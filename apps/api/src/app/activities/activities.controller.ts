@@ -2,6 +2,7 @@ import { HasPermission } from '@ghostfolio/api/decorators/has-permission.decorat
 import { Impersonation } from '@ghostfolio/api/decorators/impersonation.decorator';
 import { RequiresScope } from '@ghostfolio/api/decorators/requires-scope.decorator';
 import { isActivityInFuture } from '@ghostfolio/api/helper/activity.helper';
+import { resolveCustomDateRangeQuery } from '@ghostfolio/api/helper/custom-date-range.helper';
 import { RedactValuesInResponseInterceptor } from '@ghostfolio/api/interceptors/redact-values-in-response/redact-values-in-response.interceptor';
 import { TransformDataSourceInRequestInterceptor } from '@ghostfolio/api/interceptors/transform-data-source-in-request/transform-data-source-in-request.interceptor';
 import { TransformDataSourceInResponseInterceptor } from '@ghostfolio/api/interceptors/transform-data-source-in-response/transform-data-source-in-response.interceptor';
@@ -54,25 +55,35 @@ export class ActivitiesController {
   @RequiresScope(scopes.activityDelete)
   @UseInterceptors(TransformDataSourceInRequestInterceptor)
   public async deleteActivities(
-    @Impersonation() { userId }: ImpersonationContext,
+    @Impersonation() { userId, userSettings }: ImpersonationContext,
     @Query()
     {
       accounts,
       activityTypes,
       assetClasses,
       dataSource,
+      from,
       range,
+      savedRangeId,
       symbol,
-      tags
+      tags,
+      to
     }: ActivitiesFilterDto
   ): Promise<number> {
     let endDate: Date | undefined;
     let startDate: Date | undefined;
 
     if (range) {
-      ({ endDate, startDate } = getIntervalFromDateRange({
-        dateRange: range
-      }));
+      const customInterval = resolveCustomDateRangeQuery({
+        from,
+        range,
+        savedRangeId,
+        to,
+        userSettings
+      });
+
+      ({ endDate, startDate } =
+        customInterval ?? getIntervalFromDateRange({ dateRange: range }));
     }
 
     const filters = this.apiService.buildFiltersFromQueryParams({
@@ -130,22 +141,32 @@ export class ActivitiesController {
       activityTypes,
       assetClasses,
       dataSource,
+      from,
       range,
+      savedRangeId,
       skip,
       sortColumn,
       sortDirection,
       symbol,
       tags,
-      take
+      take,
+      to
     }: GetActivitiesDto
   ): Promise<ActivitiesResponse> {
     let endDate: Date | undefined;
     let startDate: Date | undefined;
 
     if (range) {
-      ({ endDate, startDate } = getIntervalFromDateRange({
-        dateRange: range
-      }));
+      const customInterval = resolveCustomDateRangeQuery({
+        from,
+        range,
+        savedRangeId,
+        to,
+        userSettings
+      });
+
+      ({ endDate, startDate } =
+        customInterval ?? getIntervalFromDateRange({ dateRange: range }));
     }
 
     const filters = this.apiService.buildFiltersFromQueryParams({

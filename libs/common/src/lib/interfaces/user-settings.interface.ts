@@ -1,3 +1,7 @@
+import {
+  CustomDateRangeSelection,
+  SavedCustomDateRange
+} from '@ghostfolio/common/interfaces/custom-date-range.interface';
 import { XRayRulesSettings } from '@ghostfolio/common/interfaces/x-ray-rules-settings.interface';
 import {
   ColorScheme,
@@ -14,6 +18,8 @@ export interface UserSettings {
   baseCurrency?: string;
   benchmark?: string;
   colorScheme?: ColorScheme;
+  customDateRange?: CustomDateRangeSelection;
+  customDateRanges?: SavedCustomDateRange[];
   dateRange?: DateRange;
   emergencyFund?: number;
   'filters.accounts'?: string[];

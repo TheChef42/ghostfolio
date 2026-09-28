@@ -2,6 +2,7 @@ import { ActivitiesService } from '@ghostfolio/api/app/activities/activities.ser
 import { HasPermission } from '@ghostfolio/api/decorators/has-permission.decorator';
 import { Impersonation } from '@ghostfolio/api/decorators/impersonation.decorator';
 import { RequiresScope } from '@ghostfolio/api/decorators/requires-scope.decorator';
+import { resolveCustomDateRangeQuery } from '@ghostfolio/api/helper/custom-date-range.helper';
 import {
   hasNotDefinedValuesInObject,
   nullifyValuesInObject
@@ -283,10 +284,13 @@ export class PortfolioController {
       accounts,
       assetClasses,
       dataSource,
+      from,
       groupBy,
       range,
+      savedRangeId,
       symbol,
-      tags
+      tags,
+      to
     }: GetDividendsDto
   ): Promise<PortfolioDividendsResponse> {
     const filters = this.apiService.buildFiltersFromQueryParams({
@@ -299,9 +303,15 @@ export class PortfolioController {
 
     const userCurrency = userSettings.baseCurrency;
 
-    const { endDate, startDate } = getIntervalFromDateRange({
-      dateRange: range
+    const customInterval = resolveCustomDateRangeQuery({
+      from,
+      range,
+      savedRangeId,
+      to,
+      userSettings
     });
+    const { endDate, startDate } =
+      customInterval ?? getIntervalFromDateRange({ dateRange: range });
 
     const { activities } = await this.activitiesService.getActivities({
       endDate,
@@ -414,16 +424,19 @@ export class PortfolioController {
   @UseInterceptors(TransformDataSourceInRequestInterceptor)
   public async getInvestments(
     @Impersonation()
-    { scopes: impersonationScopes, userId }: ImpersonationContext,
+    { scopes: impersonationScopes, userId, userSettings }: ImpersonationContext,
     @Query()
     {
       accounts,
       assetClasses,
       dataSource,
+      from,
       groupBy,
       range,
+      savedRangeId,
       symbol,
-      tags
+      tags,
+      to
     }: GetInvestmentsDto
   ): Promise<PortfolioInvestmentsResponse> {
     const filters = this.apiService.buildFiltersFromQueryParams({
@@ -434,10 +447,20 @@ export class PortfolioController {
       filterByTags: tags
     });
 
+    const customInterval = resolveCustomDateRangeQuery({
+      from,
+      range,
+      savedRangeId,
+      to,
+      userSettings
+    });
+
     let { investments, savingsRate, streaks } =
       await this.portfolioService.getInvestments({
+        endDate: customInterval?.endDate,
         filters,
         groupBy,
+        startDate: customInterval?.startDate,
         userId,
         dateRange: range
       });
@@ -489,15 +512,18 @@ export class PortfolioController {
   @Version('2')
   public async getPerformanceV2(
     @Impersonation()
-    { scopes: impersonationScopes, userId }: ImpersonationContext,
+    { scopes: impersonationScopes, userId, userSettings }: ImpersonationContext,
     @Query()
     {
       accounts,
       assetClasses,
       dataSource,
+      from,
       range,
+      savedRangeId,
       symbol,
       tags,
+      to,
       withExcludedAccounts
     }: GetPerformanceDto
   ): Promise<PortfolioPerformanceResponse> {
@@ -509,8 +535,18 @@ export class PortfolioController {
       filterByTags: tags
     });
 
+    const customInterval = resolveCustomDateRangeQuery({
+      from,
+      range,
+      savedRangeId,
+      to,
+      userSettings
+    });
+
     const performanceInformation = await this.portfolioService.getPerformance({
+      endDate: customInterval?.endDate,
       filters,
+      startDate: customInterval?.startDate,
       userId,
       withExcludedAccounts,
       dateRange: range

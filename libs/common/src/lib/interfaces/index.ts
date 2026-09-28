@@ -12,6 +12,12 @@ import type { AssetProfileItem } from './asset-profile-item.interface';
 import type { BenchmarkProperty } from './benchmark-property.interface';
 import type { Benchmark } from './benchmark.interface';
 import type { Coupon } from './coupon.interface';
+import type {
+  CustomDateRangeEndMode,
+  CustomDateRangeSelection,
+  ResolvedCustomDateRange,
+  SavedCustomDateRange
+} from './custom-date-range.interface';
 import type { DataProviderInfo } from './data-provider-info.interface';
 import type { EnhancedAssetProfile } from './enhanced-asset-profile.interface';
 import type {
@@ -145,6 +151,8 @@ export {
   BenchmarkProperty,
   BenchmarkResponse,
   Coupon,
+  CustomDateRangeEndMode,
+  CustomDateRangeSelection,
   CreateStripeCheckoutSessionResponse,
   DataEnhancerHealthResponse,
   DataProviderGhostfolioAssetProfileResponse,
@@ -203,9 +211,11 @@ export {
   PublicPortfolioResponse,
   QuotesResponse,
   ReferralPartner,
+  ResolvedCustomDateRange,
   ResponseError,
   RuleSettings,
   ScraperConfiguration,
+  SavedCustomDateRange,
   Statistics,
   SubscriptionOffer,
   SymbolItem,

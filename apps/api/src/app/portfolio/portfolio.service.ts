@@ -513,20 +513,27 @@ export class PortfolioService {
 
   public async getInvestments({
     dateRange,
+    endDate: customEndDate,
     filters,
     groupBy,
+    startDate: customStartDate,
     userId
   }: {
     dateRange: DateRange;
+    endDate?: Date;
     filters?: Filter[];
     groupBy?: GroupBy;
+    startDate?: Date;
     userId: string;
   }): Promise<PortfolioInvestmentsResponse> {
     const user = await this.userService.user({ id: userId });
     const userCurrency = this.getUserCurrency(user);
     const savingsRate = (user.settings?.settings as UserSettings)?.savingsRate;
 
-    const { endDate, startDate } = getIntervalFromDateRange({ dateRange });
+    const { endDate, startDate } =
+      customEndDate && customStartDate
+        ? { endDate: customEndDate, startDate: customStartDate }
+        : getIntervalFromDateRange({ dateRange });
 
     const { activities } =
       await this.activitiesService.getActivitiesForPortfolioCalculator({
@@ -1189,11 +1196,15 @@ export class PortfolioService {
 
   public async getPerformance({
     dateRange = DEFAULT_DATE_RANGE,
+    endDate: customEndDate,
     filters,
+    startDate: customStartDate,
     userId
   }: {
     dateRange?: DateRange;
+    endDate?: Date;
     filters?: Filter[];
+    startDate?: Date;
     userId: string;
     withExcludedAccounts?: boolean;
   }): Promise<PortfolioPerformanceResponse> {
@@ -1244,7 +1255,10 @@ export class PortfolioService {
     const { errors, hasErrors, historicalData } =
       await portfolioCalculator.getSnapshot();
 
-    const { endDate, startDate } = getIntervalFromDateRange({ dateRange });
+    const { endDate, startDate } =
+      customEndDate && customStartDate
+        ? { endDate: customEndDate, startDate: customStartDate }
+        : getIntervalFromDateRange({ dateRange });
 
     const { chart } = await portfolioCalculator.getPerformance({
       end: endDate,
