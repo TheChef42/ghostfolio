@@ -1,6 +1,7 @@
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { ActivitiesService } from '@ghostfolio/api/app/activities/activities.service';
 import { ExportService } from '@ghostfolio/api/app/export/export.service';
+import { ExternalCashFlowService } from '@ghostfolio/api/app/external-cash-flow/external-cash-flow.service';
 import type { ImportDataDto } from '@ghostfolio/api/app/import/import-data.dto';
 import { ImportService } from '@ghostfolio/api/app/import/import.service';
 import { PlatformService } from '@ghostfolio/api/app/platform/platform.service';
@@ -38,6 +39,11 @@ describe('legacy import/export compatibility with the cash-flow foundation', () 
   const activities = {
     getActivities: jest.fn().mockResolvedValue({ activities: [] })
   };
+  const externalCashFlows = {
+    exportSection: jest.fn().mockResolvedValue(undefined),
+    importSection: jest.fn(),
+    validateImportSection: jest.fn()
+  };
   const user = {
     id: 'synthetic-legacy-owner',
     permissions: getPermissions('ADMIN'),
@@ -49,6 +55,7 @@ describe('legacy import/export compatibility with the cash-flow foundation', () 
       providers: [
         ImportService,
         ExportService,
+        { provide: ExternalCashFlowService, useValue: externalCashFlows },
         { provide: AccountService, useValue: accounts },
         { provide: ActivitiesService, useValue: activities },
         { provide: ApiService, useValue: {} },
@@ -63,7 +70,10 @@ describe('legacy import/export compatibility with the cash-flow foundation', () 
                   : false
           }
         },
-        { provide: DataGatheringService, useValue: {} },
+        {
+          provide: DataGatheringService,
+          useValue: { gatherSymbols: jest.fn() }
+        },
         {
           provide: DataProviderService,
           useValue: {
@@ -125,6 +135,7 @@ describe('legacy import/export compatibility with the cash-flow foundation', () 
     accounts.accounts.mockResolvedValue([]);
     accounts.getAccounts.mockResolvedValue([]);
     activities.getActivities.mockResolvedValue({ activities: [] });
+    externalCashFlows.exportSection.mockResolvedValue(undefined);
   });
 
   // Broker/provider network and FX lookup are stubbed. The real existing import
@@ -224,5 +235,111 @@ describe('legacy import/export compatibility with the cash-flow foundation', () 
     });
     expect(preview).toHaveLength(1);
     expect(preview[0].error).toBeFalsy();
+  });
+
+  it('keeps a flow-only account in a filtered export', async () => {
+    const accountId = '11111111-1111-4111-8111-111111111111';
+    accounts.accounts.mockResolvedValue([
+      {
+        id: accountId,
+        balances: [],
+        comment: null,
+        currency: 'EUR',
+        name: 'Flow only',
+        platform: null,
+        platformId: null,
+        tags: []
+      }
+    ]);
+    externalCashFlows.exportSection.mockResolvedValue({
+      version: 1,
+      items: [
+        {
+          id: '22222222-2222-4222-8222-222222222222',
+          accountId,
+          amount: '1',
+          comment: null,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          currency: 'EUR',
+          date: '2026-01-01',
+          source: null,
+          transferGroupId: null,
+          type: 'DEPOSIT',
+          updatedAt: '2026-01-01T00:00:00.000Z'
+        }
+      ]
+    });
+    const result = await exporter.export({
+      filters: [{ id: accountId, type: 'ACCOUNT' }],
+      userId: user.id,
+      userSettings: {
+        baseCurrency: 'EUR',
+        performanceCalculationType: PerformanceCalculationType.ROAI
+      }
+    });
+    expect(result.accounts.map(({ id }) => id)).toEqual([accountId]);
+    expect(result.externalCashFlows?.items).toHaveLength(1);
+  });
+
+  it('passes the existing account-import remapping into cash-flow import', async () => {
+    const sourceAccountId = '11111111-1111-4111-8111-111111111111';
+    const targetAccountId = '22222222-2222-4222-8222-222222222222';
+    const targetAccount = {
+      id: targetAccountId,
+      userId: user.id,
+      currency: 'EUR',
+      name: 'Reusable'
+    };
+    accounts.accounts
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([targetAccount]);
+    accounts.getAccounts.mockResolvedValue([targetAccount]);
+    externalCashFlows.importSection.mockResolvedValue({
+      created: 1,
+      skipped: 0,
+      version: 1
+    });
+    const externalCashFlow = {
+      id: '33333333-3333-4333-8333-333333333333',
+      accountId: sourceAccountId,
+      amount: '1',
+      comment: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      currency: 'EUR',
+      date: '2026-01-01',
+      source: null,
+      transferGroupId: null,
+      type: 'DEPOSIT' as const,
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    };
+    const result = await importer.importData({
+      isDryRun: false,
+      user,
+      importData: {
+        accounts: [
+          {
+            id: sourceAccountId,
+            balances: [],
+            currency: 'EUR',
+            name: 'Reusable',
+            platformId: null
+          }
+        ],
+        activities: [],
+        externalCashFlows: { version: 1, items: [externalCashFlow] }
+      }
+    });
+    expect(result.externalCashFlows).toEqual({
+      created: 1,
+      skipped: 0,
+      version: 1
+    });
+    expect(externalCashFlows.importSection).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: user.id,
+        accountIdMapping: { [sourceAccountId]: targetAccountId },
+        ownedAccountIds: [targetAccountId]
+      })
+    );
   });
 });
