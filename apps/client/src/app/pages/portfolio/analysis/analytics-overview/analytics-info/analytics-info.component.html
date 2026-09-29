@@ -1,0 +1,20 @@
+<button
+  class="analytics-info-button"
+  mat-icon-button
+  type="button"
+  [attr.aria-label]="accessibleLabel"
+  [matMenuTriggerFor]="infoMenu"
+  (click)="$event.stopPropagation()"
+>
+  <ion-icon aria-hidden="true" name="information-circle-outline" />
+</button>
+
+<mat-menu #infoMenu="matMenu" class="analytics-info-menu">
+  <div
+    class="analytics-info-content px-3 py-2"
+    role="note"
+    (click)="$event.stopPropagation()"
+  >
+    {{ text }}
+  </div>
+</mat-menu>

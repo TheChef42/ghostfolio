@@ -39,6 +39,8 @@ import {
   tap
 } from 'rxjs';
 
+import { GfAnalyticsInfoComponent } from './analytics-info/analytics-info.component';
+
 interface RequestResult<T> {
   data: T | null;
   failed: boolean;
@@ -48,6 +50,7 @@ interface RequestResult<T> {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     GfBenchmarkComparatorComponent,
+    GfAnalyticsInfoComponent,
     GfValueComponent,
     MatCardModule,
     MatExpansionModule
@@ -65,16 +68,22 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
   public readonly benchmarkChanged = output<string>();
 
   protected advancedLoaded = false;
+  protected readonly benchmarkHelp = $localize`A benchmark is a reference, not a target. Its period return uses the same selected interval as your portfolio. Depending on the selected instrument, the data can be total return, price only, or an unknown basis.`;
   protected benchmarkApiFailed = false;
   protected benchmarkResult: AnalyticsTwrBenchmarkResponse | null = null;
   protected cashFlowMatchedResult: AnalyticsCashFlowMatchedResponse | null =
     null;
+  protected readonly cashFlowMatchedHelp = $localize`Shows what the same deposits and withdrawals, made on the same dates, would be worth in the benchmark. It is an economic comparison and does not reproduce real-world trading costs or taxes.`;
+  protected readonly dataQualityHelp = $localize`Historical analytics can be unavailable when cash balances, prices, or exchange rates are missing or too old. The messages below identify the affected data.`;
   protected isLoadingAdvanced = false;
   protected isLoadingBenchmark = false;
   protected isLoadingPerformance = false;
   protected modifiedDietzResult: AnalyticsModifiedDietzResponse | null = null;
+  protected readonly modifiedDietzHelp = $localize`Modified Dietz is a money-weighted approximation that weights external cash flows by time. It is a period return, not an annualized return, and is commonly used as an institutional fallback when exact cash-flow timing is unavailable.`;
   protected performanceApiFailed = false;
   protected twrResult: AnalyticsTwrResponse | null = null;
+  protected readonly twrHelp = $localize`Time-weighted return neutralizes deposits and withdrawals to show investment performance over the selected period. It is suited to benchmark comparison, but it does not reflect the timing of your personal cash flows.`;
+  protected readonly xirrHelp = $localize`XIRR is a money-weighted annualized return that reflects the size and timing of your deposits and withdrawals. It represents your investor experience. Short periods can produce extreme annualized values.`;
   protected xirrResult: AnalyticsXirrResponse | null = null;
 
   private readonly advancedRefresh = new Subject<void>();

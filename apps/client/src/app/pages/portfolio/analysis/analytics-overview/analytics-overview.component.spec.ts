@@ -18,6 +18,7 @@ jest.mock(
   '@ghostfolio/client/components/benchmark-comparator/benchmark-comparator.component',
   () => ({ GfBenchmarkComparatorComponent: class {} })
 );
+jest.mock('@ionic/angular/standalone', () => ({ IonIcon: class {} }));
 jest.mock('@ghostfolio/ui/value', () => ({ GfValueComponent: class {} }));
 
 const coverage = { reasons: [], status: 'COMPLETE' as const };
@@ -216,11 +217,38 @@ describe('GfAnalyticsOverviewComponent', () => {
   it('presents TWR first and labels XIRR as annualized', () => {
     initialize();
     const text = fixture.nativeElement.textContent;
-    expect(text.indexOf('Portfolio return')).toBeLessThan(
-      text.indexOf('Your annualized return')
+    expect(text.indexOf('Portfolio return (TWR)')).toBeLessThan(
+      text.indexOf('Your annualized return (XIRR)')
     );
+    expect(text).toContain('Portfolio return (TWR)');
+    expect(text).toContain('Your annualized return (XIRR)');
     expect(text).toContain('Period return');
     expect(text).toContain('annualized return');
+  });
+
+  it('provides independent accessible explanations for each return concept', () => {
+    initialize();
+    const controls = Array.from(
+      fixture.nativeElement.querySelectorAll('gf-analytics-info')
+    ) as Array<HTMLElement & { text: string }>;
+    const labels = controls.map((control) =>
+      control.getAttribute('accessibleLabel')
+    );
+
+    expect(labels).toEqual(
+      expect.arrayContaining([
+        'About Portfolio return (TWR)',
+        'About Your annualized return (XIRR)',
+        'About benchmark return',
+        'About Modified Dietz',
+        'About cash-flow-matched benchmark'
+      ])
+    );
+    expect(controls[1].text).toContain(
+      'Short periods can produce extreme annualized values'
+    );
+    expect(controls[2].text).toContain('price only');
+    expect(controls[0].text).not.toBe(controls[1].text);
   });
 
   it('keeps Modified Dietz and cash-flow matching in advanced analysis', () => {

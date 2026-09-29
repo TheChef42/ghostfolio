@@ -23,6 +23,14 @@
     <div class="col-lg-3 col-md-6 mb-3">
       <mat-card appearance="outlined" class="h-100">
         <mat-card-content>
+          <div class="align-items-center d-flex h6 mb-1">
+            <span i18n>Portfolio return (TWR)</span>
+            <gf-analytics-info
+              accessibleLabel="About Portfolio return (TWR)"
+              i18n-accessibleLabel
+              [text]="twrHelp"
+            />
+          </div>
           @if (
             asNumber(twrResult?.periodReturn) !== null || isLoadingPerformance
           ) {
@@ -36,11 +44,9 @@
               [isPercent]="true"
               [locale]="user?.settings?.locale"
               [value]="asNumber(twrResult?.periodReturn)"
-              >Portfolio return</gf-value
-            >
+            />
           } @else {
             <div class="h2 text-muted">—</div>
-            <div class="h6 mb-1" i18n>Portfolio return</div>
             <small class="text-muted">{{
               reasonMessage(twrResult?.reason)
             }}</small>
@@ -51,6 +57,14 @@
     <div class="col-lg-3 col-md-6 mb-3">
       <mat-card appearance="outlined" class="h-100">
         <mat-card-content>
+          <div class="align-items-center d-flex h6 mb-1">
+            <span i18n>Your annualized return (XIRR)</span>
+            <gf-analytics-info
+              accessibleLabel="About Your annualized return (XIRR)"
+              i18n-accessibleLabel
+              [text]="xirrHelp"
+            />
+          </div>
           @if (
             asNumber(xirrResult?.annualizedReturn) !== null ||
             isLoadingPerformance
@@ -63,11 +77,9 @@
               [isPercent]="true"
               [locale]="user?.settings?.locale"
               [value]="asNumber(xirrResult?.annualizedReturn)"
-              >Your annualized return</gf-value
-            >
+            />
           } @else {
             <div class="h2 text-muted">—</div>
-            <div class="h6 mb-1" i18n>Your annualized return</div>
             <small class="text-muted">{{
               reasonMessage(xirrResult?.reason)
             }}</small>
@@ -78,6 +90,14 @@
     <div class="col-lg-3 col-md-6 mb-3">
       <mat-card appearance="outlined" class="h-100">
         <mat-card-content>
+          <div class="align-items-center d-flex h6 mb-1">
+            <span i18n>Benchmark</span>
+            <gf-analytics-info
+              accessibleLabel="About benchmark return"
+              i18n-accessibleLabel
+              [text]="benchmarkHelp"
+            />
+          </div>
           @if (
             asNumber(benchmarkResult?.benchmarkPeriodReturn) !== null ||
             isLoadingBenchmark
@@ -92,11 +112,9 @@
               [isPercent]="true"
               [locale]="user?.settings?.locale"
               [value]="asNumber(benchmarkResult?.benchmarkPeriodReturn)"
-              >Benchmark</gf-value
-            >
+            />
           } @else {
             <div class="h2 text-muted">—</div>
-            <div class="h6 mb-1" i18n>Benchmark</div>
             <small class="text-muted" i18n
               >Select a benchmark to compare.</small
             >
@@ -168,7 +186,14 @@
         <div class="col-md-6 mb-3">
           <mat-card appearance="outlined" class="h-100">
             <mat-card-header>
-              <mat-card-title i18n>Modified Dietz</mat-card-title>
+              <mat-card-title class="align-items-center d-flex">
+                <span i18n>Modified Dietz</span>
+                <gf-analytics-info
+                  accessibleLabel="About Modified Dietz"
+                  i18n-accessibleLabel
+                  [text]="modifiedDietzHelp"
+                />
+              </mat-card-title>
               <mat-card-subtitle i18n>Period return</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
@@ -202,7 +227,14 @@
         <div class="col-md-6 mb-3">
           <mat-card appearance="outlined" class="h-100">
             <mat-card-header>
-              <mat-card-title i18n>Cash-flow-matched benchmark</mat-card-title>
+              <mat-card-title class="align-items-center d-flex">
+                <span i18n>Cash-flow-matched benchmark</span>
+                <gf-analytics-info
+                  accessibleLabel="About cash-flow-matched benchmark"
+                  i18n-accessibleLabel
+                  [text]="cashFlowMatchedHelp"
+                />
+              </mat-card-title>
               <mat-card-subtitle i18n>Advanced comparison</mat-card-subtitle>
             </mat-card-header>
             <mat-card-content>
@@ -241,7 +273,14 @@
           class="small text-muted"
           i18n-aria-label
         >
-          <strong i18n>Data quality details</strong>
+          <span class="align-items-center d-flex">
+            <strong i18n>Data quality details</strong>
+            <gf-analytics-info
+              accessibleLabel="About analytics data quality"
+              i18n-accessibleLabel
+              [text]="dataQualityHelp"
+            />
+          </span>
           <ul class="mb-0 mt-2 pl-3">
             @for (message of coverageMessages; track message) {
               <li>{{ message }}</li>
