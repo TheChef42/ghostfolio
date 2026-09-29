@@ -5,9 +5,10 @@ import { VERSION_METADATA } from '@nestjs/common/constants';
 
 import { PortfolioController } from './portfolio.controller';
 
-describe('PortfolioController analytics valuation endpoint', () => {
-  const handler = PortfolioController.prototype.getValuationTimeline;
-
+describe.each([
+  ['performance', PortfolioController.prototype.getAnalyticsPerformance],
+  ['valuation', PortfolioController.prototype.getValuationTimeline]
+])('PortfolioController analytics %s endpoint', (_name, handler) => {
   it('requires portfolio access including monetary values', () => {
     expect(Reflect.getMetadata(REQUIRES_SCOPE_KEY, handler)).toEqual([
       scopes.portfolioRead,
