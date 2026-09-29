@@ -10,8 +10,11 @@ export class GetAnalyticsPerformanceDto extends DateRangeFilterDto {
 
   @IsIn([
     PerformanceCalculationType.MODIFIED_DIETZ,
+    PerformanceCalculationType.TWR,
     PerformanceCalculationType.XIRR
   ])
   method!:
-    PerformanceCalculationType.MODIFIED_DIETZ | PerformanceCalculationType.XIRR;
+    | PerformanceCalculationType.MODIFIED_DIETZ
+    | PerformanceCalculationType.TWR
+    | PerformanceCalculationType.XIRR;
 }

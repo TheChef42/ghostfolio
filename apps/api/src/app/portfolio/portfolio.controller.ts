@@ -54,6 +54,8 @@ import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modified-dietz-analytics.service';
 import type { ModifiedDietzResult } from './analytics/modified-dietz/modified-dietz.types';
 import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
+import { TwrAnalyticsService } from './analytics/twr/twr-analytics.service';
+import type { TwrResult } from './analytics/twr/twr.types';
 import type { PortfolioValuationTimeline } from './analytics/valuation-timeline.types';
 import { XirrAnalyticsService } from './analytics/xirr/xirr-analytics.service';
 import type { XirrResult } from './analytics/xirr/xirr.types';
@@ -76,6 +78,7 @@ export class PortfolioController {
     private readonly modifiedDietzAnalyticsService: ModifiedDietzAnalyticsService,
     private readonly portfolioService: PortfolioService,
     private readonly portfolioValuationTimelineService: PortfolioValuationTimelineService,
+    private readonly twrAnalyticsService: TwrAnalyticsService,
     private readonly xirrAnalyticsService: XirrAnalyticsService,
     @Inject(REQUEST) private readonly request: RequestWithUser
   ) {}
@@ -100,7 +103,7 @@ export class PortfolioController {
       tags,
       to
     }: GetAnalyticsPerformanceDto
-  ): Promise<ModifiedDietzResult | XirrResult> {
+  ): Promise<ModifiedDietzResult | TwrResult | XirrResult> {
     if (assetClasses?.length || dataSource || symbol || tags?.length) {
       throw new HttpException(
         'Analytics performance supports portfolio and account scope only',
@@ -131,9 +134,14 @@ export class PortfolioController {
       userId
     };
 
-    return method === 'XIRR'
-      ? this.xirrAnalyticsService.getPerformance(input)
-      : this.modifiedDietzAnalyticsService.getPerformance(input);
+    if (method === 'TWR') {
+      return this.twrAnalyticsService.getPerformance(input);
+    }
+    if (method === 'XIRR') {
+      return this.xirrAnalyticsService.getPerformance(input);
+    }
+
+    return this.modifiedDietzAnalyticsService.getPerformance(input);
   }
 
   @Get('analytics/valuation')

@@ -29,6 +29,9 @@ import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modifi
 import { ModifiedDietzCalculator } from './analytics/modified-dietz/modified-dietz.calculator';
 import { PerformanceScopeResolver } from './analytics/performance-scope.resolver';
 import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
+import { TwrAnalyticsService } from './analytics/twr/twr-analytics.service';
+import { TwrTimelineAdapter } from './analytics/twr/twr-timeline.adapter';
+import { TwrCalculator } from './analytics/twr/twr.calculator';
 import { XirrAnalyticsService } from './analytics/xirr/xirr-analytics.service';
 import { XirrScheduleAdapter } from './analytics/xirr/xirr-schedule.adapter';
 import { XirrCalculator } from './analytics/xirr/xirr.calculator';
@@ -76,6 +79,9 @@ import { RulesService } from './rules.service';
     PortfolioService,
     PortfolioValuationTimelineService,
     RulesService,
+    TwrAnalyticsService,
+    TwrCalculator,
+    TwrTimelineAdapter,
     XirrAnalyticsService,
     XirrCalculator,
     XirrScheduleAdapter
