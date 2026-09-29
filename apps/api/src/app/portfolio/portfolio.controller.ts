@@ -52,6 +52,8 @@ import { Big } from 'big.js';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 
 import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modified-dietz-analytics.service';
+import { BenchmarkAnalyticsService } from './analytics/benchmark/benchmark-analytics.service';
+import type { BenchmarkResult } from './analytics/benchmark/benchmark.types';
 import type { ModifiedDietzResult } from './analytics/modified-dietz/modified-dietz.types';
 import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
 import { TwrAnalyticsService } from './analytics/twr/twr-analytics.service';
@@ -60,6 +62,7 @@ import type { PortfolioValuationTimeline } from './analytics/valuation-timeline.
 import { XirrAnalyticsService } from './analytics/xirr/xirr-analytics.service';
 import type { XirrResult } from './analytics/xirr/xirr.types';
 import { GetAnalyticsPerformanceDto } from './get-analytics-performance.dto';
+import { GetAnalyticsBenchmarkDto } from './get-analytics-benchmark.dto';
 import { GetDetailsDto } from './get-details.dto';
 import { GetDividendsDto } from './get-dividends.dto';
 import { GetHoldingsDto } from './get-holdings.dto';
@@ -74,6 +77,7 @@ export class PortfolioController {
   public constructor(
     private readonly activitiesService: ActivitiesService,
     private readonly apiService: ApiService,
+    private readonly benchmarkAnalyticsService: BenchmarkAnalyticsService,
     private readonly configurationService: ConfigurationService,
     private readonly modifiedDietzAnalyticsService: ModifiedDietzAnalyticsService,
     private readonly portfolioService: PortfolioService,
@@ -82,6 +86,61 @@ export class PortfolioController {
     private readonly xirrAnalyticsService: XirrAnalyticsService,
     @Inject(REQUEST) private readonly request: RequestWithUser
   ) {}
+
+  @Get('analytics/benchmark')
+  @RequiresScope(scopes.portfolioRead, scopes.portfolioReadValues)
+  @UseInterceptors(TransformDataSourceInRequestInterceptor)
+  @UseInterceptors(TransformDataSourceInResponseInterceptor)
+  @Version('1')
+  public async getAnalyticsBenchmark(
+    @Impersonation()
+    { userId, userSettings }: ImpersonationContext,
+    @Query()
+    {
+      accounts,
+      assetClasses,
+      baseCurrency,
+      dataSource,
+      from,
+      mode,
+      range,
+      savedRangeId,
+      symbol,
+      tags,
+      to
+    }: GetAnalyticsBenchmarkDto
+  ): Promise<BenchmarkResult> {
+    if (assetClasses?.length || tags?.length || !dataSource || !symbol) {
+      throw new HttpException(
+        'Analytics benchmark requires an explicit benchmark and portfolio or account scope',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+    const interval = resolveCustomDateRangeQuery({
+      from,
+      range,
+      savedRangeId,
+      to,
+      userSettings
+    });
+    if (!interval) {
+      throw new HttpException(
+        'Analytics benchmark requires a resolved custom interval',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    return this.benchmarkAnalyticsService.getComparison({
+      accountIds: accounts,
+      baseCurrency: baseCurrency ?? userSettings.baseCurrency,
+      dataSource,
+      from: interval.from,
+      mode,
+      symbol,
+      to: interval.to,
+      userId
+    });
+  }
 
   @Get('analytics/performance')
   @RequiresScope(scopes.portfolioRead, scopes.portfolioReadValues)

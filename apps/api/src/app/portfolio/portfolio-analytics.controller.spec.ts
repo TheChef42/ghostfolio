@@ -6,6 +6,7 @@ import { VERSION_METADATA } from '@nestjs/common/constants';
 import { PortfolioController } from './portfolio.controller';
 
 describe.each([
+  ['benchmark', PortfolioController.prototype.getAnalyticsBenchmark],
   ['performance', PortfolioController.prototype.getAnalyticsPerformance],
   ['valuation', PortfolioController.prototype.getValuationTimeline]
 ])('PortfolioController analytics %s endpoint', (_name, handler) => {
@@ -18,6 +19,62 @@ describe.each([
 
   it('uses the explicit version 1 analytics boundary', () => {
     expect(Reflect.getMetadata(VERSION_METADATA, handler)).toBe('1');
+  });
+});
+
+describe('PortfolioController analytics benchmark dispatch', () => {
+  it('resolves the shared interval and explicit benchmark identity', async () => {
+    const result = { mode: 'TWR' };
+    const context = {
+      benchmarkAnalyticsService: {
+        getComparison: jest.fn().mockResolvedValue(result)
+      }
+    };
+    await expect(
+      PortfolioController.prototype.getAnalyticsBenchmark.call(
+        context as never,
+        {
+          userId: 'user',
+          userSettings: { baseCurrency: 'DKK' }
+        } as never,
+        {
+          dataSource: 'YAHOO',
+          from: '2024-01-01',
+          mode: 'TWR',
+          range: 'custom',
+          symbol: 'IDX',
+          to: '2024-01-31'
+        } as never
+      )
+    ).resolves.toBe(result);
+    expect(context.benchmarkAnalyticsService.getComparison).toHaveBeenCalledWith({
+      accountIds: undefined,
+      baseCurrency: 'DKK',
+      dataSource: 'YAHOO',
+      from: '2024-01-01',
+      mode: 'TWR',
+      symbol: 'IDX',
+      to: '2024-01-31',
+      userId: 'user'
+    });
+  });
+
+  it('rejects a request without explicit benchmark identity', async () => {
+    await expect(
+      PortfolioController.prototype.getAnalyticsBenchmark.call(
+        { benchmarkAnalyticsService: {} } as never,
+        {
+          userId: 'user',
+          userSettings: { baseCurrency: 'DKK' }
+        } as never,
+        {
+          from: '2024-01-01',
+          mode: 'TWR',
+          range: 'custom',
+          to: '2024-01-31'
+        } as never
+      )
+    ).rejects.toMatchObject({ status: 400 });
   });
 });
 

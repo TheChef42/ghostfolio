@@ -24,6 +24,10 @@ import { TagModule } from '@ghostfolio/api/services/tag/tag.module';
 
 import { Module } from '@nestjs/common';
 
+import { BenchmarkAnalyticsService } from './analytics/benchmark/benchmark-analytics.service';
+import { BenchmarkHistoricalValuationAdapter } from './analytics/benchmark/benchmark-historical-valuation.adapter';
+import { CashFlowMatchedBenchmarkSimulator } from './analytics/benchmark/cash-flow-matched-benchmark.simulator';
+import { TwrBenchmarkComparator } from './analytics/benchmark/twr-benchmark-comparator';
 import { HistoricalValuationResolverService } from './analytics/historical-valuation-resolver.service';
 import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modified-dietz-analytics.service';
 import { ModifiedDietzCalculator } from './analytics/modified-dietz/modified-dietz.calculator';
@@ -70,6 +74,9 @@ import { RulesService } from './rules.service';
   providers: [
     AccountBalanceService,
     AccountService,
+    BenchmarkAnalyticsService,
+    BenchmarkHistoricalValuationAdapter,
+    CashFlowMatchedBenchmarkSimulator,
     CurrentRateService,
     HistoricalValuationResolverService,
     ModifiedDietzAnalyticsService,
@@ -80,6 +87,7 @@ import { RulesService } from './rules.service';
     PortfolioValuationTimelineService,
     RulesService,
     TwrAnalyticsService,
+    TwrBenchmarkComparator,
     TwrCalculator,
     TwrTimelineAdapter,
     XirrAnalyticsService,
