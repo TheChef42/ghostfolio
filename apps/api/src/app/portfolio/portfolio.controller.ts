@@ -55,6 +55,8 @@ import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modifi
 import type { ModifiedDietzResult } from './analytics/modified-dietz/modified-dietz.types';
 import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
 import type { PortfolioValuationTimeline } from './analytics/valuation-timeline.types';
+import { XirrAnalyticsService } from './analytics/xirr/xirr-analytics.service';
+import type { XirrResult } from './analytics/xirr/xirr.types';
 import { GetAnalyticsPerformanceDto } from './get-analytics-performance.dto';
 import { GetDetailsDto } from './get-details.dto';
 import { GetDividendsDto } from './get-dividends.dto';
@@ -74,6 +76,7 @@ export class PortfolioController {
     private readonly modifiedDietzAnalyticsService: ModifiedDietzAnalyticsService,
     private readonly portfolioService: PortfolioService,
     private readonly portfolioValuationTimelineService: PortfolioValuationTimelineService,
+    private readonly xirrAnalyticsService: XirrAnalyticsService,
     @Inject(REQUEST) private readonly request: RequestWithUser
   ) {}
 
@@ -90,16 +93,17 @@ export class PortfolioController {
       baseCurrency,
       dataSource,
       from,
+      method,
       range,
       savedRangeId,
       symbol,
       tags,
       to
     }: GetAnalyticsPerformanceDto
-  ): Promise<ModifiedDietzResult> {
+  ): Promise<ModifiedDietzResult | XirrResult> {
     if (assetClasses?.length || dataSource || symbol || tags?.length) {
       throw new HttpException(
-        'Modified Dietz supports portfolio and account scope only',
+        'Analytics performance supports portfolio and account scope only',
         StatusCodes.BAD_REQUEST
       );
     }
@@ -114,18 +118,22 @@ export class PortfolioController {
 
     if (!interval) {
       throw new HttpException(
-        'Modified Dietz requires a resolved custom interval',
+        'Analytics performance requires a resolved custom interval',
         StatusCodes.BAD_REQUEST
       );
     }
 
-    return this.modifiedDietzAnalyticsService.getPerformance({
+    const input = {
       accountIds: accounts,
       baseCurrency: baseCurrency ?? userSettings.baseCurrency,
       from: interval.from,
       to: interval.to,
       userId
-    });
+    };
+
+    return method === 'XIRR'
+      ? this.xirrAnalyticsService.getPerformance(input)
+      : this.modifiedDietzAnalyticsService.getPerformance(input);
   }
 
   @Get('analytics/valuation')

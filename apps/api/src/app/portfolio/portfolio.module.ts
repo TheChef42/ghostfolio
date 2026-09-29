@@ -29,6 +29,9 @@ import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modifi
 import { ModifiedDietzCalculator } from './analytics/modified-dietz/modified-dietz.calculator';
 import { PerformanceScopeResolver } from './analytics/performance-scope.resolver';
 import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
+import { XirrAnalyticsService } from './analytics/xirr/xirr-analytics.service';
+import { XirrScheduleAdapter } from './analytics/xirr/xirr-schedule.adapter';
+import { XirrCalculator } from './analytics/xirr/xirr.calculator';
 import { PortfolioCalculatorFactory } from './calculator/portfolio-calculator.factory';
 import { CurrentRateService } from './current-rate.service';
 import { PortfolioController } from './portfolio.controller';
@@ -72,7 +75,10 @@ import { RulesService } from './rules.service';
     PortfolioCalculatorFactory,
     PortfolioService,
     PortfolioValuationTimelineService,
-    RulesService
+    RulesService,
+    XirrAnalyticsService,
+    XirrCalculator,
+    XirrScheduleAdapter
   ]
 })
 export class PortfolioModule {}
