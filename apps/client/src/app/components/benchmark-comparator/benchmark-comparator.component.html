@@ -24,9 +24,12 @@
       >
         <mat-option [value]="null" />
         @for (symbolProfile of benchmarks(); track symbolProfile) {
-          <mat-option [value]="symbolProfile.id">{{
-            symbolProfile.name
-          }}</mat-option>
+          <mat-option [value]="symbolProfile.id">
+            {{ symbolProfile.name }}
+            @if (symbolProfile.symbol) {
+              <span class="text-muted">({{ symbolProfile.symbol }})</span>
+            }
+          </mat-option>
         }
         @if (hasPermissionToAccessAdminControl) {
           <mat-option [routerLink]="routerLinkAdminControlMarketData">
@@ -40,6 +43,22 @@
     </mat-form-field>
   </div>
 </div>
+<div
+  aria-label="Chart series"
+  class="chart-legend d-flex flex-wrap mb-2 small"
+  i18n-aria-label
+>
+  <span class="align-items-center d-flex mr-3">
+    <span class="legend-line legend-line-portfolio mr-1"></span>
+    <span i18n>Portfolio</span>
+  </span>
+  @if (benchmark()) {
+    <span class="align-items-center d-flex">
+      <span class="legend-line legend-line-benchmark mr-1"></span>
+      <span>{{ benchmark()?.name ?? benchmark()?.symbol }}</span>
+    </span>
+  }
+</div>
 <div class="chart-container">
   @if (isLoading()) {
     <ngx-skeleton-loader
@@ -52,7 +71,10 @@
   }
   <canvas
     #chartCanvas
+    aria-label="Portfolio and benchmark performance chart"
     class="h-100"
+    i18n-aria-label
+    role="img"
     [style.display]="isLoading() ? 'none' : 'block'"
   ></canvas>
 </div>

@@ -8,4 +8,20 @@
       height: 100%;
     }
   }
+
+  .legend-line {
+    border-top-style: solid;
+    border-top-width: 2px;
+    display: inline-block;
+    width: 1.5rem;
+  }
+
+  .legend-line-portfolio {
+    border-color: #36cfcc;
+  }
+
+  .legend-line-benchmark {
+    border-color: #3686cf;
+    border-top-style: dashed;
+  }
 }
