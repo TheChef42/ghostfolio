@@ -12,6 +12,7 @@ describe('Portfolio Analysis page structure', () => {
     );
 
     expect(template).toContain('<gf-analytics-overview');
+    expect(template).toContain('<gf-core-satellite-allocation');
     expect(template).toContain('Absolute Asset Performance');
     expect(template).toContain('>Top<');
     expect(template).toContain('>Bottom<');

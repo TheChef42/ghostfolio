@@ -1,0 +1,95 @@
+<section aria-labelledby="core-satellite-heading">
+  <div class="mb-3">
+    <h2 class="h4 mb-1" i18n id="core-satellite-heading">
+      Core / Satellite allocation
+    </h2>
+    <p class="mb-0 text-muted" i18n>
+      Current market-value snapshot for the selected account scope. Targets are
+      a personal 70 / 30 reference.
+    </p>
+  </div>
+
+  @if (allocation.totalValue > 0) {
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <mat-card appearance="outlined" class="h-100">
+          <mat-card-content>
+            <div class="h6 mb-1" i18n>Core</div>
+            <gf-value
+              size="large"
+              [isPercent]="true"
+              [locale]="locale"
+              [value]="allocation.coreWeight"
+            />
+            <div class="small text-muted">
+              <span i18n>Target 70%</span>
+              ·
+              <gf-value
+                i18n
+                [colorizeSign]="true"
+                [isPercent]="true"
+                [locale]="locale"
+                [value]="allocation.coreDeviation"
+                >Deviation</gf-value
+              >
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="col-md-4 mb-3">
+        <mat-card appearance="outlined" class="h-100">
+          <mat-card-content>
+            <div class="h6 mb-1" i18n>Satellite</div>
+            <gf-value
+              size="large"
+              [isPercent]="true"
+              [locale]="locale"
+              [value]="allocation.satelliteWeight"
+            />
+            <div class="small text-muted">
+              <span i18n>Target 30%</span>
+              ·
+              <gf-value
+                i18n
+                [colorizeSign]="true"
+                [isPercent]="true"
+                [locale]="locale"
+                [value]="allocation.satelliteDeviation"
+                >Deviation</gf-value
+              >
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+      <div class="col-md-4 mb-3">
+        <mat-card appearance="outlined" class="h-100">
+          <mat-card-content>
+            <div class="h6 mb-1" i18n>Other</div>
+            <gf-value
+              size="large"
+              [isPercent]="true"
+              [locale]="locale"
+              [value]="allocation.otherWeight"
+            />
+            <div class="small text-muted" i18n>No target</div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  } @else {
+    <mat-card appearance="outlined">
+      <mat-card-content class="text-muted" i18n>
+        No invested holdings are available for this account scope.
+      </mat-card-content>
+    </mat-card>
+  }
+
+  @if (allocation.ambiguousHoldings.length) {
+    <div class="alert alert-warning mb-0" role="status">
+      <span i18n>
+        Holdings tagged as both Core and Satellite are counted once under Other:
+      </span>
+      {{ allocation.ambiguousHoldings.join(', ') }}
+    </div>
+  }
+</section>

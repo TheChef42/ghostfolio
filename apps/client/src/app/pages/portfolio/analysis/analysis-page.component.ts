@@ -58,11 +58,13 @@ import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { forkJoin } from 'rxjs';
 
 import { GfAnalyticsOverviewComponent } from './analytics-overview/analytics-overview.component';
+import { GfCoreSatelliteAllocationComponent } from './core-satellite-allocation/core-satellite-allocation.component';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     GfAnalyticsOverviewComponent,
+    GfCoreSatelliteAllocationComponent,
     GfInvestmentChartComponent,
     GfPremiumIndicatorComponent,
     GfToggleComponent,
@@ -83,6 +85,7 @@ export class GfAnalysisPageComponent implements OnInit {
   protected benchmark?: Partial<SymbolProfile>;
   protected readonly benchmarks: Partial<SymbolProfile>[];
   protected bottom3: PortfolioPosition[];
+  protected currentHoldings: PortfolioPosition[] = [];
   protected dividendsByGroup: InvestmentItem[];
   protected filters: Filter[] = [];
   protected readonly dividendTimelineDataLabel = $localize`Dividend`;
@@ -385,6 +388,7 @@ export class GfAnalysisPageComponent implements OnInit {
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(({ holdings }) => {
+        this.currentHoldings = holdings;
         const holdingsSorted = sortBy(
           holdings.filter((holding) => {
             return (
