@@ -28,7 +28,9 @@ describe('BenchmarkAnalyticsService', () => {
       const cashFlowMatchedSimulator = {
         calculate: jest.fn().mockReturnValue(expected)
       };
-      const twrAdapter = { fromTimeline: jest.fn().mockReturnValue('prepared') };
+      const twrAdapter = {
+        fromTimeline: jest.fn().mockReturnValue('prepared')
+      };
       const twrCalculator = { calculate: jest.fn().mockReturnValue('twr') };
       const twrComparator = { calculate: jest.fn().mockReturnValue(expected) };
       const service = new BenchmarkAnalyticsService(

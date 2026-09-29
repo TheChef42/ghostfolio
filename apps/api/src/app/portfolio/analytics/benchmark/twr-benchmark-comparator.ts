@@ -41,9 +41,7 @@ export class TwrBenchmarkComparator {
           priceStalenessDays: benchmarkPoint.nativePrice!.stalenessDays
         };
       });
-      const benchmarkPeriodReturn = new Decimal(
-        series.at(-1)!.benchmarkIndex!
-      )
+      const benchmarkPeriodReturn = new Decimal(series.at(-1)!.benchmarkIndex!)
         .minus(1)
         .toString();
       return this.result(input, null, series, benchmarkPeriodReturn);

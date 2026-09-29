@@ -45,7 +45,9 @@ const twr = (reason: TwrResult['reason'] = null): TwrResult =>
 
 const benchmark = (
   prices = ['100', '110'],
-  basis: NonNullable<PreparedBenchmarkTimeline['benchmark']>['basis'] = 'UNKNOWN'
+  basis: NonNullable<
+    PreparedBenchmarkTimeline['benchmark']
+  >['basis'] = 'UNKNOWN'
 ): PreparedBenchmarkTimeline => ({
   baseCurrency: 'DKK',
   benchmark: {
@@ -105,6 +107,22 @@ describe('TwrBenchmarkComparator', () => {
     });
   });
 
+  it('uses the portfolio TWR index without applying a mid-period deposit', () => {
+    const portfolioTimeline = timeline();
+    portfolioTimeline.externalFlows = [
+      { amountInBaseCurrency: '50', date: '2024-01-01' }
+    ] as never;
+    const result = calculator.calculate({
+      benchmarkTimeline: benchmark(['100', '105']),
+      timeline: portfolioTimeline,
+      twr: twr()
+    });
+    expect(result).toMatchObject({
+      benchmarkPeriodReturn: '0.05',
+      portfolioPeriodReturn: '0.1'
+    });
+  });
+
   it.each(['PRICE_ONLY', 'TOTAL_RETURN'] as const)(
     'preserves declared %s basis',
     (basis) => {
@@ -131,21 +149,21 @@ describe('TwrBenchmarkComparator', () => {
     });
   });
 
-  it.each([
-    'MISSING_BENCHMARK_PRICE',
-    'MISSING_BENCHMARK_FX'
-  ] as const)('returns explicit %s coverage failure', (code) => {
-    const input = benchmark();
-    input.coverage = {
-      reasons: [{ code, message: code, severity: 'ERROR' }],
-      status: 'INCOMPLETE'
-    };
-    const result = calculator.calculate({
-      benchmarkTimeline: input,
-      timeline: timeline(),
-      twr: twr()
-    });
-    expect(result.reason).toBe(code);
-    expect(result.series).toEqual([]);
-  });
+  it.each(['MISSING_BENCHMARK_PRICE', 'MISSING_BENCHMARK_FX'] as const)(
+    'returns explicit %s coverage failure',
+    (code) => {
+      const input = benchmark();
+      input.coverage = {
+        reasons: [{ code, message: code, severity: 'ERROR' }],
+        status: 'INCOMPLETE'
+      };
+      const result = calculator.calculate({
+        benchmarkTimeline: input,
+        timeline: timeline(),
+        twr: twr()
+      });
+      expect(result.reason).toBe(code);
+      expect(result.series).toEqual([]);
+    }
+  );
 });

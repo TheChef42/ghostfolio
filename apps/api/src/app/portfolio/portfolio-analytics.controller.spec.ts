@@ -47,7 +47,9 @@ describe('PortfolioController analytics benchmark dispatch', () => {
         } as never
       )
     ).resolves.toBe(result);
-    expect(context.benchmarkAnalyticsService.getComparison).toHaveBeenCalledWith({
+    expect(
+      context.benchmarkAnalyticsService.getComparison
+    ).toHaveBeenCalledWith({
       accountIds: undefined,
       baseCurrency: 'DKK',
       dataSource: 'YAHOO',

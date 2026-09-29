@@ -32,9 +32,10 @@ const timeline = ({
       fx: null,
       signedAmount: amount,
       transferGroupId: null,
-      type: Number(amount) >= 0
-        ? ExternalCashFlowType.DEPOSIT
-        : ExternalCashFlowType.WITHDRAWAL
+      type:
+        Number(amount) >= 0
+          ? ExternalCashFlowType.DEPOSIT
+          : ExternalCashFlowType.WITHDRAWAL
     })),
     interval: {
       from: dates[1],
@@ -206,18 +207,33 @@ describe('CashFlowMatchedBenchmarkSimulator', () => {
   });
 
   it.each([
-    'MISSING_BENCHMARK_PRICE',
-    'MISSING_BENCHMARK_FX'
-  ] as const)('returns explicit %s instead of falling back', (code) => {
-    const prepared = benchmark(['10', '10', '10', '10']);
-    prepared.coverage = {
-      reasons: [{ code, message: code, severity: 'ERROR' }],
-      status: 'INCOMPLETE'
-    };
-    const result = simulator.calculate({
-      benchmarkTimeline: prepared,
-      timeline: timeline()
-    });
-    expect(result.reason).toBe(code);
-  });
+    ['whole-portfolio internal transfer', []],
+    ['cross-currency internal transfer at whole scope', []],
+    ['single-account transfer leg', [['2024-01-01', '25']]]
+  ] as [string, [string, string][]][])(
+    'uses only the Phase 4A normalized schedule for %s',
+    (_name, flows) => {
+      const result = simulator.calculate({
+        benchmarkTimeline: benchmark(['10', '10', '10', '10']),
+        timeline: timeline({ flows })
+      });
+      expect(result.benchmarkValue).toBe(flows.length ? '125' : '100');
+    }
+  );
+
+  it.each(['MISSING_BENCHMARK_PRICE', 'MISSING_BENCHMARK_FX'] as const)(
+    'returns explicit %s instead of falling back',
+    (code) => {
+      const prepared = benchmark(['10', '10', '10', '10']);
+      prepared.coverage = {
+        reasons: [{ code, message: code, severity: 'ERROR' }],
+        status: 'INCOMPLETE'
+      };
+      const result = simulator.calculate({
+        benchmarkTimeline: prepared,
+        timeline: timeline()
+      });
+      expect(result.reason).toBe(code);
+    }
+  );
 });
