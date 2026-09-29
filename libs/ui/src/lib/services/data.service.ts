@@ -24,6 +24,10 @@ import {
   AccountBalancesResponse,
   AccountResponse,
   AccountsResponse,
+  AnalyticsBenchmarkMode,
+  AnalyticsBenchmarkResponse,
+  AnalyticsPerformanceMethod,
+  AnalyticsPerformanceResponse,
   ActivitiesResponse,
   ActivityResponse,
   AiPromptResponse,
@@ -231,6 +235,62 @@ export class DataService {
   public fetchAccountBalances(aAccountId: string) {
     return this.http.get<AccountBalancesResponse>(
       `/api/v1/account/${aAccountId}/balances`
+    );
+  }
+
+  public fetchAnalyticsBenchmark({
+    benchmark,
+    baseCurrency,
+    customDateRange,
+    filters,
+    mode,
+    range
+  }: {
+    benchmark: AssetProfileIdentifier;
+    baseCurrency?: string;
+    customDateRange?: CustomDateRangeSelection;
+    filters?: Filter[];
+    mode: AnalyticsBenchmarkMode;
+    range: DateRange;
+  }) {
+    let params = this.buildFiltersAsQueryParams({ filters });
+    params = this.buildDateRangeQueryParams({ customDateRange, params, range });
+    params = params.append('dataSource', benchmark.dataSource);
+    params = params.append('mode', mode);
+    params = params.append('symbol', benchmark.symbol);
+    if (baseCurrency) {
+      params = params.append('baseCurrency', baseCurrency);
+    }
+
+    return this.http.get<AnalyticsBenchmarkResponse>(
+      '/api/v1/portfolio/analytics/benchmark',
+      { params }
+    );
+  }
+
+  public fetchAnalyticsPerformance({
+    baseCurrency,
+    customDateRange,
+    filters,
+    method,
+    range
+  }: {
+    baseCurrency?: string;
+    customDateRange?: CustomDateRangeSelection;
+    filters?: Filter[];
+    method: AnalyticsPerformanceMethod;
+    range: DateRange;
+  }) {
+    let params = this.buildFiltersAsQueryParams({ filters });
+    params = this.buildDateRangeQueryParams({ customDateRange, params, range });
+    params = params.append('method', method);
+    if (baseCurrency) {
+      params = params.append('baseCurrency', baseCurrency);
+    }
+
+    return this.http.get<AnalyticsPerformanceResponse>(
+      '/api/v1/portfolio/analytics/performance',
+      { params }
     );
   }
 

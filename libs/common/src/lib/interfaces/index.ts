@@ -6,6 +6,21 @@ import type { AdminData } from './admin-data.interface';
 import type { AdminJobs } from './admin-jobs.interface';
 import type { AdminMarketDataDetails } from './admin-market-data-details.interface';
 import type { AdminUser } from './admin-user.interface';
+import type {
+  AnalyticsBenchmarkBasis,
+  AnalyticsBenchmarkMode,
+  AnalyticsBenchmarkResponse,
+  AnalyticsCashFlowMatchedResponse,
+  AnalyticsCoverage,
+  AnalyticsCoverageReason,
+  AnalyticsCoverageStatus,
+  AnalyticsModifiedDietzResponse,
+  AnalyticsPerformanceMethod,
+  AnalyticsPerformanceResponse,
+  AnalyticsTwrBenchmarkResponse,
+  AnalyticsTwrResponse,
+  AnalyticsXirrResponse
+} from './analytics.interface';
 import type { AssetClassSelectorOption } from './asset-class-selector-option.interface';
 import type { AssetProfileIdentifier } from './asset-profile-identifier.interface';
 import type { AssetProfileItem } from './asset-profile-item.interface';
@@ -133,6 +148,19 @@ export {
   AdminJobs,
   AdminMarketDataDetails,
   AdminUser,
+  AnalyticsBenchmarkBasis,
+  AnalyticsBenchmarkMode,
+  AnalyticsBenchmarkResponse,
+  AnalyticsCashFlowMatchedResponse,
+  AnalyticsCoverage,
+  AnalyticsCoverageReason,
+  AnalyticsCoverageStatus,
+  AnalyticsModifiedDietzResponse,
+  AnalyticsPerformanceMethod,
+  AnalyticsPerformanceResponse,
+  AnalyticsTwrBenchmarkResponse,
+  AnalyticsTwrResponse,
+  AnalyticsXirrResponse,
   AdminUserResponse,
   AdminUsersResponse,
   AiPromptResponse,
