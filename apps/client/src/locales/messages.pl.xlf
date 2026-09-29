@@ -350,6 +350,14 @@
           <context context-type="linenumber">153</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="4026626244449208625" datatype="html">
+        <source>Shows what the same deposits and withdrawals, made on the same dates, would be worth in the benchmark. It is an economic comparison and does not reproduce real-world trading costs or taxes.</source>
+        <target state="new">Shows what the same deposits and withdrawals, made on the same dates, would be worth in the benchmark. It is an economic comparison and does not reproduce real-world trading costs or taxes.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
+          <context context-type="linenumber">76</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4029903570030679337" datatype="html">
         <source>Cash Balance</source>
         <target state="translated">Saldo Gotówkowe</target>
@@ -364,18 +372,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/accounts-table/accounts-table.component.html</context>
           <context context-type="linenumber">161</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="962000142581197318" datatype="html">
-        <source>Portfolio return</source>
-        <target state="new">Portfolio return</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">37</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">41</context>
         </context-group>
       </trans-unit>
       <trans-unit id="962765493084218985" datatype="html">
@@ -714,6 +710,14 @@
           <context context-type="linenumber">496</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1107099544781859495" datatype="html">
+        <source>Holdings tagged as both Core and Satellite are counted once under Other:</source>
+        <target state="new">Holdings tagged as both Core and Satellite are counted once under Other:</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">90</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1107354728956440783" datatype="html">
         <source>Data Source</source>
         <target state="translated">Źródło Danych</target>
@@ -752,6 +756,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/admin-jobs/admin-jobs.html</context>
           <context context-type="linenumber">120</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4470076689720660356" datatype="html">
+        <source>Target 70%</source>
+        <target state="new">Target 70%</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">25</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4472298507300372923" datatype="html">
@@ -795,7 +807,7 @@
         <target state="new">Portfolio difference</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">221</context>
+          <context context-type="linenumber">258</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5611965261696422586" datatype="html">
@@ -927,7 +939,7 @@
         <target state="new">Benchmark data could not be loaded. Portfolio performance is still available.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="linenumber">138</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8298612418414367990" datatype="html">
@@ -1019,7 +1031,7 @@
         <target state="new">Opening value: <x id="INTERPOLATION" equiv-text="{{ modifiedDietzResult?.openingValue ?? &apos;—&apos; }}"/> <x id="INTERPOLATION_1" equiv-text="{{ user?.settings?.baseCurrency }}"/></target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">179</context>
+          <context context-type="linenumber">209</context>
         </context-group>
       </trans-unit>
       <trans-unit id="641154803270226443" datatype="html">
@@ -1080,18 +1092,6 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/user-detail-dialog/user-detail-dialog.html</context>
           <context context-type="linenumber">156</context>
-        </context-group>
-      </trans-unit>
-      <trans-unit id="3700350267394453343" datatype="html">
-        <source>Your annualized return</source>
-        <target state="new">Your annualized return</target>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">61</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">65</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3720539089813177542" datatype="html">
@@ -1422,6 +1422,14 @@
           <context context-type="linenumber">12</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="378097864988133014" datatype="html">
+        <source>No target</source>
+        <target state="new">No target</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">74</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="378542251607647500" datatype="html">
         <source>per User</source>
         <target state="translated">na Użytkownika</target>
@@ -1467,15 +1475,15 @@
         <target state="new">Period return</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">31</context>
+          <context context-type="linenumber">41</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">84</context>
+          <context context-type="linenumber">109</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">167</context>
+          <context context-type="linenumber">197</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6237159237409231194" datatype="html">
@@ -1851,10 +1859,6 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">90</context>
-        </context-group>
-        <context-group purpose="location">
-          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
           <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
@@ -2050,6 +2054,14 @@
           <context context-type="linenumber">34</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="5799077829231941054" datatype="html">
+        <source>Current market-value snapshot for the selected account scope. Targets are a personal 70 / 30 reference.</source>
+        <target state="new">Current market-value snapshot for the selected account scope. Targets are a personal 70 / 30 reference.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">7</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1583589315502140592" datatype="html">
         <source>Track your progress in real-time with comprehensive analysis and insights.</source>
         <target state="translated">Śledź swój postęp w czasie rzeczywistym dzięki kompleksowym analizom i obserwacjom.</target>
@@ -2243,7 +2255,7 @@
         <target state="new">This benchmark may not include dividends.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">217</context>
+          <context context-type="linenumber">226</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4072809765904753879" datatype="html">
@@ -2255,7 +2267,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">179</context>
+          <context context-type="linenumber">186</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3118565567530464051" datatype="html">
@@ -2267,7 +2279,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">195</context>
+          <context context-type="linenumber">202</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4980697492087090765" datatype="html">
@@ -2359,7 +2371,7 @@
         <target state="new">Performance cannot be linked across a period with no invested capital.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">306</context>
+          <context context-type="linenumber">315</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6762504134540024018" datatype="html">
@@ -2527,7 +2539,7 @@
         <target state="new">Cash-flow-matched benchmark</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">200</context>
+          <context context-type="linenumber">231</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4563965495368336177" datatype="html">
@@ -2635,7 +2647,15 @@
         <target state="new">Advanced analysis</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">156</context>
+          <context context-type="linenumber">179</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8798315692865594781" datatype="html">
+        <source>Time-weighted return neutralizes deposits and withdrawals to show investment performance over the selected period. It is suited to benchmark comparison, but it does not reflect the timing of your personal cash flows.</source>
+        <target state="new">Time-weighted return neutralizes deposits and withdrawals to show investment performance over the selected period. It is suited to benchmark comparison, but it does not reflect the timing of your personal cash flows.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
+          <context context-type="linenumber">85</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7304247106520037555" datatype="html">
@@ -2743,7 +2763,7 @@
         <target state="new">Performance is unavailable because invested capital is zero or negative.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">315</context>
+          <context context-type="linenumber">324</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4819099731531004979" datatype="html">
@@ -2971,7 +2991,7 @@
         <target state="new">Net external flows: <x id="INTERPOLATION" equiv-text="{{ modifiedDietzResult?.totalExternalFlow ?? &apos;—&apos; }}"/> <x id="INTERPOLATION_1" equiv-text="{{ user?.settings?.baseCurrency }}"/></target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">189</context>
+          <context context-type="linenumber">219</context>
         </context-group>
       </trans-unit>
       <trans-unit id="803461344619482122" datatype="html">
@@ -4067,7 +4087,7 @@
         <target state="new">Select a benchmark to compare.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">96</context>
+          <context context-type="linenumber">119</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4758973823150843482" datatype="html">
@@ -4171,7 +4191,7 @@
         <target state="new">Historical price data is too old for part of this period.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">318</context>
+          <context context-type="linenumber">327</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6952711292901447467" datatype="html">
@@ -4347,7 +4367,15 @@
         <target state="new">Historical exchange-rate data is too old for part of this period.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">321</context>
+          <context context-type="linenumber">330</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="2797696046317729466" datatype="html">
+        <source>Your annualized return (XIRR)</source>
+        <target state="new">Your annualized return (XIRR)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">61</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1398112848362226140" datatype="html">
@@ -4483,7 +4511,7 @@
         <target state="new">Advanced comparison</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">201</context>
+          <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
       <trans-unit id="4808791512433987109" datatype="html">
@@ -4523,7 +4551,7 @@
         <target state="new">The result is unavailable because historical data is incomplete.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">323</context>
+          <context context-type="linenumber">332</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7078781840928078248" datatype="html">
@@ -4579,7 +4607,7 @@
         <target state="new">Select a benchmark to run this comparison.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">206</context>
+          <context context-type="linenumber">243</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3627006945295714424" datatype="html">
@@ -4851,7 +4879,15 @@
         <target state="new">Modified Dietz</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">166</context>
+          <context context-type="linenumber">190</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8709989077689221909" datatype="html">
+        <source>XIRR is a money-weighted annualized return that reflects the size and timing of your deposits and withdrawals. It represents your investor experience. Short periods can produce extreme annualized values.</source>
+        <target state="new">XIRR is a money-weighted annualized return that reflects the size and timing of your deposits and withdrawals. It represents your investor experience. Short periods can produce extreme annualized values.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
+          <context context-type="linenumber">86</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8716714788752456736" datatype="html">
@@ -5191,7 +5227,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">88</context>
+          <context context-type="linenumber">91</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/i18n.ts</context>
@@ -5227,7 +5263,7 @@
         <target state="translated">Miesięcznie</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">100</context>
+          <context context-type="linenumber">103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8036977202721714375" datatype="html">
@@ -5235,7 +5271,7 @@
         <target state="translated">Rocznie</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">101</context>
+          <context context-type="linenumber">104</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6293970137138896363" datatype="html">
@@ -5243,7 +5279,7 @@
         <target state="translated">Największe wzrosty</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">231</context>
+          <context context-type="linenumber">238</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3561829325566543464" datatype="html">
@@ -5259,7 +5295,7 @@
         <target state="translated">Największy spadek</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">282</context>
+          <context context-type="linenumber">289</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5242468862715363747" datatype="html">
@@ -5267,7 +5303,7 @@
         <target state="translated">Rozwój portfela</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">337</context>
+          <context context-type="linenumber">344</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5245785408880660848" datatype="html">
@@ -5275,7 +5311,7 @@
         <target state="new">Modified Dietz, cash-flow comparison and data details</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">158</context>
+          <context context-type="linenumber">181</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6766448922039123937" datatype="html">
@@ -5283,7 +5319,7 @@
         <target state="translated">Oś czasu inwestycji</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">364</context>
+          <context context-type="linenumber">371</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1440519383036502539" datatype="html">
@@ -5291,7 +5327,7 @@
         <target state="translated">Obecna passa</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">385</context>
+          <context context-type="linenumber">392</context>
         </context-group>
       </trans-unit>
       <trans-unit id="457461496511383061" datatype="html">
@@ -5299,7 +5335,7 @@
         <target state="translated">Najdłuższa passa</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">394</context>
+          <context context-type="linenumber">401</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6854252543786630145" datatype="html">
@@ -5307,7 +5343,7 @@
         <target state="translated">Oś czasu dywidend</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">421</context>
+          <context context-type="linenumber">428</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5857197365507636437" datatype="html">
@@ -5388,6 +5424,22 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/pricing/pricing-page.html</context>
           <context context-type="linenumber">14</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1953313871852750145" datatype="html">
+        <source>Portfolio return (TWR)</source>
+        <target state="new">Portfolio return (TWR)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">27</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="195493991510304628" datatype="html">
+        <source>About benchmark return</source>
+        <target state="new">About benchmark return</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">96</context>
         </context-group>
       </trans-unit>
       <trans-unit id="195913158506780337" datatype="html">
@@ -5716,7 +5768,7 @@
         <target state="new">Period</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">106</context>
+          <context context-type="linenumber">129</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1509032395181307486" datatype="html">
@@ -6068,7 +6120,7 @@
         <target state="new">Closing value: <x id="INTERPOLATION" equiv-text="{{ modifiedDietzResult?.closingValue ?? &apos;—&apos; }}"/> <x id="INTERPOLATION_1" equiv-text="{{ user?.settings?.baseCurrency }}"/></target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">184</context>
+          <context context-type="linenumber">214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3737711445155929474" datatype="html">
@@ -6144,11 +6196,11 @@
         <target state="new">Data quality details</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">235</context>
+          <context context-type="linenumber">272</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">239</context>
+          <context context-type="linenumber">277</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5388209493122807655" datatype="html">
@@ -6248,7 +6300,7 @@
         <target state="new">Simulates investing the same deposits and withdrawals in the benchmark on the same dates.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">224</context>
+          <context context-type="linenumber">261</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3090149248828869138" datatype="html">
@@ -6381,6 +6433,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/i18n.ts</context>
           <context context-type="linenumber">46</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="344494002175841623" datatype="html">
+        <source>Historical analytics can be unavailable when cash balances, prices, or exchange rates are missing or too old. The messages below identify the affected data.</source>
+        <target state="new">Historical analytics can be unavailable when cash balances, prices, or exchange rates are missing or too old. The messages below identify the affected data.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
+          <context context-type="linenumber">77</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1054498214311181686" datatype="html">
@@ -6539,6 +6599,10 @@
         <source>Core</source>
         <target state="translated">Główny</target>
         <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">17</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/i18n.ts</context>
           <context context-type="linenumber">16</context>
         </context-group>
@@ -6564,7 +6628,7 @@
         <target state="new">Shared by all analytics</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">107</context>
+          <context context-type="linenumber">130</context>
         </context-group>
       </trans-unit>
       <trans-unit id="6268646680388419543" datatype="html">
@@ -6643,6 +6707,10 @@
         <source>Other</source>
         <target state="translated">Inne</target>
         <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">67</context>
+        </context-group>
+        <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/i18n.ts</context>
           <context context-type="linenumber">31</context>
         </context-group>
@@ -6684,7 +6752,7 @@
         <target state="new">The benchmark return basis could not be confirmed.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">220</context>
+          <context context-type="linenumber">229</context>
         </context-group>
       </trans-unit>
       <trans-unit id="9218541487912911620" datatype="html">
@@ -6711,9 +6779,25 @@
           <context context-type="linenumber">199</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="936192550900633332" datatype="html">
+        <source>Deviation</source>
+        <target state="new">Deviation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">33</context>
+        </context-group>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">58</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="8050244774979733855" datatype="html">
         <source>Satellite</source>
         <target state="translated">Satelita</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">42</context>
+        </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/i18n.ts</context>
           <context context-type="linenumber">35</context>
@@ -6772,7 +6856,7 @@
         <target state="new">The simulated benchmark could not fund a withdrawal without going negative.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">308</context>
+          <context context-type="linenumber">317</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1464072562214937907" datatype="html">
@@ -6873,6 +6957,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">libs/ui/src/lib/access-level-icon/access-level-icon.component.html</context>
           <context context-type="linenumber">5</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="4885804542904168908" datatype="html">
+        <source>Modified Dietz is a money-weighted approximation that weights external cash flows by time. It is a period return, not an annualized return, and is commonly used as an institutional fallback when exact cash-flow timing is unavailable.</source>
+        <target state="new">Modified Dietz is a money-weighted approximation that weights external cash flows by time. It is a period return, not an annualized return, and is commonly used as an institutional fallback when exact cash-flow timing is unavailable.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
+          <context context-type="linenumber">82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="787798817533231355" datatype="html">
@@ -7000,7 +7092,7 @@
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">91</context>
+          <context context-type="linenumber">94</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5957846001261659229" datatype="html">
@@ -7244,7 +7336,7 @@
         <target state="translated">Inwestycje</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">106</context>
+          <context context-type="linenumber">109</context>
         </context-group>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/resources/personal-finance-tools/product-page.component.ts</context>
@@ -7272,7 +7364,7 @@
         <target state="translated">Łączny wynik aktywów</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">96</context>
+          <context context-type="linenumber">103</context>
         </context-group>
       </trans-unit>
       <trans-unit id="775717789032174431" datatype="html">
@@ -7280,7 +7372,7 @@
         <target state="translated">Wyniki aktywów</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">115</context>
+          <context context-type="linenumber">122</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3796488546909223546" datatype="html">
@@ -7288,7 +7380,7 @@
         <target state="translated">Łączny wynik walut</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">133</context>
+          <context context-type="linenumber">140</context>
         </context-group>
       </trans-unit>
       <trans-unit id="104509087727626192" datatype="html">
@@ -7296,7 +7388,7 @@
         <target state="translated">Wynik walut</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.html</context>
-          <context context-type="linenumber">157</context>
+          <context context-type="linenumber">164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1046918007982944581" datatype="html">
@@ -7487,6 +7579,14 @@
           <context context-type="linenumber">36</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6441349706916376619" datatype="html">
+        <source>About cash-flow-matched benchmark</source>
+        <target state="new">About cash-flow-matched benchmark</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">233</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="7201815346028553735" datatype="html">
         <source>Cloud</source>
         <target state="translated">Rozwiązanie w Chmurze</target>
@@ -7561,7 +7661,7 @@
         <target state="new">No benchmark is configured yet.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">141</context>
+          <context context-type="linenumber">164</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7860418101283165917" datatype="html">
@@ -7606,6 +7706,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/admin-jobs/admin-jobs.html</context>
           <context context-type="linenumber">96</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="823206621504505425" datatype="html">
+        <source>About Your annualized return (XIRR)</source>
+        <target state="new">About Your annualized return (XIRR)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">63</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8236987838684066590" datatype="html">
@@ -7757,7 +7865,7 @@
         <target state="new">Historical exchange-rate data is missing.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">302</context>
+          <context context-type="linenumber">311</context>
         </context-group>
       </trans-unit>
       <trans-unit id="829826868886560502" datatype="html">
@@ -8002,6 +8110,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/resources/personal-finance-tools/product-page.component.ts</context>
           <context context-type="linenumber">142</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="1090894262701924438" datatype="html">
+        <source>No invested holdings are available for this account scope.</source>
+        <target state="new">No invested holdings are available for this account scope.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">82</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1099393285611854080" datatype="html">
@@ -8444,6 +8560,14 @@
           <context context-type="linenumber">277</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="7901710338565405525" datatype="html">
+        <source>Core / Satellite allocation</source>
+        <target state="new">Core / Satellite allocation</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">4</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4604813705660070247" datatype="html">
         <source>Shares Before</source>
         <target state="new">Shares Before</target>
@@ -8723,7 +8847,7 @@
         <target state="new">Historical price data is missing.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">299</context>
+          <context context-type="linenumber">308</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8517109745758603034" datatype="html">
@@ -8842,6 +8966,14 @@
           <context context-type="linenumber">59</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1793284677008480950" datatype="html">
+        <source>About Modified Dietz</source>
+        <target state="new">About Modified Dietz</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">192</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4060547242431613838" datatype="html">
         <source>Net Worth Tracking</source>
         <target state="new">Net Worth Tracking</target>
@@ -8871,7 +9003,7 @@
         <target state="new">Your annualized return is not available for these cash flows.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">313</context>
+          <context context-type="linenumber">322</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7826234236931647519" datatype="html">
@@ -8879,7 +9011,7 @@
         <target state="translated">Prompt AI został skopiowany do schowka</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">210</context>
+          <context context-type="linenumber">213</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1616747898909934803" datatype="html">
@@ -8904,6 +9036,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/admin-market-data/asset-profile-dialog/asset-profile-dialog.component.ts</context>
           <context context-type="linenumber">300</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="6895662479494941732" datatype="html">
+        <source>Target 30%</source>
+        <target state="new">Target 30%</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/core-satellite-allocation/core-satellite-allocation.component.html</context>
+          <context context-type="linenumber">50</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8214660894894142610" datatype="html">
@@ -8983,7 +9123,7 @@
         <target state="translated">Otwórz Duck.ai</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analysis-page.component.ts</context>
-          <context context-type="linenumber">211</context>
+          <context context-type="linenumber">214</context>
         </context-group>
       </trans-unit>
       <trans-unit id="5674286808255988565" datatype="html">
@@ -9096,6 +9236,14 @@
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/components/admin-settings/admin-settings.component.ts</context>
           <context context-type="linenumber">88</context>
+        </context-group>
+      </trans-unit>
+      <trans-unit id="8823773432725451543" datatype="html">
+        <source>About Portfolio return (TWR)</source>
+        <target state="new">About Portfolio return (TWR)</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">29</context>
         </context-group>
       </trans-unit>
       <trans-unit id="8857575912903799298" datatype="html">
@@ -9243,6 +9391,14 @@
           <context context-type="linenumber">235</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="6807822644197688414" datatype="html">
+        <source>A benchmark is a reference, not a target. Its period return uses the same selected interval as your portfolio. Depending on the selected instrument, the data can be total return, price only, or an unknown basis.</source>
+        <target state="new">A benchmark is a reference, not a target. Its period return uses the same selected interval as your portfolio. Depending on the selected instrument, the data can be total return, price only, or an unknown basis.</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
+          <context context-type="linenumber">71</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="4396995010887588291" datatype="html">
         <source>Gather Recent Historical Market Data</source>
         <target state="translated">Zbierz najnowsze historyczne dane rynkowe</target>
@@ -9280,7 +9436,7 @@
         <target state="new">Select a benchmark to add it to the performance chart.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
-          <context context-type="linenumber">145</context>
+          <context context-type="linenumber">168</context>
         </context-group>
       </trans-unit>
       <trans-unit id="7588205374923801261" datatype="html">
@@ -9307,12 +9463,20 @@
           <context context-type="linenumber">68</context>
         </context-group>
       </trans-unit>
+      <trans-unit id="1061520185617907946" datatype="html">
+        <source>About analytics data quality</source>
+        <target state="new">About analytics data quality</target>
+        <context-group purpose="location">
+          <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.html</context>
+          <context context-type="linenumber">279</context>
+        </context-group>
+      </trans-unit>
       <trans-unit id="1065559247680639391" datatype="html">
         <source>Historical cash balance is missing for the start of this period.</source>
         <target state="new">Historical cash balance is missing for the start of this period.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">296</context>
+          <context context-type="linenumber">305</context>
         </context-group>
       </trans-unit>
       <trans-unit id="1071146706139680655" datatype="html">
@@ -9655,7 +9819,7 @@
         <target state="new">Recorded cash does not fully match reconstructed transactions.</target>
         <context-group purpose="location">
           <context context-type="sourcefile">apps/client/src/app/pages/portfolio/analysis/analytics-overview/analytics-overview.component.ts</context>
-          <context context-type="linenumber">304</context>
+          <context context-type="linenumber">313</context>
         </context-group>
       </trans-unit>
       <trans-unit id="3955868613858648955" datatype="html">
