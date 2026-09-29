@@ -7,6 +7,7 @@ import { GetAnalyticsPerformanceDto } from './get-analytics-performance.dto';
 describe('GetAnalyticsPerformanceDto', () => {
   it.each([
     PerformanceCalculationType.MODIFIED_DIETZ,
+    PerformanceCalculationType.TWR,
     PerformanceCalculationType.XIRR
   ])('accepts the explicit analytics method %s', async (method) => {
     const dto = Object.assign(new GetAnalyticsPerformanceDto(), { method });

@@ -22,10 +22,49 @@ describe.each([
 });
 
 describe('PortfolioController analytics method dispatch', () => {
+  it('routes TWR through its separate analytics service', async () => {
+    const twrResult = { method: 'TWR' };
+    const context = {
+      modifiedDietzAnalyticsService: { getPerformance: jest.fn() },
+      twrAnalyticsService: {
+        getPerformance: jest.fn().mockResolvedValue(twrResult)
+      },
+      xirrAnalyticsService: { getPerformance: jest.fn() }
+    };
+
+    await expect(
+      PortfolioController.prototype.getAnalyticsPerformance.call(
+        context as never,
+        {
+          userId: 'user',
+          userSettings: { baseCurrency: 'DKK' }
+        } as never,
+        {
+          from: '2024-01-01',
+          method: 'TWR',
+          range: 'custom',
+          to: '2024-12-31'
+        } as never
+      )
+    ).resolves.toBe(twrResult);
+    expect(context.twrAnalyticsService.getPerformance).toHaveBeenCalledWith({
+      accountIds: undefined,
+      baseCurrency: 'DKK',
+      from: '2024-01-01',
+      to: '2024-12-31',
+      userId: 'user'
+    });
+    expect(
+      context.modifiedDietzAnalyticsService.getPerformance
+    ).not.toHaveBeenCalled();
+    expect(context.xirrAnalyticsService.getPerformance).not.toHaveBeenCalled();
+  });
+
   it('routes XIRR through its separate analytics service', async () => {
     const xirrResult = { method: 'XIRR' };
     const context = {
       modifiedDietzAnalyticsService: { getPerformance: jest.fn() },
+      twrAnalyticsService: { getPerformance: jest.fn() },
       xirrAnalyticsService: {
         getPerformance: jest.fn().mockResolvedValue(xirrResult)
       }
