@@ -51,8 +51,11 @@ import { DataSource } from '@prisma/client';
 import { Big } from 'big.js';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 
+import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modified-dietz-analytics.service';
+import type { ModifiedDietzResult } from './analytics/modified-dietz/modified-dietz.types';
 import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
 import type { PortfolioValuationTimeline } from './analytics/valuation-timeline.types';
+import { GetAnalyticsPerformanceDto } from './get-analytics-performance.dto';
 import { GetDetailsDto } from './get-details.dto';
 import { GetDividendsDto } from './get-dividends.dto';
 import { GetHoldingsDto } from './get-holdings.dto';
@@ -68,10 +71,62 @@ export class PortfolioController {
     private readonly activitiesService: ActivitiesService,
     private readonly apiService: ApiService,
     private readonly configurationService: ConfigurationService,
+    private readonly modifiedDietzAnalyticsService: ModifiedDietzAnalyticsService,
     private readonly portfolioService: PortfolioService,
     private readonly portfolioValuationTimelineService: PortfolioValuationTimelineService,
     @Inject(REQUEST) private readonly request: RequestWithUser
   ) {}
+
+  @Get('analytics/performance')
+  @RequiresScope(scopes.portfolioRead, scopes.portfolioReadValues)
+  @Version('1')
+  public async getAnalyticsPerformance(
+    @Impersonation()
+    { userId, userSettings }: ImpersonationContext,
+    @Query()
+    {
+      accounts,
+      assetClasses,
+      baseCurrency,
+      dataSource,
+      from,
+      range,
+      savedRangeId,
+      symbol,
+      tags,
+      to
+    }: GetAnalyticsPerformanceDto
+  ): Promise<ModifiedDietzResult> {
+    if (assetClasses?.length || dataSource || symbol || tags?.length) {
+      throw new HttpException(
+        'Modified Dietz supports portfolio and account scope only',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    const interval = resolveCustomDateRangeQuery({
+      from,
+      range,
+      savedRangeId,
+      to,
+      userSettings
+    });
+
+    if (!interval) {
+      throw new HttpException(
+        'Modified Dietz requires a resolved custom interval',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    return this.modifiedDietzAnalyticsService.getPerformance({
+      accountIds: accounts,
+      baseCurrency: baseCurrency ?? userSettings.baseCurrency,
+      from: interval.from,
+      to: interval.to,
+      userId
+    });
+  }
 
   @Get('analytics/valuation')
   @RequiresScope(scopes.portfolioRead, scopes.portfolioReadValues)
