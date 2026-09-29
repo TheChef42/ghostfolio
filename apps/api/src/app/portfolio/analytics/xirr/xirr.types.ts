@@ -14,6 +14,7 @@ export type XirrUnavailableReason =
   | 'NUMERICAL_NON_CONVERGENCE'
   | 'NUMERICAL_OVERFLOW'
   | 'ONE_SIGN_ONLY'
+  | 'ROOT_UNIQUENESS_NOT_ESTABLISHED'
   | 'ZERO_DURATION';
 
 export type XirrScheduleSource =

@@ -183,6 +183,40 @@ describe('XirrCalculator', () => {
     );
   });
 
+  it('reports no valid root when a non-conventional schedule has no candidate', () => {
+    const result = calculator.calculate(
+      input([
+        entry('2024-01-01', '-100'),
+        entry('2024-12-31', '100'),
+        entry('2025-12-31', '-100')
+      ])
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        annualizedReturn: null,
+        reason: 'NO_VALID_ROOT',
+        rootCount: 0
+      })
+    );
+  });
+
+  it('does not infer uniqueness from one non-conventional candidate', () => {
+    const result = calculator.calculate(
+      input([
+        entry('2024-01-01', '-10000000000'),
+        entry('2024-12-31', '10000000001'),
+        entry('2025-12-31', '-1')
+      ])
+    );
+    expect(result).toEqual(
+      expect.objectContaining({
+        annualizedReturn: null,
+        reason: 'ROOT_UNIQUENESS_NOT_ESTABLISHED',
+        rootCount: 1
+      })
+    );
+  });
+
   it('does not claim convergence for a tangential-root schedule', () => {
     const result = calculator.calculate(
       input([
@@ -192,7 +226,9 @@ describe('XirrCalculator', () => {
       ])
     );
     expect(result.annualizedReturn).toBeNull();
-    expect(['MULTIPLE_ROOTS', 'NO_VALID_ROOT']).toContain(result.reason);
+    expect(['ROOT_UNIQUENESS_NOT_ESTABLISHED', 'NO_VALID_ROOT']).toContain(
+      result.reason
+    );
   });
 
   it.each([

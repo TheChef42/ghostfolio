@@ -320,7 +320,12 @@ export class XirrCalculator {
 
     return {
       candidates,
-      reason: candidates.length === 0 ? 'NO_VALID_ROOT' : 'MULTIPLE_ROOTS',
+      reason:
+        candidates.length === 0
+          ? 'NO_VALID_ROOT'
+          : candidates.length === 1
+            ? 'ROOT_UNIQUENESS_NOT_ESTABLISHED'
+            : 'MULTIPLE_ROOTS',
       rootCount: candidates.length
     };
   }

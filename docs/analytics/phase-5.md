@@ -59,11 +59,17 @@ converted external flow are available. Undefined schedules return one of:
 - `EMPTY_SCHEDULE`
 - `ONE_SIGN_ONLY`
 - `NO_VALID_ROOT`
+- `ROOT_UNIQUENESS_NOT_ESTABLISHED`
 - `MULTIPLE_ROOTS`
 - `NUMERICAL_NON_CONVERGENCE`
 - `NUMERICAL_OVERFLOW`
 
 These are valid analytics responses rather than server errors.
+
+`MULTIPLE_ROOTS` means that more than one validated root was actually detected.
+`ROOT_UNIQUENESS_NOT_ESTABLISHED` means a non-conventional schedule produced one
+validated candidate, but the finite search cannot prove that it is unique. Both
+cases keep the annualized return null.
 
 ## API
 
