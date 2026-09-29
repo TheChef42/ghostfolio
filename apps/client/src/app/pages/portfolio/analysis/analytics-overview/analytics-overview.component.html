@@ -1,0 +1,257 @@
+<section aria-labelledby="analytics-heading">
+  <div class="mb-3">
+    <h2 class="h4 mb-1" i18n id="analytics-heading">Portfolio performance</h2>
+    <p class="mb-0 text-muted" i18n>
+      Returns for the selected period and account scope.
+    </p>
+  </div>
+
+  @if (performanceApiFailed) {
+    <div class="alert alert-danger" i18n role="alert">
+      Performance data could not be loaded. Please try again.
+    </div>
+  }
+  @if (coverageMessages.length) {
+    <div class="alert alert-warning" role="status">
+      @for (message of coverageMessages; track message) {
+        <div>{{ message }}</div>
+      }
+    </div>
+  }
+
+  <div class="mb-4 row summary-grid">
+    <div class="col-lg-3 col-md-6 mb-3">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-content>
+          @if (
+            asNumber(twrResult?.periodReturn) !== null || isLoadingPerformance
+          ) {
+            <gf-value
+              i18n
+              i18n-subLabel
+              size="large"
+              subLabel="Period return"
+              [colorizeSign]="true"
+              [isLoading]="isLoadingPerformance"
+              [isPercent]="true"
+              [locale]="user?.settings?.locale"
+              [value]="asNumber(twrResult?.periodReturn)"
+              >Portfolio return</gf-value
+            >
+          } @else {
+            <div class="h2 text-muted">—</div>
+            <div class="h6 mb-1" i18n>Portfolio return</div>
+            <small class="text-muted">{{
+              reasonMessage(twrResult?.reason)
+            }}</small>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-content>
+          @if (
+            asNumber(xirrResult?.annualizedReturn) !== null ||
+            isLoadingPerformance
+          ) {
+            <gf-value
+              i18n
+              size="large"
+              [colorizeSign]="true"
+              [isLoading]="isLoadingPerformance"
+              [isPercent]="true"
+              [locale]="user?.settings?.locale"
+              [value]="asNumber(xirrResult?.annualizedReturn)"
+              >Your annualized return</gf-value
+            >
+          } @else {
+            <div class="h2 text-muted">—</div>
+            <div class="h6 mb-1" i18n>Your annualized return</div>
+            <small class="text-muted">{{
+              reasonMessage(xirrResult?.reason)
+            }}</small>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-content>
+          @if (
+            asNumber(benchmarkResult?.benchmarkPeriodReturn) !== null ||
+            isLoadingBenchmark
+          ) {
+            <gf-value
+              i18n
+              i18n-subLabel
+              size="large"
+              subLabel="Period return"
+              [colorizeSign]="true"
+              [isLoading]="isLoadingBenchmark"
+              [isPercent]="true"
+              [locale]="user?.settings?.locale"
+              [value]="asNumber(benchmarkResult?.benchmarkPeriodReturn)"
+              >Benchmark</gf-value
+            >
+          } @else {
+            <div class="h2 text-muted">—</div>
+            <div class="h6 mb-1" i18n>Benchmark</div>
+            <small class="text-muted" i18n
+              >Select a benchmark to compare.</small
+            >
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+      <mat-card appearance="outlined" class="h-100">
+        <mat-card-content>
+          <div class="h5 mb-2 period-value">{{ periodLabel }}</div>
+          <div class="h6 mb-0" i18n>Period</div>
+          <small class="text-muted" i18n>Shared by all analytics</small>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+
+  @if (benchmarkApiFailed) {
+    <div class="alert alert-danger" i18n role="alert">
+      Benchmark data could not be loaded. Portfolio performance is still
+      available.
+    </div>
+  }
+  @if (benchmarkCoverageMessages.length) {
+    <div class="alert alert-warning" role="status">
+      @for (message of benchmarkCoverageMessages; track message) {
+        <div>{{ message }}</div>
+      }
+    </div>
+  }
+
+  <div class="mb-4">
+    <gf-benchmark-comparator
+      [benchmark]="benchmark"
+      [benchmarkDataItems]="benchmarkChartItems"
+      [benchmarks]="benchmarks"
+      [colorScheme]="user?.settings?.colorScheme"
+      [isLoading]="isLoadingPerformance || isLoadingBenchmark"
+      [locale]="user?.settings?.locale"
+      [performanceDataItems]="portfolioChartItems"
+      [user]="user"
+      (benchmarkChanged)="onChangeBenchmark($event)"
+    />
+    @if (!benchmarks.length) {
+      <p class="mb-0 mt-2 text-muted" i18n role="status">
+        No benchmark is configured yet.
+      </p>
+    } @else if (!benchmark) {
+      <p class="mb-0 mt-2 text-muted" i18n role="status">
+        Select a benchmark to add it to the performance chart.
+      </p>
+    }
+    @if (benchmarkWarning) {
+      <p class="mb-0 mt-2 text-muted" role="status">{{ benchmarkWarning }}</p>
+    }
+  </div>
+
+  <mat-accordion>
+    <mat-expansion-panel (opened)="onAdvancedOpened()">
+      <mat-expansion-panel-header>
+        <mat-panel-title i18n>Advanced analysis</mat-panel-title>
+        <mat-panel-description class="d-none d-sm-flex" i18n>
+          Modified Dietz, cash-flow comparison and data details
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <mat-card appearance="outlined" class="h-100">
+            <mat-card-header>
+              <mat-card-title i18n>Modified Dietz</mat-card-title>
+              <mat-card-subtitle i18n>Period return</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              <gf-value
+                [colorizeSign]="true"
+                [isLoading]="isLoadingAdvanced"
+                [isPercent]="true"
+                [locale]="user?.settings?.locale"
+                [value]="asNumber(modifiedDietzResult?.periodReturn)"
+              />
+              <div class="mt-3 small text-muted">
+                <div i18n>
+                  Opening value:
+                  {{ modifiedDietzResult?.openingValue ?? '—' }}
+                  {{ user?.settings?.baseCurrency }}
+                </div>
+                <div i18n>
+                  Closing value:
+                  {{ modifiedDietzResult?.closingValue ?? '—' }}
+                  {{ user?.settings?.baseCurrency }}
+                </div>
+                <div i18n>
+                  Net external flows:
+                  {{ modifiedDietzResult?.totalExternalFlow ?? '—' }}
+                  {{ user?.settings?.baseCurrency }}
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <div class="col-md-6 mb-3">
+          <mat-card appearance="outlined" class="h-100">
+            <mat-card-header>
+              <mat-card-title i18n>Cash-flow-matched benchmark</mat-card-title>
+              <mat-card-subtitle i18n>Advanced comparison</mat-card-subtitle>
+            </mat-card-header>
+            <mat-card-content>
+              @if (!benchmark) {
+                <p class="mb-0 text-muted" i18n>
+                  Select a benchmark to run this comparison.
+                </p>
+              } @else if (cashFlowMatchedResult?.reason) {
+                <p class="mb-0 text-muted">
+                  {{ reasonMessage(cashFlowMatchedResult.reason) }}
+                </p>
+              } @else {
+                <gf-value
+                  i18n
+                  [colorizeSign]="true"
+                  [isCurrency]="true"
+                  [isLoading]="isLoadingAdvanced"
+                  [locale]="user?.settings?.locale"
+                  [unit]="user?.settings?.baseCurrency"
+                  [value]="asNumber(cashFlowMatchedResult?.difference)"
+                  >Portfolio difference</gf-value
+                >
+                <p class="mb-0 mt-3 small text-muted" i18n>
+                  Simulates investing the same deposits and withdrawals in the
+                  benchmark on the same dates.
+                </p>
+              }
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+
+      @if (coverageMessages.length || benchmarkCoverageMessages.length) {
+        <div
+          aria-label="Data quality details"
+          class="small text-muted"
+          i18n-aria-label
+        >
+          <strong i18n>Data quality details</strong>
+          <ul class="mb-0 mt-2 pl-3">
+            @for (message of coverageMessages; track message) {
+              <li>{{ message }}</li>
+            }
+            @for (message of benchmarkCoverageMessages; track message) {
+              <li>{{ message }}</li>
+            }
+          </ul>
+        </div>
+      }
+    </mat-expansion-panel>
+  </mat-accordion>
+</section>

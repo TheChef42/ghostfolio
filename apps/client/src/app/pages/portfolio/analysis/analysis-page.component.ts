@@ -1,4 +1,3 @@
-import { GfBenchmarkComparatorComponent } from '@ghostfolio/client/components/benchmark-comparator/benchmark-comparator.component';
 import { GfInvestmentChartComponent } from '@ghostfolio/client/components/investment-chart/investment-chart.component';
 import { UserService } from '@ghostfolio/client/services/user/user.service';
 import {
@@ -8,6 +7,7 @@ import {
 import { canOpenHoldingDetail } from '@ghostfolio/common/helper';
 import {
   HistoricalDataItem,
+  Filter,
   InvestmentItem,
   PortfolioInvestmentsResponse,
   PortfolioPerformance,
@@ -57,10 +57,12 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 import { forkJoin } from 'rxjs';
 
+import { GfAnalyticsOverviewComponent } from './analytics-overview/analytics-overview.component';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    GfBenchmarkComparatorComponent,
+    GfAnalyticsOverviewComponent,
     GfInvestmentChartComponent,
     GfPremiumIndicatorComponent,
     GfToggleComponent,
@@ -79,17 +81,16 @@ import { forkJoin } from 'rxjs';
 })
 export class GfAnalysisPageComponent implements OnInit {
   protected benchmark?: Partial<SymbolProfile>;
-  protected benchmarkDataItems: HistoricalDataItem[] = [];
   protected readonly benchmarks: Partial<SymbolProfile>[];
   protected bottom3: PortfolioPosition[];
   protected dividendsByGroup: InvestmentItem[];
+  protected filters: Filter[] = [];
   protected readonly dividendTimelineDataLabel = $localize`Dividend`;
   protected hasPermissionToReadAiPrompt: boolean;
   protected investments: InvestmentItem[];
   protected readonly investmentTimelineDataLabel = $localize`Invested Capital`;
   protected investmentsByGroup: InvestmentItem[];
   protected isLoadingAnalysisPrompt: boolean;
-  protected isLoadingBenchmarkComparator: boolean;
   protected isLoadingDividendTimelineChart: boolean;
   protected isLoadingInvestmentChart: boolean;
   protected isLoadingInvestmentTimelineChart: boolean;
@@ -102,7 +103,6 @@ export class GfAnalysisPageComponent implements OnInit {
   protected performance: PortfolioPerformance;
   protected readonly PerformanceCalculationType = PerformanceCalculationType;
   protected performanceDataItems: HistoricalDataItem[];
-  protected performanceDataItemsInPercentage: HistoricalDataItem[];
   protected readonly portfolioEvolutionDataLabel = $localize`Investment`;
   protected precision = 2;
   protected savingsRatePerMonth: number | undefined;
@@ -116,8 +116,6 @@ export class GfAnalysisPageComponent implements OnInit {
   private readonly deviceType = computed(
     () => this.deviceDetectorService.deviceInfo().deviceType
   );
-  private dateOfFirstActivity: Date;
-
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly clipboard = inject(Clipboard);
   private readonly dataService = inject(DataService);
@@ -153,6 +151,7 @@ export class GfAnalysisPageComponent implements OnInit {
           this.benchmark = this.benchmarks.find(({ id }) => {
             return id === this.user.settings?.benchmark;
           });
+          this.filters = this.userService.getFilters();
 
           this.hasPermissionToReadAiPrompt = hasPermission(
             this.user.permissions,
@@ -176,6 +175,10 @@ export class GfAnalysisPageComponent implements OnInit {
           .pipe(takeUntilDestroyed(this.destroyRef))
           .subscribe((user) => {
             this.user = user;
+            this.benchmark = this.benchmarks.find(({ id }) => {
+              return id === this.user.settings?.benchmark;
+            });
+            this.filters = this.userService.getFilters();
 
             this.changeDetectorRef.markForCheck();
           });
@@ -324,19 +327,15 @@ export class GfAnalysisPageComponent implements OnInit {
         range: this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(({ chart, dateOfFirstActivity, performance }) => {
-        this.dateOfFirstActivity = dateOfFirstActivity ?? new Date();
-
+      .subscribe(({ chart, performance }) => {
         this.investments = [];
         this.performance = performance;
         this.performanceDataItems = [];
-        this.performanceDataItemsInPercentage = [];
 
         for (const [
           index,
           {
             date,
-            netPerformanceInPercentageWithCurrencyEffect,
             totalInvestmentValueWithCurrencyEffect,
             valueInPercentage,
             valueWithCurrencyEffect
@@ -358,11 +357,6 @@ export class GfAnalysisPageComponent implements OnInit {
                 : valueInPercentage
             });
           }
-
-          this.performanceDataItemsInPercentage.push({
-            date,
-            value: netPerformanceInPercentageWithCurrencyEffect
-          });
         }
 
         if (
@@ -374,8 +368,6 @@ export class GfAnalysisPageComponent implements OnInit {
         }
 
         this.isLoadingInvestmentChart = false;
-
-        this.updateBenchmarkDataItems();
 
         this.changeDetectorRef.markForCheck();
       });
@@ -424,45 +416,5 @@ export class GfAnalysisPageComponent implements OnInit {
     this.fetchDividendsAndInvestments();
 
     this.changeDetectorRef.markForCheck();
-  }
-
-  private updateBenchmarkDataItems() {
-    this.benchmarkDataItems = [];
-
-    if (this.user.settings.benchmark) {
-      const { dataSource, symbol } =
-        this.benchmarks.find(({ id }) => {
-          return id === this.user.settings.benchmark;
-        }) ?? {};
-
-      if (dataSource && symbol) {
-        this.isLoadingBenchmarkComparator = true;
-
-        this.dataService
-          .fetchBenchmarkForUser({
-            dataSource,
-            symbol,
-            filters: this.userService.getFilters(),
-            range:
-              this.user?.settings?.dateRange === 'custom'
-                ? DEFAULT_DATE_RANGE
-                : (this.user?.settings?.dateRange ?? DEFAULT_DATE_RANGE),
-            startDate: this.dateOfFirstActivity
-          })
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe(({ marketData }) => {
-            this.benchmarkDataItems = marketData.map(({ date, value }) => {
-              return {
-                date,
-                value
-              };
-            });
-
-            this.isLoadingBenchmarkComparator = false;
-
-            this.changeDetectorRef.markForCheck();
-          });
-      }
-    }
   }
 }
