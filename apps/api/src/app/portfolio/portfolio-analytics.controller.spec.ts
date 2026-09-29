@@ -156,3 +156,175 @@ describe('PortfolioController analytics method dispatch', () => {
     ).not.toHaveBeenCalled();
   });
 });
+
+const SAVED_RANGE_ID = '11111111-1111-4111-8111-111111111111';
+
+const analyticsIntervalEndpoints = [
+  {
+    invoke: ({ context, query, userSettings }) =>
+      PortfolioController.prototype.getValuationTimeline.call(
+        context as never,
+        { userId: 'user', userSettings } as never,
+        query as never
+      ),
+    name: 'valuation',
+    query: {},
+    service: 'portfolioValuationTimelineService'
+  },
+  {
+    invoke: ({ context, query, userSettings }) =>
+      PortfolioController.prototype.getAnalyticsPerformance.call(
+        context as never,
+        { userId: 'user', userSettings } as never,
+        query as never
+      ),
+    name: 'performance',
+    query: { method: 'TWR' },
+    service: 'twrAnalyticsService'
+  },
+  {
+    invoke: ({ context, query, userSettings }) =>
+      PortfolioController.prototype.getAnalyticsBenchmark.call(
+        context as never,
+        { userId: 'user', userSettings } as never,
+        query as never
+      ),
+    name: 'benchmark',
+    query: {
+      dataSource: 'YAHOO',
+      mode: 'TWR',
+      symbol: 'IDX'
+    },
+    service: 'benchmarkAnalyticsService'
+  }
+] as const;
+
+describe.each(analyticsIntervalEndpoints)(
+  'PortfolioController analytics $name interval resolution',
+  ({ invoke, query: endpointQuery, service }) => {
+    const userSettings = {
+      baseCurrency: 'DKK',
+      customDateRanges: [
+        {
+          endMode: 'FIXED',
+          from: '2024-02-01',
+          id: SAVED_RANGE_ID,
+          name: 'Saved interval',
+          to: '2024-02-29'
+        }
+      ]
+    };
+
+    function createContext() {
+      return {
+        benchmarkAnalyticsService: { getComparison: jest.fn() },
+        modifiedDietzAnalyticsService: { getPerformance: jest.fn() },
+        portfolioValuationTimelineService: { getTimeline: jest.fn() },
+        twrAnalyticsService: { getPerformance: jest.fn() },
+        xirrAnalyticsService: { getPerformance: jest.fn() }
+      };
+    }
+
+    function getServiceMock(context: ReturnType<typeof createContext>) {
+      if (service === 'benchmarkAnalyticsService') {
+        return context.benchmarkAnalyticsService.getComparison;
+      }
+      if (service === 'portfolioValuationTimelineService') {
+        return context.portfolioValuationTimelineService.getTimeline;
+      }
+      return context.twrAnalyticsService.getPerformance;
+    }
+
+    beforeAll(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-09-29T12:00:00.000Z'));
+    });
+
+    afterAll(() => {
+      jest.useRealTimers();
+    });
+
+    it('resolves YTD with Ghostfolio named-range semantics', async () => {
+      const context = createContext();
+
+      await invoke({
+        context,
+        query: { ...endpointQuery, range: 'ytd' },
+        userSettings
+      });
+
+      expect(getServiceMock(context)).toHaveBeenCalledWith(
+        expect.objectContaining({ from: '2026-01-01', to: '2026-09-29' })
+      );
+    });
+
+    it('resolves another named range with the same semantics', async () => {
+      const context = createContext();
+
+      await invoke({
+        context,
+        query: { ...endpointQuery, range: '1y' },
+        userSettings
+      });
+
+      expect(getServiceMock(context)).toHaveBeenCalledWith(
+        expect.objectContaining({ from: '2025-09-30', to: '2026-09-29' })
+      );
+    });
+
+    it('preserves explicit custom bounds', async () => {
+      const context = createContext();
+
+      await invoke({
+        context,
+        query: {
+          ...endpointQuery,
+          from: '2024-01-01',
+          range: 'custom',
+          to: '2024-01-31'
+        },
+        userSettings
+      });
+
+      expect(getServiceMock(context)).toHaveBeenCalledWith(
+        expect.objectContaining({ from: '2024-01-01', to: '2024-01-31' })
+      );
+    });
+
+    it('preserves saved custom ranges', async () => {
+      const context = createContext();
+
+      await invoke({
+        context,
+        query: {
+          ...endpointQuery,
+          range: 'custom',
+          savedRangeId: SAVED_RANGE_ID
+        },
+        userSettings
+      });
+
+      expect(getServiceMock(context)).toHaveBeenCalledWith(
+        expect.objectContaining({ from: '2024-02-01', to: '2024-02-29' })
+      );
+    });
+
+    it('continues to reject custom bounds combined with a named range', async () => {
+      const context = createContext();
+
+      await expect(
+        invoke({
+          context,
+          query: {
+            ...endpointQuery,
+            from: '2024-01-01',
+            range: 'ytd'
+          },
+          userSettings
+        })
+      ).rejects.toMatchObject({ status: 400 });
+
+      expect(getServiceMock(context)).not.toHaveBeenCalled();
+    });
+  }
+);

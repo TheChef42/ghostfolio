@@ -51,6 +51,7 @@ import { DataSource } from '@prisma/client';
 import { Big } from 'big.js';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 
+import { resolveAnalyticsDateRangeQuery } from './analytics/analytics-date-range.helper';
 import { BenchmarkAnalyticsService } from './analytics/benchmark/benchmark-analytics.service';
 import type { BenchmarkResult } from './analytics/benchmark/benchmark.types';
 import { ModifiedDietzAnalyticsService } from './analytics/modified-dietz/modified-dietz-analytics.service';
@@ -116,20 +117,13 @@ export class PortfolioController {
         StatusCodes.BAD_REQUEST
       );
     }
-    const interval = resolveCustomDateRangeQuery({
+    const interval = resolveAnalyticsDateRangeQuery({
       from,
       range,
       savedRangeId,
       to,
       userSettings
     });
-    if (!interval) {
-      throw new HttpException(
-        'Analytics benchmark requires a resolved custom interval',
-        StatusCodes.BAD_REQUEST
-      );
-    }
-
     return this.benchmarkAnalyticsService.getComparison({
       accountIds: accounts,
       baseCurrency: baseCurrency ?? userSettings.baseCurrency,
@@ -170,20 +164,13 @@ export class PortfolioController {
       );
     }
 
-    const interval = resolveCustomDateRangeQuery({
+    const interval = resolveAnalyticsDateRangeQuery({
       from,
       range,
       savedRangeId,
       to,
       userSettings
     });
-
-    if (!interval) {
-      throw new HttpException(
-        'Analytics performance requires a resolved custom interval',
-        StatusCodes.BAD_REQUEST
-      );
-    }
 
     const input = {
       accountIds: accounts,
@@ -230,20 +217,13 @@ export class PortfolioController {
       );
     }
 
-    const interval = resolveCustomDateRangeQuery({
+    const interval = resolveAnalyticsDateRangeQuery({
       from,
       range,
       savedRangeId,
       to,
       userSettings
     });
-
-    if (!interval) {
-      throw new HttpException(
-        'The valuation timeline requires a resolved custom interval',
-        StatusCodes.BAD_REQUEST
-      );
-    }
 
     return this.portfolioValuationTimelineService.getTimeline({
       accountIds: accounts,
