@@ -24,6 +24,9 @@ import { TagModule } from '@ghostfolio/api/services/tag/tag.module';
 
 import { Module } from '@nestjs/common';
 
+import { HistoricalValuationResolverService } from './analytics/historical-valuation-resolver.service';
+import { PerformanceScopeResolver } from './analytics/performance-scope.resolver';
+import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
 import { PortfolioCalculatorFactory } from './calculator/portfolio-calculator.factory';
 import { CurrentRateService } from './current-rate.service';
 import { PortfolioController } from './portfolio.controller';
@@ -60,8 +63,11 @@ import { RulesService } from './rules.service';
     AccountBalanceService,
     AccountService,
     CurrentRateService,
+    HistoricalValuationResolverService,
+    PerformanceScopeResolver,
     PortfolioCalculatorFactory,
     PortfolioService,
+    PortfolioValuationTimelineService,
     RulesService
   ]
 })

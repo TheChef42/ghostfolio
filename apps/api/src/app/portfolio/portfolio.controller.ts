@@ -51,11 +51,14 @@ import { DataSource } from '@prisma/client';
 import { Big } from 'big.js';
 import { StatusCodes, getReasonPhrase } from 'http-status-codes';
 
+import { PortfolioValuationTimelineService } from './analytics/portfolio-valuation-timeline.service';
+import type { PortfolioValuationTimeline } from './analytics/valuation-timeline.types';
 import { GetDetailsDto } from './get-details.dto';
 import { GetDividendsDto } from './get-dividends.dto';
 import { GetHoldingsDto } from './get-holdings.dto';
 import { GetInvestmentsDto } from './get-investments.dto';
 import { GetPerformanceDto } from './get-performance.dto';
+import { GetValuationTimelineDto } from './get-valuation-timeline.dto';
 import { PortfolioService } from './portfolio.service';
 import { UpdateHoldingTagsDto } from './update-holding-tags.dto';
 
@@ -66,8 +69,60 @@ export class PortfolioController {
     private readonly apiService: ApiService,
     private readonly configurationService: ConfigurationService,
     private readonly portfolioService: PortfolioService,
+    private readonly portfolioValuationTimelineService: PortfolioValuationTimelineService,
     @Inject(REQUEST) private readonly request: RequestWithUser
   ) {}
+
+  @Get('analytics/valuation')
+  @RequiresScope(scopes.portfolioRead, scopes.portfolioReadValues)
+  @Version('1')
+  public async getValuationTimeline(
+    @Impersonation()
+    { userId, userSettings }: ImpersonationContext,
+    @Query()
+    {
+      accounts,
+      assetClasses,
+      baseCurrency,
+      dataSource,
+      from,
+      range,
+      savedRangeId,
+      symbol,
+      tags,
+      to
+    }: GetValuationTimelineDto
+  ): Promise<PortfolioValuationTimeline> {
+    if (assetClasses?.length || dataSource || symbol || tags?.length) {
+      throw new HttpException(
+        'Phase 4A valuation supports portfolio and account scope only',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    const interval = resolveCustomDateRangeQuery({
+      from,
+      range,
+      savedRangeId,
+      to,
+      userSettings
+    });
+
+    if (!interval) {
+      throw new HttpException(
+        'The valuation timeline requires a resolved custom interval',
+        StatusCodes.BAD_REQUEST
+      );
+    }
+
+    return this.portfolioValuationTimelineService.getTimeline({
+      accountIds: accounts,
+      baseCurrency: baseCurrency ?? userSettings.baseCurrency,
+      from: interval.from,
+      to: interval.to,
+      userId
+    });
+  }
 
   @Get('details')
   @RequiresScope(scopes.portfolioRead)
