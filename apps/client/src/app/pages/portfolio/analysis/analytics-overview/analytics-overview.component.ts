@@ -87,9 +87,13 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
   protected xirrResult: AnalyticsXirrResponse | null = null;
 
   private readonly advancedRefresh = new Subject<void>();
+  private readonly benchmarkRefresh = new Subject<void>();
+  private readonly cashFlowMatchedRefresh = new Subject<void>();
   private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly dataService = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
+  private lastBenchmarkRequestKey: string | undefined;
+  private lastPortfolioRequestKey: string | undefined;
   private readonly performanceRefresh = new Subject<void>();
 
   public constructor() {
@@ -97,31 +101,11 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
       .pipe(
         tap(() => {
           this.isLoadingPerformance = true;
-          this.isLoadingBenchmark = Boolean(this.benchmark);
           this.performanceApiFailed = false;
-          this.benchmarkApiFailed = false;
         }),
         switchMap(() => {
           const input = this.requestInput();
-          const benchmarkRequest =
-            this.benchmark?.dataSource && this.benchmark.symbol
-              ? this.safe<AnalyticsBenchmarkResponse>(
-                  this.dataService.fetchAnalyticsBenchmark({
-                    ...input,
-                    benchmark: {
-                      dataSource: this.benchmark.dataSource,
-                      symbol: this.benchmark.symbol
-                    },
-                    mode: 'TWR'
-                  })
-                )
-              : of<RequestResult<AnalyticsBenchmarkResponse>>({
-                  data: null,
-                  failed: false
-                });
-
           return forkJoin({
-            benchmark: benchmarkRequest,
             twr: this.safe<AnalyticsTwrResponse>(
               this.dataService.fetchAnalyticsPerformance({
                 ...input,
@@ -138,14 +122,44 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
         }),
         takeUntilDestroyed(this.destroyRef)
       )
-      .subscribe(({ benchmark, twr, xirr }) => {
+      .subscribe(({ twr, xirr }) => {
         this.twrResult = twr.data;
         this.xirrResult = xirr.data;
+        this.performanceApiFailed = twr.failed || xirr.failed;
+        this.isLoadingPerformance = false;
+        this.changeDetectorRef.markForCheck();
+      });
+
+    this.benchmarkRefresh
+      .pipe(
+        tap(() => {
+          this.isLoadingBenchmark = Boolean(this.benchmark);
+          this.benchmarkApiFailed = false;
+        }),
+        switchMap(() => {
+          const input = this.requestInput();
+          return this.benchmark?.dataSource && this.benchmark.symbol
+            ? this.safe<AnalyticsBenchmarkResponse>(
+                this.dataService.fetchAnalyticsBenchmark({
+                  ...input,
+                  benchmark: {
+                    dataSource: this.benchmark.dataSource,
+                    symbol: this.benchmark.symbol
+                  },
+                  mode: 'TWR'
+                })
+              )
+            : of<RequestResult<AnalyticsBenchmarkResponse>>({
+                data: null,
+                failed: false
+              });
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((benchmark) => {
         this.benchmarkResult =
           benchmark.data?.mode === 'TWR' ? benchmark.data : null;
-        this.performanceApiFailed = twr.failed || xirr.failed;
         this.benchmarkApiFailed = benchmark.failed;
-        this.isLoadingPerformance = false;
         this.isLoadingBenchmark = false;
         this.changeDetectorRef.markForCheck();
       });
@@ -191,15 +205,62 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
         this.isLoadingAdvanced = false;
         this.changeDetectorRef.markForCheck();
       });
+
+    this.cashFlowMatchedRefresh
+      .pipe(
+        tap(() => (this.isLoadingAdvanced = true)),
+        switchMap(() => {
+          const input = this.requestInput();
+          return this.benchmark?.dataSource && this.benchmark.symbol
+            ? this.safe<AnalyticsBenchmarkResponse>(
+                this.dataService.fetchAnalyticsBenchmark({
+                  ...input,
+                  benchmark: {
+                    dataSource: this.benchmark.dataSource,
+                    symbol: this.benchmark.symbol
+                  },
+                  mode: 'CASH_FLOW_MATCHED'
+                })
+              )
+            : of<RequestResult<AnalyticsBenchmarkResponse>>({
+                data: null,
+                failed: false
+              });
+        }),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe((benchmark) => {
+        this.cashFlowMatchedResult =
+          benchmark.data?.mode === 'CASH_FLOW_MATCHED' ? benchmark.data : null;
+        this.isLoadingAdvanced = false;
+        this.changeDetectorRef.markForCheck();
+      });
   }
 
   public ngOnChanges() {
     if (!this.user) {
       return;
     }
-    this.performanceRefresh.next();
-    if (this.advancedLoaded) {
-      this.advancedRefresh.next();
+    const portfolioRequestKey = this.portfolioRequestKey();
+    const benchmarkRequestKey = this.benchmarkRequestKey(portfolioRequestKey);
+    const portfolioChanged =
+      portfolioRequestKey !== this.lastPortfolioRequestKey;
+    const benchmarkChanged =
+      benchmarkRequestKey !== this.lastBenchmarkRequestKey;
+    this.lastPortfolioRequestKey = portfolioRequestKey;
+    this.lastBenchmarkRequestKey = benchmarkRequestKey;
+
+    if (portfolioChanged) {
+      this.performanceRefresh.next();
+      this.benchmarkRefresh.next();
+      if (this.advancedLoaded) {
+        this.advancedRefresh.next();
+      }
+    } else if (benchmarkChanged) {
+      this.benchmarkRefresh.next();
+      if (this.advancedLoaded) {
+        this.cashFlowMatchedRefresh.next();
+      }
     }
   }
 
@@ -340,6 +401,27 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
       filters: this.filters.filter(({ type }) => type === 'ACCOUNT'),
       range: this.user.settings.dateRange ?? DEFAULT_DATE_RANGE
     };
+  }
+
+  private benchmarkRequestKey(portfolioRequestKey: string) {
+    return JSON.stringify({
+      benchmark: this.benchmark?.dataSource
+        ? `${this.benchmark.dataSource}:${this.benchmark.symbol ?? ''}`
+        : null,
+      portfolioRequestKey
+    });
+  }
+
+  private portfolioRequestKey() {
+    const input = this.requestInput();
+    return JSON.stringify({
+      accountIds: [
+        ...new Set(input.filters.map(({ id }) => id).filter(Boolean))
+      ].sort(),
+      baseCurrency: input.baseCurrency,
+      customDateRange: input.customDateRange,
+      range: input.range
+    });
   }
 
   private safe<T>(request: Observable<unknown>): Observable<RequestResult<T>> {

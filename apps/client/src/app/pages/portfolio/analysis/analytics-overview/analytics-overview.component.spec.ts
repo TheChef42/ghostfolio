@@ -230,7 +230,7 @@ describe('GfAnalyticsOverviewComponent', () => {
     initialize();
     const controls = Array.from(
       fixture.nativeElement.querySelectorAll('gf-analytics-info')
-    ) as Array<HTMLElement & { text: string }>;
+    ) as (HTMLElement & { text: string })[];
     const labels = controls.map((control) =>
       control.getAttribute('accessibleLabel')
     );
@@ -288,6 +288,58 @@ describe('GfAnalyticsOverviewComponent', () => {
         range: 'custom'
       })
     );
+  });
+
+  it('issues each initial analytics request only once', () => {
+    initialize();
+    expect(
+      dataService.fetchAnalyticsPerformance.mock.calls.filter(
+        ([input]) => input.method === 'TWR'
+      )
+    ).toHaveLength(1);
+    expect(
+      dataService.fetchAnalyticsPerformance.mock.calls.filter(
+        ([input]) => input.method === 'XIRR'
+      )
+    ).toHaveLength(1);
+    expect(dataService.fetchAnalyticsBenchmark).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not refetch for an equivalent account scope or unrelated filter order', () => {
+    initialize();
+    dataService.fetchAnalyticsPerformance.mockClear();
+    dataService.fetchAnalyticsBenchmark.mockClear();
+
+    fixture.componentRef.setInput('filters', [
+      { id: 'another-ignored-tag', type: 'TAG' },
+      { id: 'account-1', type: 'ACCOUNT' },
+      { id: 'account-1', type: 'ACCOUNT' }
+    ]);
+    fixture.detectChanges();
+
+    expect(dataService.fetchAnalyticsPerformance).not.toHaveBeenCalled();
+    expect(dataService.fetchAnalyticsBenchmark).not.toHaveBeenCalled();
+  });
+
+  it('changes benchmark without refetching portfolio metrics', () => {
+    initialize();
+    (component as any).onAdvancedOpened();
+    dataService.fetchAnalyticsPerformance.mockClear();
+    dataService.fetchAnalyticsBenchmark.mockClear();
+
+    fixture.componentRef.setInput('benchmark', {
+      ...benchmark,
+      id: 'benchmark-2',
+      symbol: 'OTHER'
+    });
+    fixture.detectChanges();
+
+    expect(dataService.fetchAnalyticsPerformance).not.toHaveBeenCalled();
+    expect(
+      dataService.fetchAnalyticsBenchmark.mock.calls.map(
+        ([input]) => input.mode
+      )
+    ).toEqual(['TWR', 'CASH_FLOW_MATCHED']);
   });
 
   it('renders aligned benchmark TWR data and an unknown-basis note', () => {

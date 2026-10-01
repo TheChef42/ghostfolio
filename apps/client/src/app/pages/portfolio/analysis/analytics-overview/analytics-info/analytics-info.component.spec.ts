@@ -41,7 +41,7 @@ describe('GfAnalyticsInfoComponent', () => {
   it('opens explanatory copy from an accessible click target', () => {
     const button = (fixture.nativeElement as HTMLElement).querySelector(
       'button'
-    ) as HTMLButtonElement;
+    )!;
     expect(button.getAttribute('aria-label')).toBe('About XIRR');
 
     button.click();

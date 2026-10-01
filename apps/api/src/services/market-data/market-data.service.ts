@@ -15,15 +15,23 @@ import {
 
 @Injectable()
 export class MarketDataService {
+  private revision = 0;
+
   public constructor(private readonly prismaService: PrismaService) {}
 
   public async deleteMany({ dataSource, symbol }: AssetProfileIdentifier) {
-    return this.prismaService.marketData.deleteMany({
+    const result = await this.prismaService.marketData.deleteMany({
       where: {
         dataSource,
         symbol
       }
     });
+    this.revision++;
+    return result;
+  }
+
+  public getRevision() {
+    return this.revision;
   }
 
   public async get({
@@ -204,12 +212,14 @@ export class MarketDataService {
       },
       { timeout: DEFAULT_PROCESSOR_GATHER_HISTORICAL_MARKET_DATA_TIMEOUT }
     );
+    this.revision++;
   }
 
   public updateAssetProfileIdentifier(
     oldAssetProfileIdentifier: AssetProfileIdentifier,
     newAssetProfileIdentifier: AssetProfileIdentifier
   ) {
+    this.revision++;
     return this.prismaService.marketData.updateMany({
       data: {
         dataSource: newAssetProfileIdentifier.dataSource,
@@ -258,6 +268,8 @@ export class MarketDataService {
       }
     );
 
-    return this.prismaService.$transaction(upsertPromises);
+    const result = await this.prismaService.$transaction(upsertPromises);
+    this.revision++;
+    return result;
   }
 }

@@ -103,4 +103,57 @@ describe('HistoricalValuationResolverService', () => {
       })
     ).resolves.toBeNull();
   });
+
+  it('loads a deduplicated bounded series once and resolves prior closes in memory', async () => {
+    marketDataItems.mockImplementation(({ take }) => {
+      if (take === 1) return Promise.resolve([]);
+      return Promise.resolve([
+        {
+          dataSource: DataSource.YAHOO,
+          date: new Date('2024-01-01T00:00:00.000Z'),
+          marketPrice: 100,
+          state: MarketDataState.CLOSE,
+          symbol: 'TEST'
+        },
+        {
+          dataSource: DataSource.YAHOO,
+          date: new Date('2024-01-04T00:00:00.000Z'),
+          marketPrice: 110,
+          state: MarketDataState.CLOSE,
+          symbol: 'TEST'
+        }
+      ]);
+    });
+
+    const prepared = await service.prepare({
+      baseCurrency: 'DKK',
+      currencies: ['DKK'],
+      from: '2024-01-01',
+      prices: [
+        { dataSource: DataSource.YAHOO, symbol: 'TEST' },
+        { dataSource: DataSource.YAHOO, symbol: 'TEST' }
+      ],
+      to: '2024-01-07'
+    });
+
+    await expect(
+      prepared.resolvePrice({
+        dataSource: DataSource.YAHOO,
+        date: '2024-01-03',
+        symbol: 'TEST'
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({ sourceDate: '2024-01-01', value: '100' })
+    );
+    await expect(
+      prepared.resolvePrice({
+        dataSource: DataSource.YAHOO,
+        date: '2024-01-05',
+        symbol: 'TEST'
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({ sourceDate: '2024-01-04', value: '110' })
+    );
+    expect(marketDataItems).toHaveBeenCalledTimes(2);
+  });
 });

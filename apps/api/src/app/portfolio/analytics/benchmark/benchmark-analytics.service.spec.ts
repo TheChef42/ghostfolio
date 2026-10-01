@@ -30,17 +30,15 @@ describe('BenchmarkAnalyticsService', () => {
       const cashFlowMatchedSimulator = {
         calculate: jest.fn().mockReturnValue(expected)
       };
-      const twrAdapter = {
-        fromTimeline: jest.fn().mockReturnValue('prepared')
+      const twrAnalyticsService = {
+        getFromTimeline: jest.fn().mockReturnValue('twr')
       };
-      const twrCalculator = { calculate: jest.fn().mockReturnValue('twr') };
       const twrComparator = { calculate: jest.fn().mockReturnValue(expected) };
       const service = new BenchmarkAnalyticsService(
         benchmarkAdapter as never,
         cashFlowMatchedSimulator as never,
         timelineService as never,
-        twrAdapter as never,
-        twrCalculator as never,
+        twrAnalyticsService as never,
         twrComparator as never
       );
 
@@ -71,6 +69,27 @@ describe('BenchmarkAnalyticsService', () => {
     }
   );
 
+  it('reuses one prepared benchmark timeline across comparison modes', async () => {
+    const timeline = { timeline: [] };
+    const prepare = jest.fn().mockResolvedValue({ points: [] });
+    const service = new BenchmarkAnalyticsService(
+      { prepare } as never,
+      {
+        calculate: jest.fn().mockReturnValue({ mode: 'CASH_FLOW_MATCHED' })
+      } as never,
+      { getTimeline: jest.fn().mockResolvedValue(timeline) } as never,
+      { getFromTimeline: jest.fn().mockReturnValue({}) } as never,
+      { calculate: jest.fn().mockReturnValue({ mode: 'TWR' }) } as never
+    );
+
+    await Promise.all([
+      service.getComparison(input),
+      service.getComparison({ ...input, mode: 'CASH_FLOW_MATCHED' })
+    ]);
+
+    expect(prepare).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps portfolio TWR and XIRR available when benchmark pricing is unavailable', async () => {
     const timeline = {
       coverage: { reasons: [], status: 'COMPLETE' },
@@ -90,6 +109,11 @@ describe('BenchmarkAnalyticsService', () => {
     const twrCalculator = {
       calculate: jest.fn().mockReturnValue(portfolioResult)
     };
+    const portfolioService = new TwrAnalyticsService(
+      twrCalculator as never,
+      twrAdapter as never,
+      timelineService as never
+    );
     const benchmarkService = new BenchmarkAnalyticsService(
       {
         prepare: jest.fn().mockResolvedValue({
@@ -102,19 +126,13 @@ describe('BenchmarkAnalyticsService', () => {
       } as never,
       { calculate: jest.fn() } as never,
       timelineService as never,
-      twrAdapter as never,
-      twrCalculator as never,
+      portfolioService,
       {
         calculate: jest.fn().mockReturnValue({
           benchmarkPeriodReturn: null,
           reason: 'MISSING_BENCHMARK_PRICE'
         })
       } as never
-    );
-    const portfolioService = new TwrAnalyticsService(
-      twrCalculator as never,
-      twrAdapter as never,
-      timelineService as never
     );
     const xirrResult = {
       annualizedReturn: 0.12,

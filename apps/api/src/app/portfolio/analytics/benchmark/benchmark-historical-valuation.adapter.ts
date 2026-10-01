@@ -7,7 +7,10 @@ import { Big } from 'big.js';
 
 import { HistoricalValuationResolverService } from '../historical-valuation-resolver.service';
 import { VALUATION_MAX_STALENESS_DAYS } from '../valuation-timeline.types';
-import type { PortfolioValuationTimeline } from '../valuation-timeline.types';
+import type {
+  HistoricalValueResolver,
+  PortfolioValuationTimeline
+} from '../valuation-timeline.types';
 import type {
   BenchmarkCoverageReason,
   BenchmarkIdentity,
@@ -73,8 +76,19 @@ export class BenchmarkHistoricalValuationAdapter {
     }
 
     const dates = [...new Set(timeline.timeline.map(({ date }) => date))];
+    const resolver = this.historicalResolver.prepare
+      ? await this.historicalResolver.prepare({
+          baseCurrency: timeline.baseCurrency,
+          currencies: [benchmark.currency],
+          from: dates[0],
+          prices: [{ dataSource: benchmark.dataSource, symbol }],
+          to: dates.at(-1)!
+        })
+      : this.historicalResolver;
     const points = await Promise.all(
-      dates.map((date) => this.resolvePoint({ benchmark, date, timeline }))
+      dates.map((date) =>
+        this.resolvePoint({ benchmark, date, resolver, timeline })
+      )
     );
     for (const point of points) {
       this.collectReasons(point, reasons);
@@ -96,19 +110,21 @@ export class BenchmarkHistoricalValuationAdapter {
   private async resolvePoint({
     benchmark,
     date,
+    resolver,
     timeline
   }: {
     benchmark: BenchmarkIdentity;
     date: string;
+    resolver: HistoricalValueResolver;
     timeline: PortfolioValuationTimeline;
   }): Promise<BenchmarkValuationPoint> {
     const [nativePrice, fx] = await Promise.all([
-      this.historicalResolver.resolvePrice({
+      resolver.resolvePrice({
         dataSource: benchmark.dataSource,
         date,
         symbol: benchmark.symbol
       }),
-      this.historicalResolver.resolveFx({
+      resolver.resolveFx({
         date,
         fromCurrency: benchmark.currency,
         toCurrency: timeline.baseCurrency

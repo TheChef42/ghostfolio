@@ -147,6 +147,14 @@ export interface TimelineInputs {
 }
 
 export interface HistoricalValueResolver {
+  getRevision?(): number;
+  prepare?(input: {
+    baseCurrency: string;
+    currencies: string[];
+    from: string;
+    prices: { dataSource: DataSource; symbol: string }[];
+    to: string;
+  }): Promise<HistoricalValueResolver>;
   resolveFx(input: {
     date: string;
     fromCurrency: string;

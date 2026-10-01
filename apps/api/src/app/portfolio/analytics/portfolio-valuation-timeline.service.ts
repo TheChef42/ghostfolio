@@ -1,9 +1,11 @@
 import { resolveExternalCashFlows } from '@ghostfolio/api/app/external-cash-flow/resolve-external-cash-flows';
-import { WHERE_ACCOUNT_NOT_EXCLUDED } from '@ghostfolio/api/helper/account.helper';
+import { PortfolioChangedEvent } from '@ghostfolio/api/events/portfolio-changed.event';
 import { WHERE_ACTIVITY_NOT_DRAFT } from '@ghostfolio/api/helper/activity.helper';
 import { PrismaService } from '@ghostfolio/api/services/prisma/prisma.service';
+import { TAG_ID_EXCLUDE_FROM_ANALYSIS } from '@ghostfolio/common/config';
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import {
   Account,
   AccountBalance,
@@ -36,10 +38,30 @@ import {
 } from './valuation-timeline.types';
 
 const DAY_IN_MILLISECONDS = 86_400_000;
+const TIMELINE_CACHE_MAX_ENTRIES = 8;
+const TIMELINE_CACHE_TTL_MILLISECONDS = 30_000;
 type OrderWithProfile = Order & { SymbolProfile: SymbolProfile };
+
+interface TimelineCacheEntry {
+  expiresAt: number;
+  timeline: PortfolioValuationTimeline;
+  userId: string;
+}
 
 @Injectable()
 export class PortfolioValuationTimelineService {
+  private readonly cache = new Map<string, TimelineCacheEntry>();
+  private readonly generations = new Map<string, number>();
+  private readonly inFlight = new Map<
+    string,
+    Promise<PortfolioValuationTimeline>
+  >();
+  private readonly logger = new Logger(PortfolioValuationTimelineService.name);
+  private readonly reasonIdentities = new WeakMap<
+    ValuationCoverageReason[],
+    Set<string>
+  >();
+
   public constructor(
     private readonly historicalResolver: HistoricalValuationResolverService,
     private readonly performanceScopeResolver: PerformanceScopeResolver,
@@ -59,12 +81,99 @@ export class PortfolioValuationTimelineService {
     to: string;
     userId: string;
   }): Promise<PortfolioValuationTimeline> {
-    const [ownedAccounts, defaultAccounts] = await Promise.all([
-      this.prismaService.account.findMany({ where: { userId } }),
-      this.prismaService.account.findMany({
-        where: { userId, ...WHERE_ACCOUNT_NOT_EXCLUDED }
+    this.pruneCache();
+    const generation = this.generations.get(userId) ?? 0;
+    const marketDataRevision = this.historicalResolver.getRevision?.() ?? 0;
+    const key = JSON.stringify({
+      accountIds: [...new Set(requestedAccountIds ?? [])].sort(),
+      baseCurrency,
+      from,
+      generation,
+      marketDataRevision,
+      methodologyVersion: VALUATION_METHODOLOGY_VERSION,
+      timezone: 'UTC',
+      to,
+      userId
+    });
+    const cached = this.cache.get(key);
+    if (cached) {
+      this.logger.debug('analytics.timeline cache=HIT');
+      return cached.timeline;
+    }
+    const existing = this.inFlight.get(key);
+    if (existing) {
+      this.logger.debug('analytics.timeline cache=COALESCED');
+      return existing;
+    }
+
+    this.logger.debug('analytics.timeline cache=MISS');
+    const promise = this.loadTimeline({
+      accountIds: requestedAccountIds,
+      baseCurrency,
+      from,
+      to,
+      userId
+    })
+      .then((timeline) => {
+        if (
+          (this.generations.get(userId) ?? 0) === generation &&
+          (this.historicalResolver.getRevision?.() ?? 0) === marketDataRevision
+        ) {
+          this.cache.set(key, {
+            expiresAt: Date.now() + TIMELINE_CACHE_TTL_MILLISECONDS,
+            timeline,
+            userId
+          });
+          this.limitCacheSize();
+        }
+        return timeline;
       })
-    ]);
+      .finally(() => {
+        if (this.inFlight.get(key) === promise) {
+          this.inFlight.delete(key);
+        }
+      });
+    this.inFlight.set(key, promise);
+    return promise;
+  }
+
+  @OnEvent(PortfolioChangedEvent.getName())
+  public handlePortfolioChanged(event: PortfolioChangedEvent) {
+    this.invalidateForUser(event.getUserId());
+  }
+
+  public invalidateForUser(userId: string) {
+    this.generations.set(userId, (this.generations.get(userId) ?? 0) + 1);
+    for (const [key, entry] of this.cache) {
+      if (entry.userId === userId) {
+        this.cache.delete(key);
+      }
+    }
+  }
+
+  private async loadTimeline({
+    accountIds: requestedAccountIds,
+    baseCurrency,
+    from,
+    to,
+    userId
+  }: {
+    accountIds?: string[];
+    baseCurrency: string;
+    from: string;
+    to: string;
+    userId: string;
+  }): Promise<PortfolioValuationTimeline> {
+    const totalStartedAt = performance.now();
+    const databaseStartedAt = performance.now();
+    const ownedAccounts = await this.prismaService.account.findMany({
+      include: { tags: true },
+      where: { userId }
+    });
+    const defaultAccounts = ownedAccounts.filter(
+      ({ tags }) =>
+        !tags?.some(({ tagId }) => tagId === TAG_ID_EXCLUDE_FROM_ANALYSIS)
+    );
     const scope = this.performanceScopeResolver.resolve({
       accessibleAccountIds: ownedAccounts.map(({ id }) => id),
       defaultAccountIds: defaultAccounts.map(({ id }) => id),
@@ -95,8 +204,9 @@ export class PortfolioValuationTimelineService {
       this.prismaService.externalCashFlow.findMany({
         orderBy: [{ date: 'asc' }, { id: 'asc' }],
         // Complete transfer groups are required even when the counterpart is
-        // outside the requested interval.
-        where: { userId }
+        // outside the selected account scope. Future flows cannot affect the
+        // requested closing state and are intentionally excluded.
+        where: { userId, date: { lte: closingDate } }
       }),
       this.prismaService.order.findMany({
         include: { SymbolProfile: true },
@@ -113,21 +223,62 @@ export class PortfolioValuationTimelineService {
           where: { symbolProfileId: { in: profileIds } }
         })
       : [];
-
-    return this.buildTimeline({
+    const databaseMs = performance.now() - databaseStartedAt;
+    const activities = this.normalizeActivities(orders, splits);
+    const preparedResolver = this.historicalResolver.prepare
+      ? await this.historicalResolver.prepare({
+          baseCurrency,
+          currencies: [
+            ...accounts.map(({ currency }) => currency ?? baseCurrency),
+            ...activities.map(({ currency }) => currency),
+            ...flows
+              .filter(({ accountId }) => scope.accountIds.includes(accountId))
+              .map(({ currency }) => currency)
+          ],
+          from: this.shiftDate(from, -1),
+          prices: activities.map(({ dataSource, symbol }) => ({
+            dataSource,
+            symbol
+          })),
+          to
+        })
+      : this.historicalResolver;
+    const buildStartedAt = performance.now();
+    const timeline = await this.buildTimeline({
       baseCurrency,
       from,
       inputs: {
         accounts,
-        activities: this.normalizeActivities(orders, splits),
+        activities,
         balances,
         externalCashFlows: flows
       },
-      resolver: this.historicalResolver,
+      resolver: preparedResolver,
       scope,
       to,
       userId
     });
+    this.logger.debug(
+      `analytics.timeline accounts=${accounts.length} days=${timeline.timeline.length} activities=${orders.length} flows=${flows.length} symbols=${profileIds.length} dbMs=${databaseMs.toFixed(1)} buildMs=${(performance.now() - buildStartedAt).toFixed(1)} totalMs=${(performance.now() - totalStartedAt).toFixed(1)}`
+    );
+    return timeline;
+  }
+
+  private limitCacheSize() {
+    while (this.cache.size > TIMELINE_CACHE_MAX_ENTRIES) {
+      const oldestKey = this.cache.keys().next().value as string | undefined;
+      if (!oldestKey) break;
+      this.cache.delete(oldestKey);
+    }
+  }
+
+  private pruneCache() {
+    const now = Date.now();
+    for (const [key, entry] of this.cache) {
+      if (entry.expiresAt <= now) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   public async buildTimeline({
@@ -831,14 +982,25 @@ export class PortfolioValuationTimelineService {
     reason: ValuationCoverageReason
   ) {
     const identity = JSON.stringify(reason);
-    if (!reasons.some((item) => JSON.stringify(item) === identity))
+    let identities = this.reasonIdentities.get(reasons);
+    if (!identities) {
+      identities = new Set(reasons.map((item) => JSON.stringify(item)));
+      this.reasonIdentities.set(reasons, identities);
+    }
+    if (!identities.has(identity)) {
+      identities.add(identity);
       reasons.push(reason);
+    }
   }
 
   private groupBy<T>(items: T[], key: (item: T) => string) {
     const result = new Map<string, T[]>();
-    for (const item of items)
-      result.set(key(item), [...(result.get(key(item)) ?? []), item]);
+    for (const item of items) {
+      const itemKey = key(item);
+      const group = result.get(itemKey);
+      if (group) group.push(item);
+      else result.set(itemKey, [item]);
+    }
     return result;
   }
 
