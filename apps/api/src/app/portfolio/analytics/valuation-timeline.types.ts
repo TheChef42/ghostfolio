@@ -27,9 +27,15 @@ export interface ValuationCoverageReason {
   assetId?: string;
   code: ValuationCoverageReasonCode;
   currency?: string;
+  dataSource?: DataSource;
   date?: string;
+  difference?: string;
+  expected?: string;
   message: string;
+  reconstructed?: string;
   sourceDate?: string;
+  symbol?: string;
+  tolerance?: string;
 }
 
 export interface ValuationSource {
@@ -74,10 +80,19 @@ export interface CashReconciliationDiagnostic {
   accountId: string;
   currency: string;
   date: string;
+  difference: string;
   observed: string;
   reconstructed: string;
   residual: string;
   status: 'MATCH' | 'MISMATCH';
+  tolerance: string;
+}
+
+export interface OpeningCashDiagnostic {
+  accountId: string;
+  currency: string;
+  date: string;
+  source: 'ACCOUNT_BALANCE' | 'INFERRED_ZERO_FIRST_FUNDING';
 }
 
 export interface PortfolioValuationTimeline {
@@ -100,6 +115,7 @@ export interface PortfolioValuationTimeline {
   };
   methodologyVersion: typeof VALUATION_METHODOLOGY_VERSION;
   opening: ValuationPoint;
+  openingCash: OpeningCashDiagnostic[];
   reconciliations: CashReconciliationDiagnostic[];
   scope: {
     accountIds: string[];

@@ -68,6 +68,7 @@ function timeline({
     interval: { from: '2024-01-01', openingDate, to },
     methodologyVersion: 'phase-4a-v1',
     opening: point(openingDate, 'OPENING', opening),
+    openingCash: [],
     reconciliations: [],
     scope: { accountIds: ['a'], identity: 'a', type: 'WHOLE_PORTFOLIO' },
     timeline: []

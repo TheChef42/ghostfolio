@@ -115,11 +115,12 @@ describe('PortfolioValuationTimelineService', () => {
     fixture: TimelineInputs,
     historicalResolver: HistoricalValueResolver = resolver(),
     accountIds = fixture.accounts.map(({ id }) => id),
-    scopeType: 'ACCOUNT_SUBSET' | 'WHOLE_PORTFOLIO' = 'WHOLE_PORTFOLIO'
+    scopeType: 'ACCOUNT_SUBSET' | 'WHOLE_PORTFOLIO' = 'WHOLE_PORTFOLIO',
+    interval = { from, to }
   ) {
     return service.buildTimeline({
       baseCurrency: 'DKK',
-      from,
+      from: interval.from,
       inputs: fixture,
       resolver: historicalResolver,
       scope: {
@@ -127,7 +128,7 @@ describe('PortfolioValuationTimelineService', () => {
         identity: [...accountIds].sort().join(','),
         type: scopeType
       },
-      to,
+      to: interval.to,
       userId
     });
   }
@@ -271,6 +272,47 @@ describe('PortfolioValuationTimelineService', () => {
     );
   });
 
+  it('infers zero opening cash when explicit funding is the first economic event', async () => {
+    const result = await build(
+      inputs({
+        balances: [],
+        externalCashFlows: [
+          flow(ExternalCashFlowType.DEPOSIT, '100', 'a', from)
+        ]
+      })
+    );
+
+    expect(result.opening.cashValueInBaseCurrency).toBe('0');
+    expect(result.closing.cashValueInBaseCurrency).toBe('100');
+    expect(result.coverage.status).toBe('COMPLETE');
+    expect(result.openingCash).toContainEqual({
+      accountId: 'a',
+      currency: 'DKK',
+      date: '2023-12-31',
+      source: 'INFERRED_ZERO_FIRST_FUNDING'
+    });
+  });
+
+  it('keeps opening cash missing when earlier economic history is ambiguous', async () => {
+    const result = await build(
+      inputs({
+        activities: [activity(Type.BUY, '2023-12-30')],
+        balances: [],
+        externalCashFlows: [
+          flow(ExternalCashFlowType.DEPOSIT, '100', 'a', from)
+        ]
+      })
+    );
+
+    expect(result.opening.cashValueInBaseCurrency).toBeNull();
+    expect(result.coverage.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'MISSING_OPENING_CASH' })
+      ])
+    );
+    expect(result.openingCash).toEqual([]);
+  });
+
   it('does not omit an asset with a missing historical price', async () => {
     const result = await build(
       inputs({
@@ -282,7 +324,11 @@ describe('PortfolioValuationTimelineService', () => {
     expect(result.opening.holdings[0].valueInBaseCurrency).toBeNull();
     expect(result.coverage.reasons).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ code: 'MISSING_PRICE' })
+        expect.objectContaining({
+          code: 'MISSING_PRICE',
+          dataSource: DataSource.YAHOO,
+          symbol: 'TEST'
+        })
       ])
     );
   });
@@ -344,6 +390,179 @@ describe('PortfolioValuationTimelineService', () => {
       expect.objectContaining({ residual: '-10', status: 'MISMATCH' })
     );
     expect(result.externalFlows).toEqual([]);
+  });
+
+  it.each([
+    ['100.01', 'MATCH', 'COMPLETE'],
+    ['100.02', 'MISMATCH', 'INCOMPLETE']
+  ] as const)(
+    'reconciles DKK checkpoint %s at the native minor-unit boundary',
+    async (checkpoint, reconciliationStatus, coverageStatus) => {
+      const result = await build(
+        inputs({
+          balances: [
+            { accountId: 'a', date: openingDate, value: 100 },
+            {
+              accountId: 'a',
+              date: new Date(`${from}T00:00:00.000Z`),
+              value: Number(checkpoint)
+            }
+          ]
+        })
+      );
+
+      expect(result.reconciliations[0]).toEqual(
+        expect.objectContaining({
+          difference: checkpoint === '100.01' ? '0.01' : '0.02',
+          status: reconciliationStatus,
+          tolerance: '0.01'
+        })
+      );
+      expect(result.coverage.status).toBe(coverageStatus);
+      if (reconciliationStatus === 'MISMATCH') {
+        expect(result.coverage.reasons).toContainEqual(
+          expect.objectContaining({
+            code: 'CASH_RECONCILIATION_MISMATCH',
+            difference: '0.02',
+            expected: '100.02',
+            reconstructed: '100',
+            tolerance: '0.01'
+          })
+        );
+      }
+    }
+  );
+
+  it('accepts a one-cent native residual after EUR cash conversion', async () => {
+    const convertedFlow = {
+      ...flow(ExternalCashFlowType.DEPOSIT, '16.35', 'a', from),
+      currency: 'EUR'
+    };
+    const result = await build(
+      inputs({
+        balances: [
+          { accountId: 'a', date: openingDate, value: 0 },
+          {
+            accountId: 'a',
+            date: new Date(`${from}T00:00:00.000Z`),
+            value: 122.22
+          }
+        ],
+        externalCashFlows: [convertedFlow]
+      }),
+      {
+        resolveFx: async ({ date, fromCurrency }) =>
+          source(date, fromCurrency === 'EUR' ? '7.475' : '1'),
+        resolvePrice: async ({ date }) => source(date, '40')
+      }
+    );
+
+    expect(result.reconciliations[0]).toEqual(
+      expect.objectContaining({
+        difference: '0.00375',
+        status: 'MATCH',
+        tolerance: '0.01'
+      })
+    );
+    expect(result.coverage.status).toBe('COMPLETE');
+  });
+
+  it('requires prices only after a late acquisition in a one-year interval', async () => {
+    const resolvePrice = jest.fn(async ({ date }) => source(date, '40'));
+    const result = await build(
+      inputs({
+        activities: [activity(Type.BUY, '2024-12-25')],
+        balances: [
+          {
+            accountId: 'a',
+            date: new Date('2023-12-31T00:00:00.000Z'),
+            value: 100
+          }
+        ]
+      }),
+      {
+        resolveFx: async ({ date }) => source(date),
+        resolvePrice
+      },
+      ['a'],
+      'ACCOUNT_SUBSET',
+      { from: '2024-01-01', to: '2024-12-31' }
+    );
+
+    expect(result.coverage.status).toBe('COMPLETE');
+    expect(resolvePrice).toHaveBeenCalled();
+    expect(
+      resolvePrice.mock.calls.every(([request]) => request.date >= '2024-12-25')
+    ).toBe(true);
+  });
+
+  it('does not require a price after complete liquidation', async () => {
+    const resolvePrice = jest.fn(async ({ date }) => source(date, '40'));
+    await build(
+      inputs({
+        activities: [
+          activity(Type.BUY, '2024-01-01'),
+          activity(Type.SELL, '2024-01-02')
+        ]
+      }),
+      {
+        resolveFx: async ({ date }) => source(date),
+        resolvePrice
+      },
+      ['a'],
+      'ACCOUNT_SUBSET',
+      { from: '2024-01-01', to: '2024-01-04' }
+    );
+
+    expect(resolvePrice.mock.calls.map(([request]) => request.date)).toEqual([
+      '2024-01-01'
+    ]);
+  });
+
+  it('requires prices only within separate holding episodes after re-entry', async () => {
+    const resolvePrice = jest.fn(async ({ date }) => source(date, '40'));
+    await build(
+      inputs({
+        activities: [
+          activity(Type.BUY, '2024-01-01'),
+          activity(Type.SELL, '2024-01-02'),
+          activity(Type.BUY, '2024-01-04')
+        ]
+      }),
+      {
+        resolveFx: async ({ date }) => source(date),
+        resolvePrice
+      },
+      ['a'],
+      'ACCOUNT_SUBSET',
+      { from: '2024-01-01', to: '2024-01-05' }
+    );
+
+    expect(resolvePrice.mock.calls.map(([request]) => request.date)).toEqual([
+      '2024-01-01',
+      '2024-01-04',
+      '2024-01-05'
+    ]);
+  });
+
+  it('does not inherit missing prices from an excluded account', async () => {
+    const resolvePrice = jest.fn(async () => null);
+    const result = await build(
+      inputs({
+        activities: [
+          activity(Type.BUY, from, { accountId: 'excluded', assetId: 'x' })
+        ]
+      }),
+      {
+        resolveFx: async ({ date }) => source(date),
+        resolvePrice
+      },
+      ['a'],
+      'ACCOUNT_SUBSET'
+    );
+
+    expect(resolvePrice).not.toHaveBeenCalled();
+    expect(result.coverage.status).toBe('COMPLETE');
   });
 
   it('keeps the economic opening before the inclusive from-date flow', async () => {

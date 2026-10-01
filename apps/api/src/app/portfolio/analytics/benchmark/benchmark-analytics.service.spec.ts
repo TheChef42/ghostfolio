@@ -1,5 +1,7 @@
 import { DataSource } from '@prisma/client';
 
+import { TwrAnalyticsService } from '../twr/twr-analytics.service';
+import { XirrAnalyticsService } from '../xirr/xirr-analytics.service';
 import { BenchmarkAnalyticsService } from './benchmark-analytics.service';
 
 describe('BenchmarkAnalyticsService', () => {
@@ -68,4 +70,70 @@ describe('BenchmarkAnalyticsService', () => {
       }
     }
   );
+
+  it('keeps portfolio TWR and XIRR available when benchmark pricing is unavailable', async () => {
+    const timeline = {
+      coverage: { reasons: [], status: 'COMPLETE' },
+      timeline: []
+    };
+    const portfolioResult = {
+      method: 'TWR',
+      periodReturn: '0.1',
+      reason: null
+    };
+    const timelineService = {
+      getTimeline: jest.fn().mockResolvedValue(timeline)
+    };
+    const twrAdapter = {
+      fromTimeline: jest.fn().mockReturnValue({ points: [] })
+    };
+    const twrCalculator = {
+      calculate: jest.fn().mockReturnValue(portfolioResult)
+    };
+    const benchmarkService = new BenchmarkAnalyticsService(
+      {
+        prepare: jest.fn().mockResolvedValue({
+          coverage: {
+            reasons: [{ code: 'MISSING_BENCHMARK_PRICE' }],
+            status: 'INCOMPLETE'
+          },
+          points: []
+        })
+      } as never,
+      { calculate: jest.fn() } as never,
+      timelineService as never,
+      twrAdapter as never,
+      twrCalculator as never,
+      {
+        calculate: jest.fn().mockReturnValue({
+          benchmarkPeriodReturn: null,
+          reason: 'MISSING_BENCHMARK_PRICE'
+        })
+      } as never
+    );
+    const portfolioService = new TwrAnalyticsService(
+      twrCalculator as never,
+      twrAdapter as never,
+      timelineService as never
+    );
+    const xirrResult = {
+      annualizedReturn: 0.12,
+      method: 'XIRR',
+      reason: null
+    };
+    const xirrService = new XirrAnalyticsService(
+      { calculate: jest.fn().mockReturnValue(xirrResult) } as never,
+      { fromTimeline: jest.fn().mockReturnValue({ schedule: [] }) } as never,
+      timelineService as never
+    );
+
+    await expect(benchmarkService.getComparison(input)).resolves.toEqual(
+      expect.objectContaining({ reason: 'MISSING_BENCHMARK_PRICE' })
+    );
+    await expect(portfolioService.getPerformance(input)).resolves.toBe(
+      portfolioResult
+    );
+    await expect(xirrService.getPerformance(input)).resolves.toBe(xirrResult);
+    expect(timeline.coverage.status).toBe('COMPLETE');
+  });
 });

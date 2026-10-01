@@ -74,6 +74,7 @@ function timeline({
     },
     methodologyVersion: 'phase-4a-v1',
     opening: points[0],
+    openingCash: [],
     reconciliations: [],
     scope: { accountIds: ['a'], identity: 'a', type: 'WHOLE_PORTFOLIO' },
     timeline: points

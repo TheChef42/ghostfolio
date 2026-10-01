@@ -14,11 +14,13 @@ import {
 } from '@prisma/client';
 import { Big } from 'big.js';
 
+import { getCurrencyReconciliationTolerance } from './currency-reconciliation.helper';
 import { HistoricalValuationResolverService } from './historical-valuation-resolver.service';
 import { PerformanceScopeResolver } from './performance-scope.resolver';
 import type {
   CashReconciliationDiagnostic,
   HistoricalValueResolver,
+  OpeningCashDiagnostic,
   PortfolioValuationTimeline,
   ScopeExternalFlow,
   TimelineActivity,
@@ -34,8 +36,6 @@ import {
 } from './valuation-timeline.types';
 
 const DAY_IN_MILLISECONDS = 86_400_000;
-const RECONCILIATION_TOLERANCE = new Big('0.00000001');
-
 type OrderWithProfile = Order & { SymbolProfile: SymbolProfile };
 
 @Injectable()
@@ -154,8 +154,15 @@ export class PortfolioValuationTimelineService {
     const openingDate = this.shiftDate(from, -1);
     const reasons: ValuationCoverageReason[] = [];
     const reconciliations: CashReconciliationDiagnostic[] = [];
+    const openingCash: OpeningCashDiagnostic[] = [];
     const accountById = new Map(
       inputs.accounts.map((account) => [account.id, account])
+    );
+    const scopedAccountIds = new Set(accountById.keys());
+    const scopedActivities = inputs.activities.filter(
+      ({ accountId }) =>
+        (accountId === null && scope.type === 'WHOLE_PORTFOLIO') ||
+        (accountId !== null && scopedAccountIds.has(accountId))
     );
     const quantities = new Map<string, Big>();
     const assetById = new Map<string, TimelineActivity>();
@@ -164,7 +171,7 @@ export class PortfolioValuationTimelineService {
       inputs.balances,
       ({ accountId }) => accountId
     );
-    const activityByDate = this.groupBy(inputs.activities, ({ date }) =>
+    const activityByDate = this.groupBy(scopedActivities, ({ date }) =>
       this.date(date)
     );
     const flowByDate = this.groupBy(inputs.externalCashFlows, ({ date }) =>
@@ -201,7 +208,7 @@ export class PortfolioValuationTimelineService {
       return priceCache.get(key)!;
     };
 
-    for (const activity of inputs.activities) {
+    for (const activity of scopedActivities) {
       if (!activity.accountId && this.activityCashDelta(activity)) {
         this.addReason(reasons, {
           assetId: activity.assetId,
@@ -213,7 +220,7 @@ export class PortfolioValuationTimelineService {
       }
     }
 
-    for (const activity of inputs.activities.filter(
+    for (const activity of scopedActivities.filter(
       ({ date }) => this.date(date) <= openingDate
     )) {
       this.applyHolding(activity, quantities, assetById, reasons);
@@ -224,6 +231,16 @@ export class PortfolioValuationTimelineService {
         .filter(({ date }) => this.date(date) <= openingDate)
         .at(-1);
       if (!anchor) {
+        if (this.canInferZeroOpening({ accountId: account.id, from, inputs })) {
+          cash.set(account.id, new Big(0));
+          openingCash.push({
+            accountId: account.id,
+            currency: account.currency ?? baseCurrency,
+            date: openingDate,
+            source: 'INFERRED_ZERO_FIRST_FUNDING'
+          });
+          continue;
+        }
         cash.set(account.id, null);
         this.addReason(reasons, {
           accountId: account.id,
@@ -237,6 +254,12 @@ export class PortfolioValuationTimelineService {
       }
       cash.set(account.id, new Big(anchor.value.toString()));
       const anchorDate = this.date(anchor.date);
+      openingCash.push({
+        accountId: account.id,
+        currency: account.currency ?? baseCurrency,
+        date: anchorDate,
+        source: 'ACCOUNT_BALANCE'
+      });
       for (const date of this.dates(
         this.shiftDate(anchorDate, 1),
         openingDate
@@ -276,21 +299,29 @@ export class PortfolioValuationTimelineService {
           resolvePrice(asset, date),
           resolveFx(asset.currency, date)
         ]);
-        const priceUsable = this.sourceIsUsable(
-          price,
-          'PRICE',
-          assetId,
+        const priceUsable = this.sourceIsUsable({
           date,
-          reasons
-        );
-        const fxUsable = this.sourceIsUsable(
-          fx,
-          'FX',
-          assetId,
-          date,
+          diagnostic: {
+            assetId,
+            dataSource: asset.dataSource,
+            symbol: asset.symbol
+          },
+          kind: 'PRICE',
           reasons,
-          asset.currency
-        );
+          source: price
+        });
+        const fxUsable = this.sourceIsUsable({
+          date,
+          diagnostic: {
+            assetId,
+            currency: asset.currency,
+            dataSource: asset.dataSource,
+            symbol: asset.symbol
+          },
+          kind: 'FX',
+          reasons,
+          source: fx
+        });
         const value =
           quantity.gte(0) && priceUsable && fxUsable
             ? quantity.mul(price!.value).mul(fx!.value)
@@ -316,10 +347,19 @@ export class PortfolioValuationTimelineService {
           cashComplete = false;
           continue;
         }
+        if (accountCash.eq(0)) {
+          continue;
+        }
         const currency = account.currency ?? baseCurrency;
         const fx = await resolveFx(currency, date);
         if (
-          !this.sourceIsUsable(fx, 'FX', account.id, date, reasons, currency)
+          !this.sourceIsUsable({
+            date,
+            diagnostic: { accountId: account.id, currency },
+            kind: 'FX',
+            reasons,
+            source: fx
+          })
         ) {
           cashComplete = false;
         } else {
@@ -396,6 +436,7 @@ export class PortfolioValuationTimelineService {
       interval: { from, openingDate, to },
       methodologyVersion: VALUATION_METHODOLOGY_VERSION,
       opening,
+      openingCash,
       reconciliations,
       scope,
       timeline
@@ -428,6 +469,7 @@ export class PortfolioValuationTimelineService {
       if (!current) continue;
       const delta = this.activityCashDelta(activity);
       if (!delta) continue;
+      if (delta.eq(0)) continue;
       const account = accountById.get(activity.accountId)!;
       const accountCurrency = account.currency ?? activity.currency;
       const fx = await resolver.resolveFx({
@@ -436,14 +478,19 @@ export class PortfolioValuationTimelineService {
         toCurrency: accountCurrency
       });
       if (
-        !this.sourceIsUsable(
-          fx,
-          'FX',
-          activity.assetId,
+        !this.sourceIsUsable({
           date,
+          diagnostic: {
+            accountId: activity.accountId,
+            assetId: activity.assetId,
+            currency: activity.currency,
+            dataSource: activity.dataSource,
+            symbol: activity.symbol
+          },
+          kind: 'FX',
           reasons,
-          activity.currency
-        )
+          source: fx
+        })
       ) {
         cash.set(activity.accountId, null);
       } else cash.set(activity.accountId, current.plus(delta.mul(fx!.value)));
@@ -453,6 +500,7 @@ export class PortfolioValuationTimelineService {
       if (!cash.has(flow.accountId)) continue;
       const current = cash.get(flow.accountId);
       if (!current) continue;
+      if (new Big(flow.amount.toString()).eq(0)) continue;
       const account = accountById.get(flow.accountId)!;
       const accountCurrency = account.currency ?? flow.currency;
       const fx = await resolver.resolveFx({
@@ -461,14 +509,13 @@ export class PortfolioValuationTimelineService {
         toCurrency: accountCurrency
       });
       if (
-        !this.sourceIsUsable(
-          fx,
-          'FX',
-          flow.accountId,
+        !this.sourceIsUsable({
           date,
+          diagnostic: { accountId: flow.accountId, currency: flow.currency },
+          kind: 'FX',
           reasons,
-          flow.currency
-        )
+          source: fx
+        })
       ) {
         cash.set(flow.accountId, null);
       } else {
@@ -547,17 +594,21 @@ export class PortfolioValuationTimelineService {
       const reconstructed = cash.get(account.id);
       if (reconstructed) {
         const residual = observed.minus(reconstructed);
-        const status = residual.abs().lte(RECONCILIATION_TOLERANCE)
-          ? 'MATCH'
-          : 'MISMATCH';
+        const difference = residual.abs();
+        const tolerance = getCurrencyReconciliationTolerance(
+          account.currency ?? ''
+        );
+        const status = difference.lte(tolerance) ? 'MATCH' : 'MISMATCH';
         reconciliations.push({
           accountId: account.id,
           currency: account.currency ?? '',
           date,
+          difference: difference.toFixed(),
           observed: observed.toFixed(),
           reconstructed: reconstructed.toFixed(),
           residual: residual.toFixed(),
-          status
+          status,
+          tolerance: tolerance.toFixed()
         });
         if (status === 'MISMATCH')
           this.addReason(reasons, {
@@ -565,8 +616,12 @@ export class PortfolioValuationTimelineService {
             code: 'CASH_RECONCILIATION_MISMATCH',
             currency: account.currency ?? undefined,
             date,
+            difference: difference.toFixed(),
+            expected: observed.toFixed(),
             message:
-              'Reconstructed cash does not match the recorded AccountBalance checkpoint'
+              'Reconstructed cash exceeds the native-currency reconciliation tolerance',
+            reconstructed: reconstructed.toFixed(),
+            tolerance: tolerance.toFixed()
           });
       }
       cash.set(account.id, observed);
@@ -618,19 +673,30 @@ export class PortfolioValuationTimelineService {
       resolved.map(async (flow) => {
         const source = flows.find(({ id }) => id === flow.id)!;
         const date = this.date(flow.date);
+        if (new Big(flow.amount).eq(0)) {
+          return {
+            accountId: flow.accountId,
+            amountInBaseCurrency: '0',
+            currency: flow.currency,
+            date,
+            fx: null,
+            signedAmount: flow.amount,
+            transferGroupId: flow.transferGroupId,
+            type: source.type
+          };
+        }
         const fx = await resolver.resolveFx({
           date,
           fromCurrency: flow.currency,
           toCurrency: baseCurrency
         });
-        const usable = this.sourceIsUsable(
-          fx,
-          'FX',
-          flow.accountId,
+        const usable = this.sourceIsUsable({
           date,
+          diagnostic: { accountId: flow.accountId, currency: flow.currency },
+          kind: 'FX',
           reasons,
-          flow.currency
-        );
+          source: fx
+        });
         return {
           accountId: flow.accountId,
           amountInBaseCurrency: usable
@@ -647,19 +713,23 @@ export class PortfolioValuationTimelineService {
     );
   }
 
-  private sourceIsUsable(
-    source: ValuationSource | null,
-    kind: 'FX' | 'PRICE',
-    assetId: string,
-    date: string,
-    reasons: ValuationCoverageReason[],
-    currency?: string
-  ) {
+  private sourceIsUsable({
+    date,
+    diagnostic,
+    kind,
+    reasons,
+    source
+  }: {
+    date: string;
+    diagnostic: Omit<ValuationCoverageReason, 'code' | 'date' | 'message'>;
+    kind: 'FX' | 'PRICE';
+    reasons: ValuationCoverageReason[];
+    source: ValuationSource | null;
+  }) {
     if (!source) {
       this.addReason(reasons, {
-        assetId,
+        ...diagnostic,
         code: kind === 'FX' ? 'MISSING_FX' : 'MISSING_PRICE',
-        currency,
         date,
         message: `No eligible historical ${kind.toLowerCase()} exists on or before the requested date`
       });
@@ -667,9 +737,8 @@ export class PortfolioValuationTimelineService {
     }
     if (source.stalenessDays > VALUATION_MAX_STALENESS_DAYS) {
       this.addReason(reasons, {
-        assetId,
+        ...diagnostic,
         code: kind === 'FX' ? 'STALE_FX' : 'STALE_PRICE',
-        currency,
         date,
         sourceDate: source.sourceDate,
         message: `The latest prior ${kind.toLowerCase()} exceeds the ${VALUATION_MAX_STALENESS_DAYS}-day freshness limit`
@@ -677,6 +746,41 @@ export class PortfolioValuationTimelineService {
       return false;
     }
     return true;
+  }
+
+  private canInferZeroOpening({
+    accountId,
+    from,
+    inputs
+  }: {
+    accountId: string;
+    from: string;
+    inputs: TimelineInputs;
+  }) {
+    const events = [
+      ...inputs.activities
+        .filter((activity) => activity.accountId === accountId)
+        .map((activity) => ({
+          date: this.date(activity.date),
+          funding: false
+        })),
+      ...inputs.balances
+        .filter((balance) => balance.accountId === accountId)
+        .map((balance) => ({ date: this.date(balance.date), funding: false })),
+      ...inputs.externalCashFlows
+        .filter((flow) => flow.accountId === accountId)
+        .map((flow) => ({
+          date: this.date(flow.date),
+          funding: ['DEPOSIT', 'TRANSFER_IN'].includes(flow.type)
+        }))
+    ].sort((left, right) => left.date.localeCompare(right.date));
+
+    const firstDate = events[0]?.date;
+    return Boolean(
+      firstDate &&
+      firstDate >= from &&
+      events.some(({ date, funding }) => date === firstDate && funding)
+    );
   }
 
   private normalizeActivities(
