@@ -12,11 +12,23 @@ export interface AnalyticsInterval {
 }
 
 export interface AnalyticsCoverageReason {
+  accountName?: string;
   code: string;
+  currency?: string;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  difference?: string;
+  expected?: string;
   message: string;
+  openingCashDate?: string;
+  openingCashSource?: 'ACCOUNT_BALANCE' | 'INFERRED_ZERO_FIRST_FUNDING';
+  reconstructed?: string;
   severity?: 'ERROR' | 'WARNING';
   sourceDate?: string;
+  symbol?: string;
+  targetCurrency?: string;
+  tolerance?: string;
 }
 
 export interface AnalyticsCoverage {

@@ -1,8 +1,10 @@
 import { resolveCustomDateRangeQuery } from '@ghostfolio/api/helper/custom-date-range.helper';
 import { getIntervalFromDateRange } from '@ghostfolio/common/calculation-helper';
+import { isIsoAccountingDate } from '@ghostfolio/common/custom-date-range-helper';
 import { UserSettings } from '@ghostfolio/common/interfaces';
 import { DateRange } from '@ghostfolio/common/types';
 
+import { BadRequestException } from '@nestjs/common';
 import { addDays, format } from 'date-fns';
 
 export function resolveAnalyticsDateRangeQuery({
@@ -17,7 +19,7 @@ export function resolveAnalyticsDateRangeQuery({
   savedRangeId?: string;
   to?: string;
   userSettings: UserSettings;
-}): { from: string; to: string } {
+}): { from: string | null; to: string } {
   const customInterval = resolveCustomDateRangeQuery({
     from,
     range,
@@ -34,15 +36,23 @@ export function resolveAnalyticsDateRangeQuery({
     dateRange: range
   });
 
-  // Ghostfolio's named ranges expose an exclusive opening boundary. Analytics
-  // accepts an inclusive accounting date and values the close immediately before
-  // it, so the next calendar date preserves the same interval. MAX uses the Unix
-  // epoch as a sentinel rather than an actual opening boundary.
-  const inclusiveStartDate =
-    range === 'max' ? startDate : addDays(startDate, 1);
+  // Ghostfolio's MAX interval uses the Unix epoch only as an internal sentinel.
+  // The valuation service resolves its real start from the first scoped economic
+  // record while loading the canonical timeline.
+  const fromDate =
+    range === 'max' ? null : format(addDays(startDate, 1), 'yyyy-MM-dd');
+  const toDate = format(endDate, 'yyyy-MM-dd');
+
+  if (
+    (fromDate !== null && !isIsoAccountingDate(fromDate)) ||
+    !isIsoAccountingDate(toDate) ||
+    (fromDate !== null && fromDate > toDate)
+  ) {
+    throw new BadRequestException('The resolved analytics range is invalid');
+  }
 
   return {
-    from: format(inclusiveStartDate, 'yyyy-MM-dd'),
-    to: format(endDate, 'yyyy-MM-dd')
+    from: fromDate,
+    to: toDate
   };
 }

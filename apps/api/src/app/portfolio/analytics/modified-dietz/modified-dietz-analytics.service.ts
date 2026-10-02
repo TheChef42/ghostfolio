@@ -21,7 +21,7 @@ export class ModifiedDietzAnalyticsService {
   public async getPerformance(input: {
     accountIds?: string[];
     baseCurrency: string;
-    from: string;
+    from: string | null;
     to: string;
     userId: string;
   }): Promise<ModifiedDietzResult> {

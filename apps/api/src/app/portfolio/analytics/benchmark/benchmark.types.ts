@@ -35,10 +35,15 @@ export interface BenchmarkIdentity {
 
 export interface BenchmarkCoverageReason {
   code: BenchmarkCoverageReasonCode;
+  currency?: string;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   message: string;
   severity: 'ERROR' | 'WARNING';
   sourceDate?: string;
+  symbol?: string;
+  targetCurrency?: string;
 }
 
 export interface BenchmarkCoverage {

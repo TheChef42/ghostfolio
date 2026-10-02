@@ -24,17 +24,23 @@ export type ValuationCoverageReasonCode =
 
 export interface ValuationCoverageReason {
   accountId?: string;
+  accountName?: string;
   assetId?: string;
   code: ValuationCoverageReasonCode;
   currency?: string;
   dataSource?: DataSource;
   date?: string;
+  dateFrom?: string;
+  dateTo?: string;
   difference?: string;
   expected?: string;
   message: string;
+  openingCashDate?: string;
+  openingCashSource?: OpeningCashDiagnostic['source'];
   reconstructed?: string;
   sourceDate?: string;
   symbol?: string;
+  targetCurrency?: string;
   tolerance?: string;
 }
 
@@ -140,7 +146,7 @@ export interface TimelineActivity {
 }
 
 export interface TimelineInputs {
-  accounts: Pick<Account, 'currency' | 'id'>[];
+  accounts: (Pick<Account, 'currency' | 'id'> & { name?: string | null })[];
   activities: TimelineActivity[];
   balances: Pick<AccountBalance, 'accountId' | 'date' | 'value'>[];
   externalCashFlows: ExternalCashFlow[];

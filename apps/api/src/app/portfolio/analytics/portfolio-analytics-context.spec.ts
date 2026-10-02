@@ -53,6 +53,29 @@ function context() {
 }
 
 describe('portfolio analytics context reuse', () => {
+  it('rejects an invalid interval before it can enter the cache', async () => {
+    const { prisma, timeline } = context();
+
+    await expect(
+      timeline.getTimeline({ ...request, from: 'not-a-date' })
+    ).rejects.toThrow('The resolved analytics range is invalid');
+    await timeline.getTimeline(request);
+
+    expect(prisma.order.findMany).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves MAX from the first scoped economic record', async () => {
+    const { timeline } = context();
+
+    const result = await timeline.getTimeline({ ...request, from: null });
+
+    expect(result.interval).toEqual({
+      from: '2025-01-01',
+      openingDate: '2024-12-31',
+      to: '2025-01-02'
+    });
+  });
+
   it('reuses one timeline for concurrent TWR, XIRR and Modified Dietz', async () => {
     const { prisma, timeline } = context();
     const twr = new TwrAnalyticsService(

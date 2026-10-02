@@ -35,7 +35,7 @@ export class BenchmarkAnalyticsService {
     baseCurrency: string;
     basis?: BenchmarkReturnBasis;
     dataSource: DataSource;
-    from: string;
+    from: string | null;
     mode: BenchmarkMode;
     symbol: string;
     to: string;

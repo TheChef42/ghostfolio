@@ -333,6 +333,72 @@ describe('PortfolioValuationTimelineService', () => {
     );
   });
 
+  it('compacts repeated daily coverage failures into an actionable range', async () => {
+    const result = await build(
+      inputs({
+        activities: [activity(Type.BUY, '2023-12-30')],
+        balances: [{ accountId: 'a', date: openingDate, value: 60 }]
+      }),
+      resolver({ missingPrice: true })
+    );
+    const priceReasons = result.coverage.reasons.filter(
+      ({ code }) => code === 'MISSING_PRICE'
+    );
+
+    expect(priceReasons).toEqual([
+      expect.objectContaining({
+        dateFrom: '2023-12-31',
+        dateTo: '2024-01-02',
+        symbol: 'TEST'
+      })
+    ]);
+  });
+
+  it('does not require FX for a zero-valued foreign holding', async () => {
+    const resolveFx = jest.fn(async () => null);
+    const result = await build(
+      inputs({
+        activities: [
+          activity(Type.BUY, '2023-12-30', {
+            currency: 'EUR',
+            unitPrice: '0'
+          })
+        ]
+      }),
+      { resolveFx, resolvePrice: async ({ date }) => source(date, '0') }
+    );
+
+    expect(resolveFx).not.toHaveBeenCalled();
+    expect(result.coverage.reasons).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'MISSING_FX' })])
+    );
+  });
+
+  it('requires FX for a nonzero foreign holding', async () => {
+    const resolveFx = jest.fn(async () => null);
+    const result = await build(
+      inputs({
+        activities: [
+          activity(Type.BUY, '2023-12-30', {
+            currency: 'EUR'
+          })
+        ]
+      }),
+      { resolveFx, resolvePrice: async ({ date }) => source(date, '40') }
+    );
+
+    expect(resolveFx).toHaveBeenCalled();
+    expect(result.coverage.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'MISSING_FX',
+          currency: 'EUR',
+          targetCurrency: 'DKK'
+        })
+      ])
+    );
+  });
+
   it('does not fall back to current FX when historical FX is missing', async () => {
     const result = await build(
       inputs({
@@ -432,6 +498,36 @@ describe('PortfolioValuationTimelineService', () => {
       }
     }
   );
+
+  it('includes account and opening provenance in a cash mismatch diagnostic', async () => {
+    const result = await build(
+      inputs({
+        accounts: [{ currency: 'DKK', id: 'a', name: 'Broker cash' }],
+        balances: [
+          { accountId: 'a', date: openingDate, value: 100 },
+          {
+            accountId: 'a',
+            date: new Date(`${from}T00:00:00.000Z`),
+            value: 90
+          }
+        ]
+      })
+    );
+
+    expect(result.coverage.reasons).toContainEqual(
+      expect.objectContaining({
+        accountName: 'Broker cash',
+        code: 'CASH_RECONCILIATION_MISMATCH',
+        date: from,
+        difference: '10',
+        expected: '90',
+        openingCashDate: '2023-12-31',
+        openingCashSource: 'ACCOUNT_BALANCE',
+        reconstructed: '100',
+        tolerance: '0.01'
+      })
+    );
+  });
 
   it('accepts a one-cent native residual after EUR cash conversion', async () => {
     const convertedFlow = {

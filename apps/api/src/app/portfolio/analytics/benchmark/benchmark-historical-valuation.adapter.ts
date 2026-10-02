@@ -91,14 +91,14 @@ export class BenchmarkHistoricalValuationAdapter {
       )
     );
     for (const point of points) {
-      this.collectReasons(point, reasons);
+      this.collectReasons(point, reasons, benchmark, timeline.baseCurrency);
     }
 
     return {
       baseCurrency: timeline.baseCurrency,
       benchmark,
       coverage: {
-        reasons,
+        reasons: this.compactReasons(reasons),
         status: reasons.some(({ severity }) => severity === 'ERROR')
           ? 'INCOMPLETE'
           : 'COMPLETE'
@@ -145,14 +145,18 @@ export class BenchmarkHistoricalValuationAdapter {
 
   private collectReasons(
     point: BenchmarkValuationPoint,
-    reasons: BenchmarkCoverageReason[]
+    reasons: BenchmarkCoverageReason[],
+    benchmark: BenchmarkIdentity,
+    baseCurrency: string
   ) {
     if (!point.nativePrice) {
       reasons.push(
         this.reason(
           'MISSING_BENCHMARK_PRICE',
           'No same-day or prior benchmark close is available.',
-          point.date
+          point.date,
+          undefined,
+          { symbol: benchmark.symbol }
         )
       );
     } else if (point.nativePrice.stalenessDays > VALUATION_MAX_STALENESS_DAYS) {
@@ -161,7 +165,8 @@ export class BenchmarkHistoricalValuationAdapter {
           'STALE_BENCHMARK_PRICE',
           'The prior benchmark close exceeds the freshness limit.',
           point.date,
-          point.nativePrice.sourceDate
+          point.nativePrice.sourceDate,
+          { symbol: benchmark.symbol }
         )
       );
     }
@@ -170,7 +175,12 @@ export class BenchmarkHistoricalValuationAdapter {
         this.reason(
           'MISSING_BENCHMARK_FX',
           'No same-day or prior historical FX close is available.',
-          point.date
+          point.date,
+          undefined,
+          {
+            currency: benchmark.currency,
+            targetCurrency: baseCurrency
+          }
         )
       );
     } else if (point.fx.stalenessDays > VALUATION_MAX_STALENESS_DAYS) {
@@ -179,7 +189,11 @@ export class BenchmarkHistoricalValuationAdapter {
           'STALE_BENCHMARK_FX',
           'The prior FX close exceeds the freshness limit.',
           point.date,
-          point.fx.sourceDate
+          point.fx.sourceDate,
+          {
+            currency: benchmark.currency,
+            targetCurrency: baseCurrency
+          }
         )
       );
     }
@@ -198,8 +212,44 @@ export class BenchmarkHistoricalValuationAdapter {
     code: BenchmarkCoverageReason['code'],
     message: string,
     date?: string,
-    sourceDate?: string
+    sourceDate?: string,
+    context: Partial<BenchmarkCoverageReason> = {}
   ): BenchmarkCoverageReason {
-    return { code, date, message, severity: 'ERROR', sourceDate };
+    return { ...context, code, date, message, severity: 'ERROR', sourceDate };
+  }
+
+  private compactReasons(reasons: BenchmarkCoverageReason[]) {
+    const compacted: BenchmarkCoverageReason[] = [];
+    const active = new Map<string, BenchmarkCoverageReason>();
+    for (const reason of reasons) {
+      if (!reason.date) {
+        compacted.push(reason);
+        continue;
+      }
+      const identity = { ...reason };
+      delete identity.date;
+      delete identity.dateFrom;
+      delete identity.dateTo;
+      const key = JSON.stringify(identity);
+      const previous = active.get(key);
+      if (previous?.dateTo === this.previousDate(reason.date)) {
+        previous.dateTo = reason.date;
+        continue;
+      }
+      const grouped = {
+        ...reason,
+        dateFrom: reason.date,
+        dateTo: reason.date
+      };
+      active.set(key, grouped);
+      compacted.push(grouped);
+    }
+    return compacted;
+  }
+
+  private previousDate(date: string) {
+    return new Date(Date.parse(`${date}T00:00:00.000Z`) - 86_400_000)
+      .toISOString()
+      .slice(0, 10);
   }
 }

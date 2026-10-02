@@ -11,10 +11,18 @@
       Performance data could not be loaded. Please try again.
     </div>
   }
-  @if (coverageMessages.length) {
+  @if (coverageGroups.length) {
     <div class="alert alert-warning" role="status">
-      @for (message of coverageMessages; track message) {
-        <div>{{ message }}</div>
+      <strong i18n>Why unavailable?</strong>
+      @for (group of coverageGroups; track group.label) {
+        <div class="mt-2">
+          <strong>{{ group.label }}</strong>
+        </div>
+        <ul class="mb-0 pl-3">
+          @for (message of group.messages; track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
       }
     </div>
   }
@@ -139,10 +147,18 @@
       available.
     </div>
   }
-  @if (benchmarkCoverageMessages.length) {
+  @if (benchmarkCoverageGroups.length) {
     <div class="alert alert-warning" role="status">
-      @for (message of benchmarkCoverageMessages; track message) {
-        <div>{{ message }}</div>
+      <strong i18n>Why unavailable?</strong>
+      @for (group of benchmarkCoverageGroups; track group.label) {
+        <div class="mt-2">
+          <strong>{{ group.label }}</strong>
+        </div>
+        <ul class="mb-0 pl-3">
+          @for (message of group.messages; track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
       }
     </div>
   }

@@ -46,6 +46,11 @@ interface RequestResult<T> {
   failed: boolean;
 }
 
+interface CoverageGroup {
+  label: string;
+  messages: string[];
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -298,7 +303,21 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
         ? [this.reasonMessage(this.twrResult.reason)]
         : [];
     }
-    return this.uniqueMessages(this.twrResult.coverage.reasons);
+    return this.coverageGroups.flatMap(({ messages }) => messages);
+  }
+
+  protected get coverageGroups(): CoverageGroup[] {
+    if (!this.twrResult || this.twrResult.coverage.status === 'COMPLETE') {
+      return this.twrResult?.reason
+        ? [
+            {
+              label: this.coverageCategory(this.twrResult.reason),
+              messages: [this.reasonMessage(this.twrResult.reason)]
+            }
+          ]
+        : [];
+    }
+    return this.groupCoverageReasons(this.twrResult.coverage.reasons);
   }
 
   protected get benchmarkCoverageMessages(): string[] {
@@ -311,7 +330,27 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
     if (!reasons.length && this.benchmarkResult.reason) {
       return [this.reasonMessage(this.benchmarkResult.reason)];
     }
-    return this.uniqueMessages(reasons);
+    return this.groupCoverageReasons(reasons, true).flatMap(
+      ({ messages }) => messages
+    );
+  }
+
+  protected get benchmarkCoverageGroups(): CoverageGroup[] {
+    if (!this.benchmarkResult) {
+      return [];
+    }
+    const reasons = this.benchmarkResult.benchmarkCoverage.reasons.filter(
+      ({ code }) => code !== 'UNKNOWN_RETURN_BASIS'
+    );
+    if (!reasons.length && this.benchmarkResult.reason) {
+      return [
+        {
+          label: $localize`Benchmark`,
+          messages: [this.reasonMessage(this.benchmarkResult.reason)]
+        }
+      ];
+    }
+    return this.groupCoverageReasons(reasons, true);
   }
 
   protected get periodLabel(): string {
@@ -431,7 +470,87 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
     );
   }
 
-  private uniqueMessages(reasons: AnalyticsCoverageReason[]) {
-    return [...new Set(reasons.map(({ code }) => this.reasonMessage(code)))];
+  private coverageCategory(code: string, benchmark = false) {
+    if (benchmark || code.includes('BENCHMARK')) return $localize`Benchmark`;
+    if (code.includes('PRICE')) return $localize`Prices`;
+    if (code.includes('FX')) return $localize`FX`;
+    if (code.includes('OPENING')) return $localize`Opening history`;
+    if (code.includes('RANGE')) return $localize`Range`;
+    return $localize`Cash`;
+  }
+
+  private coverageReasonMessage(reason: AnalyticsCoverageReason) {
+    const date = this.coverageDateLabel(reason);
+    const dateSuffix = date ? ` — ${date}` : '';
+    const benchmarkSymbol = this.benchmarkResult?.benchmark?.symbol;
+    switch (reason.code) {
+      case 'MISSING_PRICE':
+        return `Historical price missing for ${reason.symbol ?? 'security'}${dateSuffix}.`;
+      case 'STALE_PRICE':
+        return `Historical price for ${reason.symbol ?? 'security'} is too old${dateSuffix}${reason.sourceDate ? ` (nearest allowed prior close: ${this.formatAccountingDate(reason.sourceDate)})` : ''}.`;
+      case 'MISSING_BENCHMARK_PRICE':
+        return `Historical benchmark price missing for ${benchmarkSymbol ?? 'benchmark'}${dateSuffix}.`;
+      case 'STALE_BENCHMARK_PRICE':
+        return `Historical benchmark price for ${benchmarkSymbol ?? 'benchmark'} is too old${dateSuffix}${reason.sourceDate ? ` (prior close: ${this.formatAccountingDate(reason.sourceDate)})` : ''}.`;
+      case 'MISSING_FX':
+      case 'STALE_FX': {
+        const pair = [reason.currency, reason.targetCurrency]
+          .filter(Boolean)
+          .join('/');
+        return `Historical exchange rate${pair ? ` ${pair}` : ''} ${reason.code === 'MISSING_FX' ? 'is missing' : 'is too old'}${dateSuffix}.`;
+      }
+      case 'MISSING_BENCHMARK_FX':
+      case 'STALE_BENCHMARK_FX':
+        return `Historical benchmark exchange rate ${reason.code === 'MISSING_BENCHMARK_FX' ? 'is missing' : 'is too old'}${dateSuffix}.`;
+      case 'MISSING_OPENING_CASH':
+      case 'MISSING_OPENING_VALUE':
+        return `Opening history is missing for ${reason.accountName ?? 'the selected account'}${dateSuffix}.`;
+      case 'CASH_RECONCILIATION_MISMATCH': {
+        const account = reason.accountName ?? 'Selected account';
+        const currency = reason.currency ? ` (${reason.currency})` : '';
+        const provenance = reason.openingCashSource
+          ? ` Opening cash: ${reason.openingCashSource === 'ACCOUNT_BALANCE' ? 'account balance' : 'inferred zero at first funding'}${reason.openingCashDate ? ` on ${this.formatAccountingDate(reason.openingCashDate)}` : ''}.`
+          : '';
+        return `${account}${currency}${dateSuffix}: recorded checkpoint cash ${reason.expected ?? '—'}, reconstructed cash ${reason.reconstructed ?? '—'}, difference ${reason.difference ?? '—'}, tolerance ${reason.tolerance ?? '—'}.${provenance}`;
+      }
+      default:
+        return this.reasonMessage(reason.code);
+    }
+  }
+
+  private coverageDateLabel(reason: AnalyticsCoverageReason) {
+    const from = reason.dateFrom ?? reason.date;
+    const to = reason.dateTo ?? reason.date;
+    if (!from) return '';
+    const formattedFrom = this.formatAccountingDate(from);
+    return to && to !== from
+      ? `${formattedFrom} – ${this.formatAccountingDate(to)}`
+      : formattedFrom;
+  }
+
+  private formatAccountingDate(date: string) {
+    try {
+      return new Intl.DateTimeFormat(this.user.settings.locale, {
+        dateStyle: 'medium',
+        timeZone: 'UTC'
+      }).format(new Date(`${date}T00:00:00Z`));
+    } catch {
+      return date;
+    }
+  }
+
+  private groupCoverageReasons(
+    reasons: AnalyticsCoverageReason[],
+    benchmark = false
+  ): CoverageGroup[] {
+    const groups = new Map<string, string[]>();
+    for (const reason of reasons) {
+      const label = this.coverageCategory(reason.code, benchmark);
+      const messages = groups.get(label) ?? [];
+      const message = this.coverageReasonMessage(reason);
+      if (!messages.includes(message)) messages.push(message);
+      groups.set(label, messages);
+    }
+    return [...groups].map(([label, messages]) => ({ label, messages }));
   }
 }

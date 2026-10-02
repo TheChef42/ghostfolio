@@ -374,7 +374,10 @@ describe('GfAnalyticsOverviewComponent', () => {
                 reasons: [
                   {
                     code: 'MISSING_PRICE',
-                    message: 'technical message'
+                    dateFrom: '2026-03-15',
+                    dateTo: '2026-03-18',
+                    message: 'technical message',
+                    symbol: 'XYZ'
                   }
                 ],
                 status: 'INCOMPLETE'
@@ -386,10 +389,73 @@ describe('GfAnalyticsOverviewComponent', () => {
       )
     );
     initialize();
+    expect(fixture.nativeElement.textContent).toContain('Why unavailable?');
+    expect(fixture.nativeElement.textContent).toContain('Prices');
     expect(fixture.nativeElement.textContent).toContain(
-      'Historical price data is missing.'
+      'Historical price missing for XYZ'
     );
+    expect(fixture.nativeElement.textContent).toContain('Mar 15, 2026');
+    expect(fixture.nativeElement.textContent).toContain('Mar 18, 2026');
     expect(fixture.nativeElement.textContent).not.toContain('MISSING_PRICE');
+  });
+
+  it('shows cash mismatch context without exposing raw backend objects', () => {
+    dataService.fetchAnalyticsPerformance.mockImplementation(({ method }) =>
+      of(
+        method === 'TWR'
+          ? twr({
+              coverage: {
+                reasons: [
+                  {
+                    accountName: 'Broker cash',
+                    code: 'CASH_RECONCILIATION_MISMATCH',
+                    currency: 'DKK',
+                    date: '2026-04-01',
+                    difference: '10',
+                    expected: '90',
+                    message: 'technical message',
+                    openingCashDate: '2026-01-01',
+                    openingCashSource: 'ACCOUNT_BALANCE',
+                    reconstructed: '100',
+                    tolerance: '0.01'
+                  }
+                ],
+                status: 'INCOMPLETE'
+              },
+              periodReturn: null,
+              reason: 'INCOMPLETE_VALUATION_INPUT'
+            })
+          : xirr()
+      )
+    );
+    initialize();
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain('Broker cash (DKK)');
+    expect(text).toContain('recorded checkpoint cash 90');
+    expect(text).toContain('reconstructed cash 100');
+    expect(text).toContain('tolerance 0.01');
+    expect(text).not.toContain('[object Object]');
+  });
+
+  it('displays the interval returned by the analytics backend', () => {
+    dataService.fetchAnalyticsPerformance.mockImplementation(({ method }) =>
+      of(
+        method === 'TWR'
+          ? twr({
+              interval: {
+                from: '2024-02-03',
+                openingDate: '2024-02-02',
+                to: '2024-07-08'
+              }
+            })
+          : xirr()
+      )
+    );
+    initialize();
+
+    expect((component as any).periodLabel).toContain('Feb 3, 2024');
+    expect((component as any).periodLabel).toContain('Jul 8, 2024');
   });
 
   it('shows an unavailable reason instead of a false zero', () => {

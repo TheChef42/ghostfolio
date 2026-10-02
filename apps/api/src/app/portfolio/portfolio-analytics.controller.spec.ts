@@ -272,6 +272,20 @@ describe.each(analyticsIntervalEndpoints)(
       );
     });
 
+    it('passes MAX as a scoped timeline start instead of the Unix epoch', async () => {
+      const context = createContext();
+
+      await invoke({
+        context,
+        query: { ...endpointQuery, range: 'max' },
+        userSettings
+      });
+
+      expect(getServiceMock(context)).toHaveBeenCalledWith(
+        expect.objectContaining({ from: null, to: '2026-09-29' })
+      );
+    });
+
     it('preserves explicit custom bounds', async () => {
       const context = createContext();
 

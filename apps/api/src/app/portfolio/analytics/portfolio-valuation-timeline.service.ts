@@ -3,8 +3,12 @@ import { PortfolioChangedEvent } from '@ghostfolio/api/events/portfolio-changed.
 import { WHERE_ACTIVITY_NOT_DRAFT } from '@ghostfolio/api/helper/activity.helper';
 import { PrismaService } from '@ghostfolio/api/services/prisma/prisma.service';
 import { TAG_ID_EXCLUDE_FROM_ANALYSIS } from '@ghostfolio/common/config';
+import {
+  getUtcAccountingDate,
+  isIsoAccountingDate
+} from '@ghostfolio/common/custom-date-range-helper';
 
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
   Account,
@@ -77,10 +81,17 @@ export class PortfolioValuationTimelineService {
   }: {
     accountIds?: string[];
     baseCurrency: string;
-    from: string;
+    from: string | null;
     to: string;
     userId: string;
   }): Promise<PortfolioValuationTimeline> {
+    if (
+      !isIsoAccountingDate(to) ||
+      to > getUtcAccountingDate() ||
+      (from !== null && (!isIsoAccountingDate(from) || from > to))
+    ) {
+      throw new BadRequestException('The resolved analytics range is invalid');
+    }
     this.pruneCache();
     const generation = this.generations.get(userId) ?? 0;
     const marketDataRevision = this.historicalResolver.getRevision?.() ?? 0;
@@ -160,7 +171,7 @@ export class PortfolioValuationTimelineService {
   }: {
     accountIds?: string[];
     baseCurrency: string;
-    from: string;
+    from: string | null;
     to: string;
     userId: string;
   }): Promise<PortfolioValuationTimeline> {
@@ -225,18 +236,39 @@ export class PortfolioValuationTimelineService {
       : [];
     const databaseMs = performance.now() - databaseStartedAt;
     const activities = this.normalizeActivities(orders, splits);
+    const resolvedFrom =
+      from ??
+      this.resolveMaximumRangeStart({
+        accounts,
+        activities,
+        balances,
+        flows,
+        scopeType: scope.type,
+        to
+      });
+    const scopedAccountIds = new Set(accounts.map(({ id }) => id));
+    const scopedActivities = activities.filter(
+      ({ accountId }) =>
+        (accountId === null && scope.type === 'WHOLE_PORTFOLIO') ||
+        (accountId !== null && scopedAccountIds.has(accountId))
+    );
+    const requiredAssets = this.getRequiredAssets({
+      activities: scopedActivities,
+      from: resolvedFrom,
+      to
+    });
     const preparedResolver = this.historicalResolver.prepare
       ? await this.historicalResolver.prepare({
           baseCurrency,
           currencies: [
             ...accounts.map(({ currency }) => currency ?? baseCurrency),
-            ...activities.map(({ currency }) => currency),
+            ...requiredAssets.map(({ currency }) => currency),
             ...flows
               .filter(({ accountId }) => scope.accountIds.includes(accountId))
               .map(({ currency }) => currency)
           ],
-          from: this.shiftDate(from, -1),
-          prices: activities.map(({ dataSource, symbol }) => ({
+          from: this.shiftDate(resolvedFrom, -1),
+          prices: requiredAssets.map(({ dataSource, symbol }) => ({
             dataSource,
             symbol
           })),
@@ -246,7 +278,7 @@ export class PortfolioValuationTimelineService {
     const buildStartedAt = performance.now();
     const timeline = await this.buildTimeline({
       baseCurrency,
-      from,
+      from: resolvedFrom,
       inputs: {
         accounts,
         activities,
@@ -270,6 +302,109 @@ export class PortfolioValuationTimelineService {
       if (!oldestKey) break;
       this.cache.delete(oldestKey);
     }
+  }
+
+  private resolveMaximumRangeStart({
+    accounts,
+    activities,
+    balances,
+    flows,
+    scopeType,
+    to
+  }: {
+    accounts: Pick<Account, 'id'>[];
+    activities: TimelineActivity[];
+    balances: Pick<AccountBalance, 'accountId' | 'date'>[];
+    flows: ExternalCashFlow[];
+    scopeType: 'ACCOUNT_SUBSET' | 'WHOLE_PORTFOLIO';
+    to: string;
+  }) {
+    const accountIds = new Set(accounts.map(({ id }) => id));
+    const selectedTransferLegs = new Map<string, number>();
+    for (const flow of flows) {
+      if (flow.transferGroupId && accountIds.has(flow.accountId)) {
+        selectedTransferLegs.set(
+          flow.transferGroupId,
+          (selectedTransferLegs.get(flow.transferGroupId) ?? 0) + 1
+        );
+      }
+    }
+    const candidates = [
+      ...activities
+        .filter(
+          ({ accountId }) =>
+            (accountId === null && scopeType === 'WHOLE_PORTFOLIO') ||
+            (accountId !== null && accountIds.has(accountId))
+        )
+        .map(({ date }) => this.date(date)),
+      ...balances
+        .filter(({ accountId }) => accountIds.has(accountId))
+        .map(({ date }) => this.shiftDate(this.date(date), 1)),
+      ...flows
+        .filter(
+          (flow) =>
+            accountIds.has(flow.accountId) &&
+            !new Big(flow.amount.toString()).eq(0) &&
+            (!flow.transferGroupId ||
+              selectedTransferLegs.get(flow.transferGroupId) === 1)
+        )
+        .map(({ date }) => this.date(date))
+    ].filter((date) => date <= to);
+
+    return candidates.sort()[0] ?? to;
+  }
+
+  private getRequiredAssets({
+    activities,
+    from,
+    to
+  }: {
+    activities: TimelineActivity[];
+    from: string;
+    to: string;
+  }) {
+    const quantities = new Map<string, Big>();
+    const assets = new Map<string, TimelineActivity>();
+    const required = new Set<string>();
+    const byDate = this.groupBy(
+      activities.filter(
+        ({ date, type }) =>
+          ['BUY', 'SELL'].includes(type) && this.date(date) <= to
+      ),
+      ({ date }) => this.date(date)
+    );
+    const openingDate = this.shiftDate(from, -1);
+
+    const applyDate = (date: string) => {
+      for (const activity of byDate.get(date) ?? []) {
+        const sign = activity.type === 'BUY' ? 1 : -1;
+        quantities.set(
+          activity.assetId,
+          (quantities.get(activity.assetId) ?? new Big(0)).plus(
+            new Big(activity.quantity).mul(sign)
+          )
+        );
+        assets.set(activity.assetId, activity);
+      }
+    };
+    const markHeldAssets = () => {
+      for (const [assetId, quantity] of quantities) {
+        if (quantity.gt(0)) required.add(assetId);
+      }
+    };
+    const dates = [...byDate.keys()].sort();
+    for (const date of dates.filter((item) => item <= openingDate)) {
+      applyDate(date);
+    }
+    markHeldAssets();
+    for (const date of dates.filter((item) => item >= from)) {
+      applyDate(date);
+      markHeldAssets();
+    }
+
+    return [...required]
+      .map((assetId) => assets.get(assetId)!)
+      .sort((a, b) => a.assetId.localeCompare(b.assetId));
   }
 
   private pruneCache() {
@@ -335,9 +470,10 @@ export class PortfolioValuationTimelineService {
       if (!fxCache.has(key)) {
         fxCache.set(
           key,
-          resolver.resolveFx({
+          this.resolveFx({
             date,
             fromCurrency: currency,
+            resolver,
             toCurrency: baseCurrency
           })
         );
@@ -395,6 +531,7 @@ export class PortfolioValuationTimelineService {
         cash.set(account.id, null);
         this.addReason(reasons, {
           accountId: account.id,
+          accountName: account.name ?? undefined,
           code: 'MISSING_OPENING_CASH',
           currency: account.currency ?? baseCurrency,
           date: openingDate,
@@ -445,11 +582,19 @@ export class PortfolioValuationTimelineService {
             date,
             message: 'Negative holdings are not valued by the Phase 4A timeline'
           });
+          holdings.push({
+            assetId,
+            currency: asset.currency,
+            dataSource: asset.dataSource,
+            fx: null,
+            price: null,
+            quantity: quantity.toFixed(),
+            symbol: asset.symbol,
+            valueInBaseCurrency: null
+          });
+          continue;
         }
-        const [price, fx] = await Promise.all([
-          resolvePrice(asset, date),
-          resolveFx(asset.currency, date)
-        ]);
+        const price = await resolvePrice(asset, date);
         const priceUsable = this.sourceIsUsable({
           date,
           diagnostic: {
@@ -461,22 +606,30 @@ export class PortfolioValuationTimelineService {
           reasons,
           source: price
         });
-        const fxUsable = this.sourceIsUsable({
-          date,
-          diagnostic: {
-            assetId,
-            currency: asset.currency,
-            dataSource: asset.dataSource,
-            symbol: asset.symbol
-          },
-          kind: 'FX',
-          reasons,
-          source: fx
-        });
-        const value =
-          quantity.gte(0) && priceUsable && fxUsable
-            ? quantity.mul(price!.value).mul(fx!.value)
-            : null;
+        let fx: ValuationSource | null = null;
+        let value: Big | null = null;
+        if (priceUsable) {
+          const nativeValue = quantity.mul(price!.value);
+          if (nativeValue.eq(0)) {
+            value = new Big(0);
+          } else {
+            fx = await resolveFx(asset.currency, date);
+            const fxUsable = this.sourceIsUsable({
+              date,
+              diagnostic: {
+                assetId,
+                currency: asset.currency,
+                dataSource: asset.dataSource,
+                symbol: asset.symbol,
+                targetCurrency: baseCurrency
+              },
+              kind: 'FX',
+              reasons,
+              source: fx
+            });
+            if (fxUsable) value = nativeValue.mul(fx!.value);
+          }
+        }
         if (!value) holdingsComplete = false;
         else holdingsTotal = holdingsTotal.plus(value);
         holdings.push({
@@ -506,7 +659,12 @@ export class PortfolioValuationTimelineService {
         if (
           !this.sourceIsUsable({
             date,
-            diagnostic: { accountId: account.id, currency },
+            diagnostic: {
+              accountId: account.id,
+              accountName: account.name ?? undefined,
+              currency,
+              targetCurrency: baseCurrency
+            },
             kind: 'FX',
             reasons,
             source: fx
@@ -550,6 +708,7 @@ export class PortfolioValuationTimelineService {
         cash,
         date,
         inputs,
+        openingCash,
         reasons,
         reconciliations
       });
@@ -582,7 +741,7 @@ export class PortfolioValuationTimelineService {
       },
       baseCurrency,
       closing,
-      coverage: { reasons, status },
+      coverage: { reasons: this.compactCoverageReasons(reasons), status },
       externalFlows,
       interval: { from, openingDate, to },
       methodologyVersion: VALUATION_METHODOLOGY_VERSION,
@@ -604,7 +763,10 @@ export class PortfolioValuationTimelineService {
     reasons,
     resolver
   }: {
-    accountById: Map<string, Pick<Account, 'currency' | 'id'>>;
+    accountById: Map<
+      string,
+      Pick<Account, 'currency' | 'id'> & { name?: string | null }
+    >;
     activityByDate: Map<string, TimelineActivity[]>;
     cash: Map<string, Big | null>;
     date: string;
@@ -623,9 +785,10 @@ export class PortfolioValuationTimelineService {
       if (delta.eq(0)) continue;
       const account = accountById.get(activity.accountId)!;
       const accountCurrency = account.currency ?? activity.currency;
-      const fx = await resolver.resolveFx({
+      const fx = await this.resolveFx({
         date,
         fromCurrency: activity.currency,
+        resolver,
         toCurrency: accountCurrency
       });
       if (
@@ -633,10 +796,12 @@ export class PortfolioValuationTimelineService {
           date,
           diagnostic: {
             accountId: activity.accountId,
+            accountName: account.name ?? undefined,
             assetId: activity.assetId,
             currency: activity.currency,
             dataSource: activity.dataSource,
-            symbol: activity.symbol
+            symbol: activity.symbol,
+            targetCurrency: accountCurrency
           },
           kind: 'FX',
           reasons,
@@ -654,15 +819,21 @@ export class PortfolioValuationTimelineService {
       if (new Big(flow.amount.toString()).eq(0)) continue;
       const account = accountById.get(flow.accountId)!;
       const accountCurrency = account.currency ?? flow.currency;
-      const fx = await resolver.resolveFx({
+      const fx = await this.resolveFx({
         date,
         fromCurrency: flow.currency,
+        resolver,
         toCurrency: accountCurrency
       });
       if (
         !this.sourceIsUsable({
           date,
-          diagnostic: { accountId: flow.accountId, currency: flow.currency },
+          diagnostic: {
+            accountId: flow.accountId,
+            accountName: account.name ?? undefined,
+            currency: flow.currency,
+            targetCurrency: accountCurrency
+          },
           kind: 'FX',
           reasons,
           source: fx
@@ -723,6 +894,7 @@ export class PortfolioValuationTimelineService {
     cash,
     date,
     inputs,
+    openingCash,
     reasons,
     reconciliations
   }: {
@@ -733,6 +905,7 @@ export class PortfolioValuationTimelineService {
     cash: Map<string, Big | null>;
     date: string;
     inputs: TimelineInputs;
+    openingCash: OpeningCashDiagnostic[];
     reasons: ValuationCoverageReason[];
     reconciliations: CashReconciliationDiagnostic[];
   }) {
@@ -764,6 +937,7 @@ export class PortfolioValuationTimelineService {
         if (status === 'MISMATCH')
           this.addReason(reasons, {
             accountId: account.id,
+            accountName: account.name ?? undefined,
             code: 'CASH_RECONCILIATION_MISMATCH',
             currency: account.currency ?? undefined,
             date,
@@ -771,6 +945,12 @@ export class PortfolioValuationTimelineService {
             expected: observed.toFixed(),
             message:
               'Reconstructed cash exceeds the native-currency reconciliation tolerance',
+            openingCashDate: openingCash.find(
+              ({ accountId }) => accountId === account.id
+            )?.date,
+            openingCashSource: openingCash.find(
+              ({ accountId }) => accountId === account.id
+            )?.source,
             reconstructed: reconstructed.toFixed(),
             tolerance: tolerance.toFixed()
           });
@@ -836,14 +1016,19 @@ export class PortfolioValuationTimelineService {
             type: source.type
           };
         }
-        const fx = await resolver.resolveFx({
+        const fx = await this.resolveFx({
           date,
           fromCurrency: flow.currency,
+          resolver,
           toCurrency: baseCurrency
         });
         const usable = this.sourceIsUsable({
           date,
-          diagnostic: { accountId: flow.accountId, currency: flow.currency },
+          diagnostic: {
+            accountId: flow.accountId,
+            currency: flow.currency,
+            targetCurrency: baseCurrency
+          },
           kind: 'FX',
           reasons,
           source: fx
@@ -897,6 +1082,28 @@ export class PortfolioValuationTimelineService {
       return false;
     }
     return true;
+  }
+
+  private resolveFx({
+    date,
+    fromCurrency,
+    resolver,
+    toCurrency
+  }: {
+    date: string;
+    fromCurrency: string;
+    resolver: HistoricalValueResolver;
+    toCurrency: string;
+  }) {
+    if (fromCurrency === toCurrency) {
+      return Promise.resolve<ValuationSource>({
+        requestedDate: date,
+        sourceDate: date,
+        stalenessDays: 0,
+        value: '1'
+      });
+    }
+    return resolver.resolveFx({ date, fromCurrency, toCurrency });
   }
 
   private canInferZeroOpening({
@@ -991,6 +1198,43 @@ export class PortfolioValuationTimelineService {
       identities.add(identity);
       reasons.push(reason);
     }
+  }
+
+  private compactCoverageReasons(reasons: ValuationCoverageReason[]) {
+    const compacted: ValuationCoverageReason[] = [];
+    const active = new Map<string, ValuationCoverageReason>();
+    const temporalCodes = new Set<ValuationCoverageReason['code']>([
+      'MISSING_FX',
+      'MISSING_PRICE',
+      'STALE_FX',
+      'STALE_PRICE'
+    ]);
+
+    for (const reason of reasons) {
+      if (!reason.date || !temporalCodes.has(reason.code)) {
+        compacted.push(reason);
+        continue;
+      }
+      const identity = { ...reason };
+      delete identity.date;
+      delete identity.dateFrom;
+      delete identity.dateTo;
+      const key = JSON.stringify(identity);
+      const previous = active.get(key);
+      if (previous?.dateTo === this.shiftDate(reason.date, -1)) {
+        previous.dateTo = reason.date;
+        continue;
+      }
+      const grouped = {
+        ...reason,
+        dateFrom: reason.date,
+        dateTo: reason.date
+      };
+      active.set(key, grouped);
+      compacted.push(grouped);
+    }
+
+    return compacted;
   }
 
   private groupBy<T>(items: T[], key: (item: T) => string) {
