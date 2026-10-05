@@ -20,6 +20,7 @@ const ACCOUNTS: AccountWithPlatform[] = [
     createdAt: new Date('2024-01-01'),
     currency: 'USD',
     id: '3ef7e6d9-4598-4eb2-b0e8-00e61cfc0ea6',
+    inceptionDate: null,
     name: 'Coinbase Account',
     platform: {
       id: '9da3a8a7-4795-43e3-a6db-ccb914189737',
@@ -35,6 +36,7 @@ const ACCOUNTS: AccountWithPlatform[] = [
     createdAt: new Date('2024-01-01'),
     currency: 'CHF',
     id: '9da3a8a7-4795-43e3-a6db-ccb914189737',
+    inceptionDate: null,
     name: 'Ghostfolio Account',
     platform: {
       id: 'f3e9d0e5-1e0f-4a3c-8b12-1f2a3b4c5d6e',
@@ -50,6 +52,7 @@ const ACCOUNTS: AccountWithPlatform[] = [
     createdAt: new Date('2024-01-01'),
     currency: 'EUR',
     id: 'd191b2d5-9d5a-4c5f-9d55-6f0e5f6a7b8c',
+    inceptionDate: null,
     name: 'Savings Account',
     platformId: null,
     updatedAt: new Date('2024-01-01'),

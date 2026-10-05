@@ -11,6 +11,7 @@ const accounts: AccountWithPlatform[] = [
     createdAt: new Date('2025-06-01T06:53:10.569Z'),
     currency: 'USD',
     id: '733110b6-7c55-44eb-8cc5-c4c3e9d48a79',
+    inceptionDate: null,
     name: 'Trading Account',
     platform: {
       id: '9da3a8a7-4795-43e3-a6db-ccb914189737',
@@ -26,6 +27,7 @@ const accounts: AccountWithPlatform[] = [
     createdAt: new Date('2025-06-01T06:48:53.055Z'),
     currency: 'USD',
     id: '24ba27d6-e04b-4fb4-b856-b24c2ef0422a',
+    inceptionDate: null,
     name: 'Investment Account',
     platform: {
       id: '43e8fcd1-5b79-4100-b678-d2229bd1660d',

@@ -27,6 +27,7 @@ const accounts: AccountWithValue[] = [
     currency: 'USD',
     dividendInBaseCurrency: 0,
     id: '460d7401-ca43-4ed4-b08e-349f1822e9db',
+    inceptionDate: null,
     interestInBaseCurrency: 0,
     name: 'Coinbase Account',
     platform: {
@@ -50,6 +51,7 @@ const accounts: AccountWithValue[] = [
     currency: 'USD',
     dividendInBaseCurrency: 0,
     id: '6d773e31-0583-4c85-a247-e69870b4f1ee',
+    inceptionDate: null,
     interestInBaseCurrency: 0,
     name: 'Private Banking Account',
     platform: {
@@ -73,6 +75,7 @@ const accounts: AccountWithValue[] = [
     currency: 'USD',
     dividendInBaseCurrency: 0,
     id: '776bd1e9-b2f6-4f7e-933d-18756c2f0625',
+    inceptionDate: null,
     interestInBaseCurrency: 0,
     name: 'Trading Account',
     platform: {
