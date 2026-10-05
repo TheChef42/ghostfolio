@@ -99,6 +99,7 @@ describe('PortfolioCalculator', () => {
     accountService = new AccountService(
       accountBalanceService,
       null,
+      null,
       exchangeRateDataService,
       null,
       null
@@ -192,6 +193,7 @@ describe('PortfolioCalculator', () => {
             createdAt: parseDate('2023-12-31'),
             currency: 'USD',
             id: accountId,
+            inceptionDate: null,
             name: 'USD',
             platformId: null,
             updatedAt: parseDate('2023-12-31'),
@@ -369,6 +371,7 @@ describe('PortfolioCalculator', () => {
             createdAt: parseDate('2023-12-31'),
             currency: 'CHF',
             id: accountId,
+            inceptionDate: null,
             name: 'CHF',
             platformId: null,
             updatedAt: parseDate('2023-12-31'),
@@ -500,6 +503,7 @@ describe('PortfolioCalculator', () => {
             createdAt: parseDate('2023-12-31'),
             currency: 'CHF',
             id: accountId,
+            inceptionDate: null,
             name: 'CHF',
             platformId: null,
             updatedAt: parseDate('2023-12-31'),

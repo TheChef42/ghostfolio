@@ -3,6 +3,11 @@ import { ActivitiesService } from '@ghostfolio/api/app/activities/activities.ser
 import { ExternalCashFlowService } from '@ghostfolio/api/app/external-cash-flow/external-cash-flow.service';
 import { PlatformService } from '@ghostfolio/api/app/platform/platform.service';
 import { PortfolioService } from '@ghostfolio/api/app/portfolio/portfolio.service';
+import {
+  AccountEconomicRecord,
+  getInceptionConflict,
+  toAccountingDate
+} from '@ghostfolio/api/helper/account-history.helper';
 import { getTagsWithDraftTag } from '@ghostfolio/api/helper/activity.helper';
 import { getMaskedGhostfolioDataSource } from '@ghostfolio/api/helper/data-source.helper';
 import { ApiService } from '@ghostfolio/api/services/api/api.service';
@@ -211,6 +216,36 @@ export class ImportService {
     user: UserWithSettings;
   }) {
     const accounts = importData.accounts ?? [];
+    for (const account of accounts) {
+      if (!account.id || !account.inceptionDate) continue;
+      const records: AccountEconomicRecord[] = [
+        ...(account.balances ?? []).map(({ date }) => ({
+          date: new Date(date),
+          type: 'ACCOUNT_BALANCE' as const
+        })),
+        ...importData.activities
+          .filter(({ accountId }) => accountId === account.id)
+          .map(({ date }) => ({
+            date: new Date(date),
+            type: 'ACTIVITY' as const
+          })),
+        ...(importData.externalCashFlows?.items ?? [])
+          .filter(({ accountId }) => accountId === account.id)
+          .map(({ date }) => ({
+            date: new Date(`${date}T00:00:00.000Z`),
+            type: 'EXTERNAL_CASH_FLOW' as const
+          }))
+      ];
+      const conflict = getInceptionConflict({
+        inceptionDate: new Date(`${account.inceptionDate}T00:00:00.000Z`),
+        records
+      });
+      if (conflict) {
+        throw new ImportValidationError(
+          `Account start date cannot be later than imported account history on ${toAccountingDate(conflict.date)}`
+        );
+      }
+    }
     const sourceAccountIds = accounts
       .map(({ id }) => id)
       .filter((id): id is string => Boolean(id));
@@ -571,6 +606,11 @@ export class ImportService {
           'tags'
         ]);
 
+        const inceptionDate = account.inceptionDate
+          ? new Date(`${account.inceptionDate}T00:00:00.000Z`)
+          : null;
+        delete account.inceptionDate;
+
         let oldAccountId: string | undefined;
         const platformId =
           platformIdMapping[account.platformId] ?? account.platformId;
@@ -602,6 +642,7 @@ export class ImportService {
 
         let accountObject: Prisma.AccountCreateInput = {
           ...account,
+          inceptionDate,
           balances: {
             create: accountWithBalances.balances ?? []
           },

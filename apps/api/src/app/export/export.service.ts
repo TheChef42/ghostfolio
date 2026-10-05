@@ -116,6 +116,7 @@ export class ExportService {
           comment,
           currency,
           id,
+          inceptionDate,
           name,
           platform,
           platformId,
@@ -132,6 +133,7 @@ export class ExportService {
             comment,
             currency,
             id,
+            inceptionDate: inceptionDate?.toISOString().slice(0, 10) ?? null,
             name,
             platformId,
             tags: tags.map(({ id: tagId }) => {

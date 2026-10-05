@@ -62,6 +62,7 @@ describe('PortfolioService', () => {
     accountService = new AccountService(
       null,
       null,
+      null,
       exchangeRateDataService,
       null,
       null
@@ -329,6 +330,7 @@ describe('PortfolioService', () => {
             createdAt: parseDate('2024-01-01'),
             currency: 'USD',
             id: randomUUID(),
+            inceptionDate: null,
             name: 'USD',
             platformId: null,
             updatedAt: parseDate('2024-01-01'),
@@ -368,6 +370,7 @@ describe('PortfolioService', () => {
         createdAt: parseDate('2024-01-01'),
         currency: 'USD',
         id: randomUUID(),
+        inceptionDate: null,
         name: 'USD',
         platformId: null,
         updatedAt: parseDate('2024-01-01'),

@@ -30,12 +30,14 @@ import { Big } from 'big.js';
 import { format } from 'date-fns';
 import { groupBy, isNil } from 'lodash';
 
+import { AccountHistoryService } from './account-history.service';
 import { CashDetails } from './interfaces/cash-details.interface';
 
 @Injectable()
 export class AccountService {
   public constructor(
     private readonly accountBalanceService: AccountBalanceService,
+    private readonly accountHistoryService: AccountHistoryService,
     private readonly eventEmitter: EventEmitter2,
     private readonly exchangeRateDataService: ExchangeRateDataService,
     private readonly prismaService: PrismaService,
@@ -182,6 +184,11 @@ export class AccountService {
     userId: string;
   }): Promise<Account> {
     await this.tagService.validateTagIdsWithoutDraftTag({ tagIds, userId });
+    await this.accountHistoryService.validateInceptionDate({
+      inceptionDate:
+        data.inceptionDate instanceof Date ? data.inceptionDate : undefined,
+      userId
+    });
 
     const account = await this.prismaService.account.create({
       data: {
@@ -335,6 +342,19 @@ export class AccountService {
     where: Prisma.AccountWhereUniqueInput;
   }): Promise<Account> {
     await this.tagService.validateTagIdsWithoutDraftTag({ tagIds, userId });
+
+    const accountId = where.id_userId?.id;
+    let inceptionDate: Date | null | undefined;
+    if (data.inceptionDate === null) inceptionDate = null;
+    else if (data.inceptionDate instanceof Date)
+      inceptionDate = data.inceptionDate;
+    if (accountId && inceptionDate !== undefined) {
+      await this.accountHistoryService.validateInceptionDate({
+        accountId,
+        inceptionDate,
+        userId
+      });
+    }
 
     const account = await this.prismaService.account.update({
       data: {

@@ -293,6 +293,146 @@ describe('PortfolioValuationTimelineService', () => {
     });
   });
 
+  it('treats an account as nonexistent before its inception date', async () => {
+    const result = await build(
+      inputs({
+        accounts: [
+          {
+            currency: 'EUR',
+            id: 'a',
+            inceptionDate: new Date('2024-01-02T00:00:00.000Z')
+          }
+        ],
+        balances: []
+      }),
+      resolver({ missingFx: true })
+    );
+
+    expect(result.opening.totalValueInBaseCurrency).toBe('0');
+    expect(result.coverage.status).toBe('COMPLETE');
+    expect(result.coverage.reasons).toEqual([]);
+    expect(result.openingCash).toContainEqual({
+      accountId: 'a',
+      currency: 'EUR',
+      date: openingDate.toISOString().slice(0, 10),
+      source: 'ACCOUNT_NOT_YET_IN_EXISTENCE'
+    });
+  });
+
+  it('accepts first funding on the inception date without an opening checkpoint', async () => {
+    const result = await build(
+      inputs({
+        accounts: [
+          {
+            currency: 'DKK',
+            id: 'a',
+            inceptionDate: new Date(`${from}T00:00:00.000Z`)
+          }
+        ],
+        balances: [],
+        externalCashFlows: [
+          flow(ExternalCashFlowType.DEPOSIT, '200000', 'a', from)
+        ]
+      })
+    );
+
+    expect(result.opening.totalValueInBaseCurrency).toBe('0');
+    expect(result.closing.totalValueInBaseCurrency).toBe('200000');
+    expect(result.coverage.status).toBe('COMPLETE');
+  });
+
+  it('keeps the whole-portfolio range while a newer account contributes zero', async () => {
+    const result = await build(
+      inputs({
+        accounts: [
+          { currency: 'DKK', id: 'a' },
+          {
+            currency: 'EUR',
+            id: 'b',
+            inceptionDate: new Date('2024-01-02T00:00:00.000Z')
+          }
+        ],
+        balances: [{ accountId: 'a', date: openingDate, value: 100 }]
+      }),
+      resolver({ missingFx: true })
+    );
+
+    expect(result.interval.from).toBe(from);
+    expect(result.opening.totalValueInBaseCurrency).toBe('100');
+    expect(result.coverage.status).toBe('COMPLETE');
+  });
+
+  it('does not fabricate holdings for the first SELL after inception', async () => {
+    const result = await build(
+      inputs({
+        accounts: [
+          {
+            currency: 'DKK',
+            id: 'a',
+            inceptionDate: new Date(`${from}T00:00:00.000Z`)
+          }
+        ],
+        activities: [activity(Type.SELL, from)],
+        balances: []
+      })
+    );
+
+    expect(result.coverage.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'UNSUPPORTED_LIABILITY_OR_SHORT' })
+      ])
+    );
+    expect(result.closing.totalValueInBaseCurrency).toBeNull();
+  });
+
+  it('reports missing holding history for a first dividend after inception', async () => {
+    const result = await build(
+      inputs({
+        accounts: [
+          {
+            currency: 'DKK',
+            id: 'a',
+            inceptionDate: new Date(`${from}T00:00:00.000Z`)
+          }
+        ],
+        activities: [activity(Type.DIVIDEND, from)],
+        balances: []
+      })
+    );
+
+    expect(result.coverage.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'MISSING_OPENING_HOLDINGS' })
+      ])
+    );
+  });
+
+  it('reports impossible stored history before inception explicitly', async () => {
+    const result = await build(
+      inputs({
+        accounts: [
+          {
+            currency: 'DKK',
+            id: 'a',
+            inceptionDate: new Date('2024-01-02T00:00:00.000Z')
+          }
+        ],
+        balances: [
+          {
+            accountId: 'a',
+            date: new Date('2024-01-01T00:00:00.000Z'),
+            value: 100
+          }
+        ]
+      })
+    );
+
+    expect(result.coverage.reasons).toContainEqual(
+      expect.objectContaining({ code: 'ACCOUNT_INCEPTION_CONFLICT' })
+    );
+    expect(result.opening.totalValueInBaseCurrency).toBe('0');
+  });
+
   it('keeps opening cash missing when earlier economic history is ambiguous', async () => {
     const result = await build(
       inputs({

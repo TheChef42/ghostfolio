@@ -444,6 +444,7 @@ databaseTests('ExternalCashFlow PostgreSQL integration', () => {
     await service.create(userId, ordinary());
     const accounts = new AccountService(
       undefined,
+      undefined,
       emitter,
       undefined,
       prisma,

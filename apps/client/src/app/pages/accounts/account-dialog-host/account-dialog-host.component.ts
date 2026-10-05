@@ -148,8 +148,16 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
               return;
             }
 
-            const { balance, comment, currency, id, name, platformId, tags } =
-              account;
+            const {
+              balance,
+              comment,
+              currency,
+              id,
+              inceptionDate,
+              name,
+              platformId,
+              tags
+            } = account;
 
             this.openCreateOrUpdateAccountDialog({
               user,
@@ -158,6 +166,7 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
                 comment,
                 currency,
                 id,
+                inceptionDate,
                 name,
                 platformId,
                 tags
@@ -184,6 +193,7 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
               comment: null,
               currency: user?.settings?.baseCurrency ?? null,
               id: null,
+              inceptionDate: null,
               name: null,
               platformId: null,
               tags: []

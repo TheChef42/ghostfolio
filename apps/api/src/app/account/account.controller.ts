@@ -151,7 +151,13 @@ export class AccountController {
     @Body() data: CreateAccountDto,
     @Impersonation() { userId }: ImpersonationContext
   ): Promise<AccountModel> {
-    const { balance, tags: tagIds, ...accountData } = data;
+    const { balance, inceptionDate, tags: tagIds, ...accountData } = data;
+    const accountInception =
+      inceptionDate === undefined
+        ? undefined
+        : inceptionDate
+          ? new Date(`${inceptionDate}T00:00:00.000Z`)
+          : null;
 
     if (accountData.platformId) {
       const platformId = accountData.platformId;
@@ -163,6 +169,7 @@ export class AccountController {
         userId,
         data: {
           ...accountData,
+          inceptionDate: accountInception,
           platform: { connect: { id: platformId } },
           user: { connect: { id: userId } }
         }
@@ -176,6 +183,7 @@ export class AccountController {
         userId,
         data: {
           ...accountData,
+          inceptionDate: accountInception,
           user: { connect: { id: userId } }
         }
       });
@@ -258,7 +266,13 @@ export class AccountController {
       );
     }
 
-    const { balance, tags: tagIds, ...accountData } = data;
+    const { balance, inceptionDate, tags: tagIds, ...accountData } = data;
+    const accountInception =
+      inceptionDate === undefined
+        ? undefined
+        : inceptionDate
+          ? new Date(`${inceptionDate}T00:00:00.000Z`)
+          : null;
 
     if (accountData.platformId) {
       const platformId = accountData.platformId;
@@ -270,6 +284,7 @@ export class AccountController {
         userId,
         data: {
           ...accountData,
+          inceptionDate: accountInception,
           platform: { connect: { id: platformId } },
           user: { connect: { id: userId } }
         },
@@ -290,6 +305,7 @@ export class AccountController {
         userId,
         data: {
           ...accountData,
+          inceptionDate: accountInception,
           platform: originalAccount.platformId
             ? { disconnect: true }
             : undefined,

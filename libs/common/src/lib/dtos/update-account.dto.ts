@@ -5,6 +5,7 @@ import { Transform, TransformFnParams } from 'class-transformer';
 import {
   ArrayUnique,
   IsArray,
+  IsDateString,
   IsNumber,
   IsOptional,
   IsString,
@@ -32,6 +33,10 @@ export class UpdateAccountDto {
 
   @IsCurrencyCode()
   currency: string;
+
+  @IsDateString({ strict: true })
+  @IsOptional()
+  inceptionDate?: string | null;
 
   @IsString()
   id: string;

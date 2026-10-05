@@ -121,6 +121,11 @@ export class GfCreateOrUpdateAccountDialogComponent {
       balance: [this.data.account.balance, Validators.required],
       comment: [this.data.account.comment],
       currency: [this.data.account.currency, Validators.required],
+      inceptionDate: [
+        this.data.account.inceptionDate
+          ? new Date(this.data.account.inceptionDate).toISOString().slice(0, 10)
+          : null
+      ],
       name: [this.data.account.name, Validators.required],
       platformId: [null, this.autocompleteObjectValidator()],
       tags: [
@@ -218,6 +223,9 @@ export class GfCreateOrUpdateAccountDialogComponent {
       comment: getStringOrNull(this.accountForm.get('comment')?.value),
       currency: this.accountForm.get('currency')?.value,
       id: this.accountForm.get('accountId')?.value,
+      inceptionDate: getStringOrNull(
+        this.accountForm.get('inceptionDate')?.value
+      ),
       name: this.accountForm.get('name')?.value,
       platformId: this.accountForm.get('platformId')?.value?.id ?? null,
       tags: this.accountForm

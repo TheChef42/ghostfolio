@@ -13,9 +13,11 @@ export type ValuationCoverageStatus = 'COMPLETE' | 'INCOMPLETE' | 'UNAVAILABLE';
 
 export type ValuationCoverageReasonCode =
   | 'CASH_RECONCILIATION_MISMATCH'
+  | 'ACCOUNT_INCEPTION_CONFLICT'
   | 'MALFORMED_TRANSFER_PAIR'
   | 'MISSING_FX'
   | 'MISSING_OPENING_CASH'
+  | 'MISSING_OPENING_HOLDINGS'
   | 'MISSING_PRICE'
   | 'STALE_FX'
   | 'STALE_PRICE'
@@ -98,7 +100,10 @@ export interface OpeningCashDiagnostic {
   accountId: string;
   currency: string;
   date: string;
-  source: 'ACCOUNT_BALANCE' | 'INFERRED_ZERO_FIRST_FUNDING';
+  source:
+    | 'ACCOUNT_BALANCE'
+    | 'ACCOUNT_NOT_YET_IN_EXISTENCE'
+    | 'INFERRED_ZERO_FIRST_FUNDING';
 }
 
 export interface PortfolioValuationTimeline {
@@ -146,7 +151,10 @@ export interface TimelineActivity {
 }
 
 export interface TimelineInputs {
-  accounts: (Pick<Account, 'currency' | 'id'> & { name?: string | null })[];
+  accounts: (Pick<Account, 'currency' | 'id'> & {
+    inceptionDate?: Date | null;
+    name?: string | null;
+  })[];
   activities: TimelineActivity[];
   balances: Pick<AccountBalance, 'accountId' | 'date' | 'value'>[];
   externalCashFlows: ExternalCashFlow[];

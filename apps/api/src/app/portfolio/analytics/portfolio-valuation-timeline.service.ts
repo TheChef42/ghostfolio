@@ -1,5 +1,9 @@
 import { resolveExternalCashFlows } from '@ghostfolio/api/app/external-cash-flow/resolve-external-cash-flows';
 import { PortfolioChangedEvent } from '@ghostfolio/api/events/portfolio-changed.event';
+import {
+  resolveMaximumAccountHistoryStart,
+  toAccountingDate
+} from '@ghostfolio/api/helper/account-history.helper';
 import { WHERE_ACTIVITY_NOT_DRAFT } from '@ghostfolio/api/helper/activity.helper';
 import { PrismaService } from '@ghostfolio/api/services/prisma/prisma.service';
 import { TAG_ID_EXCLUDE_FROM_ANALYSIS } from '@ghostfolio/common/config';
@@ -238,20 +242,28 @@ export class PortfolioValuationTimelineService {
     const activities = this.normalizeActivities(orders, splits);
     const resolvedFrom =
       from ??
-      this.resolveMaximumRangeStart({
+      resolveMaximumAccountHistoryStart({
         accounts,
         activities,
         balances,
-        flows,
-        scopeType: scope.type,
+        externalCashFlows: flows,
+        includeUnassignedActivities: scope.type === 'WHOLE_PORTFOLIO',
         to
       });
     const scopedAccountIds = new Set(accounts.map(({ id }) => id));
-    const scopedActivities = activities.filter(
-      ({ accountId }) =>
-        (accountId === null && scope.type === 'WHOLE_PORTFOLIO') ||
-        (accountId !== null && scopedAccountIds.has(accountId))
+    const inceptionByAccountId = new Map(
+      accounts.flatMap(({ id, inceptionDate }) =>
+        inceptionDate ? [[id, toAccountingDate(inceptionDate)]] : []
+      )
     );
+    const scopedActivities = activities.filter(({ accountId, date }) => {
+      if (accountId === null) return scope.type === 'WHOLE_PORTFOLIO';
+      return (
+        scopedAccountIds.has(accountId) &&
+        (!inceptionByAccountId.has(accountId) ||
+          this.date(date) >= inceptionByAccountId.get(accountId)!)
+      );
+    });
     const requiredAssets = this.getRequiredAssets({
       activities: scopedActivities,
       from: resolvedFrom,
@@ -264,7 +276,13 @@ export class PortfolioValuationTimelineService {
             ...accounts.map(({ currency }) => currency ?? baseCurrency),
             ...requiredAssets.map(({ currency }) => currency),
             ...flows
-              .filter(({ accountId }) => scope.accountIds.includes(accountId))
+              .filter(({ accountId, date }) => {
+                const inceptionDate = inceptionByAccountId.get(accountId);
+                return (
+                  scope.accountIds.includes(accountId) &&
+                  (!inceptionDate || this.date(date) >= inceptionDate)
+                );
+              })
               .map(({ currency }) => currency)
           ],
           from: this.shiftDate(resolvedFrom, -1),
@@ -302,56 +320,6 @@ export class PortfolioValuationTimelineService {
       if (!oldestKey) break;
       this.cache.delete(oldestKey);
     }
-  }
-
-  private resolveMaximumRangeStart({
-    accounts,
-    activities,
-    balances,
-    flows,
-    scopeType,
-    to
-  }: {
-    accounts: Pick<Account, 'id'>[];
-    activities: TimelineActivity[];
-    balances: Pick<AccountBalance, 'accountId' | 'date'>[];
-    flows: ExternalCashFlow[];
-    scopeType: 'ACCOUNT_SUBSET' | 'WHOLE_PORTFOLIO';
-    to: string;
-  }) {
-    const accountIds = new Set(accounts.map(({ id }) => id));
-    const selectedTransferLegs = new Map<string, number>();
-    for (const flow of flows) {
-      if (flow.transferGroupId && accountIds.has(flow.accountId)) {
-        selectedTransferLegs.set(
-          flow.transferGroupId,
-          (selectedTransferLegs.get(flow.transferGroupId) ?? 0) + 1
-        );
-      }
-    }
-    const candidates = [
-      ...activities
-        .filter(
-          ({ accountId }) =>
-            (accountId === null && scopeType === 'WHOLE_PORTFOLIO') ||
-            (accountId !== null && accountIds.has(accountId))
-        )
-        .map(({ date }) => this.date(date)),
-      ...balances
-        .filter(({ accountId }) => accountIds.has(accountId))
-        .map(({ date }) => this.shiftDate(this.date(date), 1)),
-      ...flows
-        .filter(
-          (flow) =>
-            accountIds.has(flow.accountId) &&
-            !new Big(flow.amount.toString()).eq(0) &&
-            (!flow.transferGroupId ||
-              selectedTransferLegs.get(flow.transferGroupId) === 1)
-        )
-        .map(({ date }) => this.date(date))
-    ].filter((date) => date <= to);
-
-    return candidates.sort()[0] ?? to;
   }
 
   private getRequiredAssets({
@@ -445,23 +413,89 @@ export class PortfolioValuationTimelineService {
       inputs.accounts.map((account) => [account.id, account])
     );
     const scopedAccountIds = new Set(accountById.keys());
-    const scopedActivities = inputs.activities.filter(
+    const inceptionByAccountId = new Map(
+      inputs.accounts.flatMap(({ id, inceptionDate }) =>
+        inceptionDate ? [[id, toAccountingDate(inceptionDate)]] : []
+      )
+    );
+    const isBeforeInception = (accountId: string, date: Date) => {
+      const inceptionDate = inceptionByAccountId.get(accountId);
+      return Boolean(inceptionDate && this.date(date) < inceptionDate);
+    };
+    for (const activity of inputs.activities) {
+      if (
+        activity.accountId &&
+        isBeforeInception(activity.accountId, activity.date)
+      ) {
+        this.addInceptionConflictReason({
+          accountById,
+          accountId: activity.accountId,
+          date: activity.date,
+          reasons,
+          recordType: 'activity'
+        });
+      }
+    }
+    for (const balance of inputs.balances) {
+      if (isBeforeInception(balance.accountId, balance.date)) {
+        this.addInceptionConflictReason({
+          accountById,
+          accountId: balance.accountId,
+          date: balance.date,
+          reasons,
+          recordType: 'account balance'
+        });
+      }
+    }
+    for (const flow of inputs.externalCashFlows) {
+      if (
+        scopedAccountIds.has(flow.accountId) &&
+        isBeforeInception(flow.accountId, flow.date)
+      ) {
+        this.addInceptionConflictReason({
+          accountById,
+          accountId: flow.accountId,
+          date: flow.date,
+          reasons,
+          recordType: 'external cash flow'
+        });
+      }
+    }
+    const timelineInputs: TimelineInputs = {
+      accounts: inputs.accounts,
+      activities: inputs.activities.filter(
+        (activity) =>
+          !activity.accountId ||
+          !isBeforeInception(activity.accountId, activity.date)
+      ),
+      balances: inputs.balances.filter(
+        (balance) => !isBeforeInception(balance.accountId, balance.date)
+      ),
+      externalCashFlows: inputs.externalCashFlows.filter(
+        (flow) =>
+          !scopedAccountIds.has(flow.accountId) ||
+          !isBeforeInception(flow.accountId, flow.date)
+      )
+    };
+    const scopedActivities = timelineInputs.activities.filter(
       ({ accountId }) =>
         (accountId === null && scope.type === 'WHOLE_PORTFOLIO') ||
         (accountId !== null && scopedAccountIds.has(accountId))
     );
     const quantities = new Map<string, Big>();
+    const quantitiesByAccountAndAsset = new Map<string, Big>();
     const assetById = new Map<string, TimelineActivity>();
     const cash = new Map<string, Big | null>();
     const balanceByAccount = this.groupBy(
-      inputs.balances,
+      timelineInputs.balances,
       ({ accountId }) => accountId
     );
     const activityByDate = this.groupBy(scopedActivities, ({ date }) =>
       this.date(date)
     );
-    const flowByDate = this.groupBy(inputs.externalCashFlows, ({ date }) =>
-      this.date(date)
+    const flowByDate = this.groupBy(
+      timelineInputs.externalCashFlows,
+      ({ date }) => this.date(date)
     );
     const fxCache = new Map<string, Promise<ValuationSource | null>>();
     const priceCache = new Map<string, Promise<ValuationSource | null>>();
@@ -510,15 +544,39 @@ export class PortfolioValuationTimelineService {
     for (const activity of scopedActivities.filter(
       ({ date }) => this.date(date) <= openingDate
     )) {
+      this.validateHoldingDependentActivity({
+        activity,
+        inceptionByAccountId,
+        quantitiesByAccountAndAsset,
+        reasons
+      });
       this.applyHolding(activity, quantities, assetById, reasons);
+      this.applyAccountHolding(activity, quantitiesByAccountAndAsset);
     }
 
-    for (const account of inputs.accounts) {
+    for (const account of timelineInputs.accounts) {
+      const inceptionDate = inceptionByAccountId.get(account.id);
+      if (inceptionDate && openingDate < inceptionDate) {
+        cash.set(account.id, new Big(0));
+        openingCash.push({
+          accountId: account.id,
+          currency: account.currency ?? baseCurrency,
+          date: openingDate,
+          source: 'ACCOUNT_NOT_YET_IN_EXISTENCE'
+        });
+        continue;
+      }
       const anchor = (balanceByAccount.get(account.id) ?? [])
         .filter(({ date }) => this.date(date) <= openingDate)
         .at(-1);
       if (!anchor) {
-        if (this.canInferZeroOpening({ accountId: account.id, from, inputs })) {
+        if (
+          this.canInferZeroOpening({
+            accountId: account.id,
+            from,
+            inputs: timelineInputs
+          })
+        ) {
           cash.set(account.id, new Big(0));
           openingCash.push({
             accountId: account.id,
@@ -645,7 +703,7 @@ export class PortfolioValuationTimelineService {
       }
       let cashTotal = new Big(0);
       let cashComplete = true;
-      for (const account of inputs.accounts) {
+      for (const account of timelineInputs.accounts) {
         const accountCash = cash.get(account.id);
         if (!accountCash) {
           cashComplete = false;
@@ -692,8 +750,16 @@ export class PortfolioValuationTimelineService {
     const opening = await valuePoint(openingDate, 'OPENING');
     const timeline: ValuationPoint[] = [opening];
     for (const date of this.dates(from, to)) {
-      for (const activity of activityByDate.get(date) ?? [])
+      for (const activity of activityByDate.get(date) ?? []) {
+        this.validateHoldingDependentActivity({
+          activity,
+          inceptionByAccountId,
+          quantitiesByAccountAndAsset,
+          reasons
+        });
         this.applyHolding(activity, quantities, assetById, reasons);
+        this.applyAccountHolding(activity, quantitiesByAccountAndAsset);
+      }
       await this.applyCashEvents({
         accountById,
         activityByDate,
@@ -707,7 +773,7 @@ export class PortfolioValuationTimelineService {
         balanceByAccount,
         cash,
         date,
-        inputs,
+        inputs: timelineInputs,
         openingCash,
         reasons,
         reconciliations
@@ -717,7 +783,7 @@ export class PortfolioValuationTimelineService {
     const closing = timeline.at(-1)!;
     const externalFlows = await this.resolveScopeFlows({
       baseCurrency,
-      flows: inputs.externalCashFlows,
+      flows: timelineInputs.externalCashFlows,
       from,
       reasons,
       resolver,
@@ -861,6 +927,83 @@ export class PortfolioValuationTimelineService {
       return value.minus(fee);
     if (activity.type === 'FEE') return value.plus(fee).times(-1);
     return null;
+  }
+
+  private addInceptionConflictReason({
+    accountById,
+    accountId,
+    date,
+    reasons,
+    recordType
+  }: {
+    accountById: Map<
+      string,
+      Pick<Account, 'currency' | 'id'> & {
+        inceptionDate?: Date | null;
+        name?: string | null;
+      }
+    >;
+    accountId: string;
+    date: Date;
+    reasons: ValuationCoverageReason[];
+    recordType: string;
+  }) {
+    const account = accountById.get(accountId);
+    this.addReason(reasons, {
+      accountId,
+      accountName: account?.name ?? undefined,
+      code: 'ACCOUNT_INCEPTION_CONFLICT',
+      date: this.date(date),
+      message: `An ${recordType} exists before the account start date`
+    });
+  }
+
+  private applyAccountHolding(
+    activity: TimelineActivity,
+    quantities: Map<string, Big>
+  ) {
+    if (!activity.accountId || !['BUY', 'SELL'].includes(activity.type)) return;
+    const key = `${activity.accountId}:${activity.assetId}`;
+    const sign = activity.type === 'BUY' ? 1 : -1;
+    quantities.set(
+      key,
+      (quantities.get(key) ?? new Big(0)).plus(
+        new Big(activity.quantity).mul(sign)
+      )
+    );
+  }
+
+  private validateHoldingDependentActivity({
+    activity,
+    inceptionByAccountId,
+    quantitiesByAccountAndAsset,
+    reasons
+  }: {
+    activity: TimelineActivity;
+    inceptionByAccountId: Map<string, string>;
+    quantitiesByAccountAndAsset: Map<string, Big>;
+    reasons: ValuationCoverageReason[];
+  }) {
+    if (
+      activity.type !== 'DIVIDEND' ||
+      !activity.accountId ||
+      !inceptionByAccountId.has(activity.accountId)
+    ) {
+      return;
+    }
+    const quantity = quantitiesByAccountAndAsset.get(
+      `${activity.accountId}:${activity.assetId}`
+    );
+    if (quantity?.gt(0)) return;
+    this.addReason(reasons, {
+      accountId: activity.accountId,
+      assetId: activity.assetId,
+      code: 'MISSING_OPENING_HOLDINGS',
+      date: this.date(activity.date),
+      message:
+        'A dividend exists without established holding history for this account',
+      symbol: activity.symbol
+    });
   }
 
   private applyHolding(

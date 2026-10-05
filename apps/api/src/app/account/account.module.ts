@@ -11,6 +11,7 @@ import { TagModule } from '@ghostfolio/api/services/tag/tag.module';
 
 import { Module } from '@nestjs/common';
 
+import { AccountHistoryService } from './account-history.service';
 import { AccountController } from './account.controller';
 import { AccountService } from './account.service';
 
@@ -29,6 +30,6 @@ import { AccountService } from './account.service';
     TagModule,
     UserModule
   ],
-  providers: [AccountService]
+  providers: [AccountHistoryService, AccountService]
 })
 export class AccountModule {}

@@ -43,6 +43,16 @@
         }}</span>
       </mat-form-field>
     </div>
+    <div>
+      <mat-form-field appearance="outline" class="w-100">
+        <mat-label i18n>Account start date</mat-label>
+        <input formControlName="inceptionDate" matInput type="date" />
+        <mat-hint i18n>
+          The date this account first economically existed. Analytics treats the
+          account as nonexistent before this date.
+        </mat-hint>
+      </mat-form-field>
+    </div>
     <div [class.d-none]="platforms?.length < 1">
       <mat-form-field appearance="outline" class="w-100">
         <mat-label i18n>Platform</mat-label>

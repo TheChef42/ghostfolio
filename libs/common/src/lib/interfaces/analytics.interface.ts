@@ -22,7 +22,10 @@ export interface AnalyticsCoverageReason {
   expected?: string;
   message: string;
   openingCashDate?: string;
-  openingCashSource?: 'ACCOUNT_BALANCE' | 'INFERRED_ZERO_FIRST_FUNDING';
+  openingCashSource?:
+    | 'ACCOUNT_BALANCE'
+    | 'ACCOUNT_NOT_YET_IN_EXISTENCE'
+    | 'INFERRED_ZERO_FIRST_FUNDING';
   reconstructed?: string;
   severity?: 'ERROR' | 'WARNING';
   sourceDate?: string;

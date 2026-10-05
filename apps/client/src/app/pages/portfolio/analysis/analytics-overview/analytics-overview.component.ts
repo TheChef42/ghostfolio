@@ -474,7 +474,8 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
     if (benchmark || code.includes('BENCHMARK')) return $localize`Benchmark`;
     if (code.includes('PRICE')) return $localize`Prices`;
     if (code.includes('FX')) return $localize`FX`;
-    if (code.includes('OPENING')) return $localize`Opening history`;
+    if (code.includes('INCEPTION') || code.includes('OPENING'))
+      return $localize`Opening history`;
     if (code.includes('RANGE')) return $localize`Range`;
     return $localize`Cash`;
   }
@@ -503,13 +504,16 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
       case 'STALE_BENCHMARK_FX':
         return `Historical benchmark exchange rate ${reason.code === 'MISSING_BENCHMARK_FX' ? 'is missing' : 'is too old'}${dateSuffix}.`;
       case 'MISSING_OPENING_CASH':
+      case 'MISSING_OPENING_HOLDINGS':
       case 'MISSING_OPENING_VALUE':
         return `Opening history is missing for ${reason.accountName ?? 'the selected account'}${dateSuffix}.`;
+      case 'ACCOUNT_INCEPTION_CONFLICT':
+        return `Existing account history predates the configured account start date for ${reason.accountName ?? 'the selected account'}${dateSuffix}.`;
       case 'CASH_RECONCILIATION_MISMATCH': {
         const account = reason.accountName ?? 'Selected account';
         const currency = reason.currency ? ` (${reason.currency})` : '';
         const provenance = reason.openingCashSource
-          ? ` Opening cash: ${reason.openingCashSource === 'ACCOUNT_BALANCE' ? 'account balance' : 'inferred zero at first funding'}${reason.openingCashDate ? ` on ${this.formatAccountingDate(reason.openingCashDate)}` : ''}.`
+          ? ` Opening cash: ${reason.openingCashSource === 'ACCOUNT_BALANCE' ? 'account balance' : reason.openingCashSource === 'ACCOUNT_NOT_YET_IN_EXISTENCE' ? 'account not yet in existence' : 'inferred zero at first funding'}${reason.openingCashDate ? ` on ${this.formatAccountingDate(reason.openingCashDate)}` : ''}.`
           : '';
         return `${account}${currency}${dateSuffix}: recorded checkpoint cash ${reason.expected ?? '—'}, reconstructed cash ${reason.reconstructed ?? '—'}, difference ${reason.difference ?? '—'}, tolerance ${reason.tolerance ?? '—'}.${provenance}`;
       }

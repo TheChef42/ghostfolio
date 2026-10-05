@@ -36,6 +36,7 @@ model Account {
   createdAt         DateTime           @default(now())
   currency          String?
   id                String             @default(uuid())
+  inceptionDate     DateTime?          @db.Date
   name              String?
   platform          Platform?          @relation(fields: [platformId], references: [id])
   platformId        String?

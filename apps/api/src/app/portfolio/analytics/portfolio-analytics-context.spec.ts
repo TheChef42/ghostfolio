@@ -76,6 +76,22 @@ describe('portfolio analytics context reuse', () => {
     });
   });
 
+  it('starts account MAX at explicit inception before its first transaction', async () => {
+    const { prisma, timeline } = context();
+    prisma.account.findMany.mockResolvedValue([
+      {
+        currency: 'DKK',
+        id: 'account-a',
+        inceptionDate: new Date('2024-06-01T00:00:00.000Z'),
+        userId: 'user-a'
+      }
+    ]);
+
+    const result = await timeline.getTimeline({ ...request, from: null });
+
+    expect(result.interval.from).toBe('2024-06-01');
+  });
+
   it('reuses one timeline for concurrent TWR, XIRR and Modified Dietz', async () => {
     const { prisma, timeline } = context();
     const twr = new TwrAnalyticsService(
@@ -188,6 +204,16 @@ describe('portfolio analytics context reuse', () => {
       expect(prisma.order.findMany).toHaveBeenCalledTimes(2);
     }
   );
+
+  it('invalidates cached and in-flight timelines after an inception edit', async () => {
+    const { prisma, timeline } = context();
+    await timeline.getTimeline(request);
+    timeline.handlePortfolioChanged(
+      new PortfolioChangedEvent({ userId: request.userId })
+    );
+    await timeline.getTimeline(request);
+    expect(prisma.order.findMany).toHaveBeenCalledTimes(2);
+  });
 
   it('invalidates when historical price or FX data changes', async () => {
     const { marketDataRevision, prisma, timeline } = context();

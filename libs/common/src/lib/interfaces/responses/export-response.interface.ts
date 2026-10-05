@@ -7,8 +7,12 @@ import { MarketData } from '../market-data.interface';
 import { UserSettings } from '../user-settings.interface';
 
 export interface ExportResponse {
-  accounts: (Omit<Account, 'createdAt' | 'updatedAt' | 'userId'> & {
+  accounts: (Omit<
+    Account,
+    'createdAt' | 'inceptionDate' | 'updatedAt' | 'userId'
+  > & {
     balances: AccountBalance[];
+    inceptionDate: string | null;
     tags?: string[];
   })[];
   activities: (Omit<

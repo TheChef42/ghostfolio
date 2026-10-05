@@ -1,5 +1,6 @@
 import { AccessModule } from '@ghostfolio/api/app/access/access.module';
 import { AccountBalanceService } from '@ghostfolio/api/app/account-balance/account-balance.service';
+import { AccountHistoryService } from '@ghostfolio/api/app/account/account-history.service';
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { ActivitiesModule } from '@ghostfolio/api/app/activities/activities.module';
 import { RedisCacheModule } from '@ghostfolio/api/app/redis-cache/redis-cache.module';
@@ -73,6 +74,7 @@ import { RulesService } from './rules.service';
   ],
   providers: [
     AccountBalanceService,
+    AccountHistoryService,
     AccountService,
     BenchmarkAnalyticsService,
     BenchmarkHistoricalValuationAdapter,
