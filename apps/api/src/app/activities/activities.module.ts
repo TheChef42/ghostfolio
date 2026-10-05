@@ -1,4 +1,5 @@
 import { AccountBalanceService } from '@ghostfolio/api/app/account-balance/account-balance.service';
+import { AccountHistoryService } from '@ghostfolio/api/app/account/account-history.service';
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { CacheModule } from '@ghostfolio/api/app/cache/cache.module';
 import { RedisCacheModule } from '@ghostfolio/api/app/redis-cache/redis-cache.module';
@@ -43,6 +44,11 @@ import { ActivitiesService } from './activities.service';
     TransformDataSourceInRequestModule,
     TransformDataSourceInResponseModule
   ],
-  providers: [AccountBalanceService, AccountService, ActivitiesService]
+  providers: [
+    AccountBalanceService,
+    AccountHistoryService,
+    AccountService,
+    ActivitiesService
+  ]
 })
 export class ActivitiesModule {}

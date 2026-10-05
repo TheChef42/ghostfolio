@@ -1,4 +1,5 @@
 import { AccountBalanceService } from '@ghostfolio/api/app/account-balance/account-balance.service';
+import { AccountHistoryService } from '@ghostfolio/api/app/account/account-history.service';
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { ActivitiesModule } from '@ghostfolio/api/app/activities/activities.module';
 import { PortfolioCalculatorFactory } from '@ghostfolio/api/app/portfolio/calculator/portfolio-calculator.factory';
@@ -54,6 +55,7 @@ import { BenchmarksService } from './benchmarks.service';
   ],
   providers: [
     AccountBalanceService,
+    AccountHistoryService,
     AccountService,
     BenchmarkService,
     BenchmarksService,
