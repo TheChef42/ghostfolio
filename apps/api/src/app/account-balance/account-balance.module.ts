@@ -1,3 +1,4 @@
+import { AccountHistoryService } from '@ghostfolio/api/app/account/account-history.service';
 import { AccountService } from '@ghostfolio/api/app/account/account.service';
 import { ExchangeRateDataModule } from '@ghostfolio/api/services/exchange-rate-data/exchange-rate-data.module';
 import { ImpersonationModule } from '@ghostfolio/api/services/impersonation/impersonation.module';
@@ -18,6 +19,6 @@ import { AccountBalanceService } from './account-balance.service';
     PrismaModule,
     TagModule
   ],
-  providers: [AccountBalanceService, AccountService]
+  providers: [AccountBalanceService, AccountHistoryService, AccountService]
 })
 export class AccountBalanceModule {}
