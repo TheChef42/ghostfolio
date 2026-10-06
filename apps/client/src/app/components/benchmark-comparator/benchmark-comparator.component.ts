@@ -49,6 +49,13 @@ import { addIcons } from 'ionicons';
 import { arrowForwardOutline } from 'ionicons/icons';
 import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 
+import {
+  AnalyticsChartMode,
+  toAnalyticsChartValue
+} from './benchmark-comparator.util';
+
+export type { AnalyticsChartMode } from './benchmark-comparator.util';
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
@@ -67,14 +74,19 @@ import { NgxSkeletonLoaderModule } from 'ngx-skeleton-loader';
 export class GfBenchmarkComparatorComponent implements OnChanges, OnDestroy {
   public readonly benchmark = input<Partial<SymbolProfile>>();
   public readonly benchmarkDataItems = input<LineChartItem[]>([]);
+  public readonly benchmarkLabel = input<string>();
   public readonly benchmarks = input<Partial<SymbolProfile>[]>();
+  public readonly chartMode = input.required<AnalyticsChartMode>();
   public readonly colorScheme = input.required<ColorScheme>();
+  public readonly currency = input<string>();
   public readonly isLoading = input<boolean>();
   public readonly locale = input(getLocale());
   public readonly performanceDataItems = input.required<LineChartItem[]>();
+  public readonly performanceLabel = input<string>($localize`Portfolio`);
   public readonly user = input<User>();
 
   public readonly benchmarkChanged = output<string>();
+  public readonly chartModeChanged = output<AnalyticsChartMode>();
 
   protected chart: Chart<'line'>;
   protected hasPermissionToAccessAdminControl: boolean;
@@ -118,6 +130,10 @@ export class GfBenchmarkComparatorComponent implements OnChanges, OnDestroy {
     this.benchmarkChanged.emit(symbolProfileId);
   }
 
+  protected onChangeChartMode(chartMode: AnalyticsChartMode) {
+    this.chartModeChanged.emit(chartMode);
+  }
+
   private initialize() {
     const benchmarkDataValues: Record<string, number> = {};
 
@@ -134,10 +150,10 @@ export class GfBenchmarkComparatorComponent implements OnChanges, OnDestroy {
           data: this.performanceDataItems().map(({ date, value }) => {
             return {
               x: parseDate(date)?.getTime() ?? null,
-              y: value * 100
+              y: this.chartValue(value)
             };
           }),
-          label: $localize`Portfolio`
+          label: this.performanceLabel()
         },
         {
           backgroundColor: `rgb(${secondaryColorRgb.r}, ${secondaryColorRgb.g}, ${secondaryColorRgb.b})`,
@@ -146,11 +162,14 @@ export class GfBenchmarkComparatorComponent implements OnChanges, OnDestroy {
           data: this.performanceDataItems().map(({ date }) => {
             return {
               x: parseDate(date)?.getTime() ?? null,
-              y: benchmarkDataValues[date]
+              y: this.chartValue(benchmarkDataValues[date])
             };
           }),
           borderDash: [6, 4],
-          label: this.benchmark()?.name ?? $localize`Benchmark`
+          label:
+            this.benchmarkLabel() ??
+            this.benchmark()?.name ??
+            $localize`Benchmark`
         }
       ]
     };
@@ -194,7 +213,7 @@ export class GfBenchmarkComparatorComponent implements OnChanges, OnDestroy {
               y: getValueAxisOptions({
                 colorScheme: this.colorScheme(),
                 tickCallback: (tickValue) => {
-                  return `${Number(tickValue).toFixed(2)} %`;
+                  return this.formatValue(Number(tickValue));
                 }
               })
             }
@@ -212,7 +231,22 @@ export class GfBenchmarkComparatorComponent implements OnChanges, OnDestroy {
     return getTimeSeriesTooltipOptions<'line'>({
       colorScheme: this.colorScheme(),
       locale: this.locale(),
-      unit: '%'
+      unit: this.chartMode() === 'PERFORMANCE' ? '%' : this.currency()
     });
+  }
+
+  private chartValue(value: number | undefined) {
+    return toAnalyticsChartValue(value, this.chartMode());
+  }
+
+  private formatValue(value: number) {
+    if (this.chartMode() === 'PERFORMANCE') {
+      return `${value.toFixed(2)} %`;
+    }
+    return new Intl.NumberFormat(this.locale(), {
+      currency: this.currency(),
+      maximumFractionDigits: 0,
+      style: this.currency() ? 'currency' : 'decimal'
+    }).format(value);
   }
 }

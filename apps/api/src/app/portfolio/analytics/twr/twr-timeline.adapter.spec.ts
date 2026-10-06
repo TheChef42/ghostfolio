@@ -121,6 +121,20 @@ describe('TwrTimelineAdapter', () => {
     ).toBe('-40');
   });
 
+  it('keeps TWR available when coverage contains only a reconciliation warning', () => {
+    const value = timeline();
+    value.coverage.reasons = [
+      {
+        code: 'CASH_RECONCILIATION_MISMATCH',
+        message: 'Synthetic warning',
+        severity: 'WARNING'
+      }
+    ];
+    expect(adapter.fromTimeline(value)).toEqual(
+      expect.objectContaining({ preparationReason: null })
+    );
+  });
+
   it.each([
     [
       timeline({

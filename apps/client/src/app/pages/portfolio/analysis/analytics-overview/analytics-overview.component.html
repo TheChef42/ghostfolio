@@ -12,8 +12,8 @@
     </div>
   }
   @if (coverageGroups.length) {
-    <div class="alert alert-warning" role="status">
-      <strong i18n>Why unavailable?</strong>
+    <div class="alert alert-danger" role="alert">
+      <strong i18n>Blocking data issues</strong>
       @for (group of coverageGroups; track group.label) {
         <div class="mt-2">
           <strong>{{ group.label }}</strong>
@@ -24,6 +24,28 @@
           }
         </ul>
       }
+    </div>
+  }
+  @if (coverageWarningGroups.length) {
+    <div class="alert alert-warning" role="status">
+      <strong i18n>Cash reconciliation</strong>
+      @for (group of coverageWarningGroups; track group.label) {
+        <ul class="mb-0 mt-2 pl-3">
+          @for (message of group.messages; track message) {
+            <li>{{ message }}</li>
+          }
+        </ul>
+      }
+    </div>
+  }
+  @if (coverageInformationMessages.length) {
+    <div class="alert alert-info" role="status">
+      <strong i18n>How opening cash was determined</strong>
+      <ul class="mb-0 mt-2 pl-3">
+        @for (message of coverageInformationMessages; track message) {
+          <li>{{ message }}</li>
+        }
+      </ul>
     </div>
   }
 
@@ -167,14 +189,23 @@
     <gf-benchmark-comparator
       [benchmark]="benchmark"
       [benchmarkDataItems]="benchmarkChartItems"
+      [benchmarkLabel]="chartBenchmarkLabel"
       [benchmarks]="benchmarks"
+      [chartMode]="chartMode"
       [colorScheme]="user?.settings?.colorScheme"
-      [isLoading]="isLoadingPerformance || isLoadingBenchmark"
+      [currency]="user?.settings?.baseCurrency"
+      [isLoading]="
+        isLoadingPerformance ||
+        (chartMode === 'PERFORMANCE' && isLoadingBenchmark)
+      "
       [locale]="user?.settings?.locale"
       [performanceDataItems]="portfolioChartItems"
+      [performanceLabel]="chartPortfolioLabel"
       [user]="user"
       (benchmarkChanged)="onChangeBenchmark($event)"
+      (chartModeChanged)="onChangeChartMode($event)"
     />
+    <p class="mb-0 mt-2 text-muted">{{ chartHelp }}</p>
     @if (!benchmarks.length) {
       <p class="mb-0 mt-2 text-muted" i18n role="status">
         No benchmark is configured yet.

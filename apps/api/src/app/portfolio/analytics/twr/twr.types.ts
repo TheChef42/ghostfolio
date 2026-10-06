@@ -32,7 +32,10 @@ export interface TwrPreparedInput {
 export interface TwrIndexPoint extends TwrTimelinePoint {
   boundary: 'CONTINUE' | 'SEGMENT_END' | 'SEGMENT_START' | 'UNFUNDED';
   chainFactor: string | null;
+  cumulativeGainLoss: string;
+  cumulativeNetContributions: string;
   indexLevel: string | null;
+  investedCapital: string;
   segmentId: number | null;
   subperiodReturn: string | null;
 }

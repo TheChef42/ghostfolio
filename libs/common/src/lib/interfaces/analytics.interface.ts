@@ -12,6 +12,7 @@ export interface AnalyticsInterval {
 }
 
 export interface AnalyticsCoverageReason {
+  adjustment?: string;
   accountName?: string;
   code: string;
   currency?: string;
@@ -27,7 +28,7 @@ export interface AnalyticsCoverageReason {
     | 'ACCOUNT_NOT_YET_IN_EXISTENCE'
     | 'INFERRED_ZERO_FIRST_FUNDING';
   reconstructed?: string;
-  severity?: 'ERROR' | 'WARNING';
+  severity?: 'ERROR' | 'INFO' | 'WARNING';
   sourceDate?: string;
   symbol?: string;
   targetCurrency?: string;
@@ -60,9 +61,12 @@ export interface AnalyticsPerformanceBase {
 export interface AnalyticsTwrPoint {
   boundary: 'CONTINUE' | 'SEGMENT_END' | 'SEGMENT_START' | 'UNFUNDED';
   chainFactor: string | null;
+  cumulativeGainLoss: string;
+  cumulativeNetContributions: string;
   date: string;
   externalFlow: string;
   indexLevel: string | null;
+  investedCapital: string;
   portfolioValue: string;
   segmentId: number | null;
   subperiodReturn: string | null;

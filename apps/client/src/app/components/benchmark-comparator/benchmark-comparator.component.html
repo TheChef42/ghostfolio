@@ -3,7 +3,17 @@
     <div
       class="align-items-center d-flex flex-grow-1 h5 mb-0 py-2 text-truncate"
     >
-      <span i18n>Performance</span>
+      @switch (chartMode()) {
+        @case ('GAIN_LOSS') {
+          <span i18n>Gain / loss</span>
+        }
+        @case ('TOTAL_VALUE') {
+          <span i18n>Total value</span>
+        }
+        @default {
+          <span i18n>Performance (%)</span>
+        }
+      }
       @if (user()?.subscription?.type === 'Basic') {
         <gf-premium-indicator class="ml-1" />
       }
@@ -12,35 +22,56 @@
   <div class="col-md-6 col-xs-12 d-flex justify-content-end">
     <mat-form-field
       appearance="outline"
-      class="gf-form-field-dense w-100 without-hint"
+      class="gf-form-field-dense mr-2 without-hint"
       color="accent"
     >
-      <mat-label i18n>Compare with...</mat-label>
+      <mat-label i18n>Graph</mat-label>
       <mat-select
-        name="benchmark"
-        [disabled]="user()?.subscription?.type === 'Basic'"
-        [value]="benchmark()?.id"
-        (selectionChange)="onChangeBenchmark($event.value)"
+        name="chartMode"
+        [value]="chartMode()"
+        (selectionChange)="onChangeChartMode($event.value)"
       >
-        <mat-option [value]="null" />
-        @for (symbolProfile of benchmarks(); track symbolProfile) {
-          <mat-option [value]="symbolProfile.id">
-            {{ symbolProfile.name }}
-            @if (symbolProfile.symbol) {
-              <span class="text-muted">({{ symbolProfile.symbol }})</span>
-            }
-          </mat-option>
-        }
-        @if (hasPermissionToAccessAdminControl) {
-          <mat-option [routerLink]="routerLinkAdminControlMarketData">
-            <div class="align-items-center d-flex">
-              <ion-icon class="mr-2 text-muted" name="arrow-forward-outline" />
-              <span i18n>Manage Benchmarks</span>
-            </div>
-          </mat-option>
-        }
+        <mat-option i18n value="PERFORMANCE">Performance (%)</mat-option>
+        <mat-option i18n value="GAIN_LOSS">Gain / loss</mat-option>
+        <mat-option i18n value="TOTAL_VALUE">Total value</mat-option>
       </mat-select>
     </mat-form-field>
+    @if (chartMode() === 'PERFORMANCE') {
+      <mat-form-field
+        appearance="outline"
+        class="gf-form-field-dense w-100 without-hint"
+        color="accent"
+      >
+        <mat-label i18n>Compare with...</mat-label>
+        <mat-select
+          name="benchmark"
+          [disabled]="user()?.subscription?.type === 'Basic'"
+          [value]="benchmark()?.id"
+          (selectionChange)="onChangeBenchmark($event.value)"
+        >
+          <mat-option [value]="null" />
+          @for (symbolProfile of benchmarks(); track symbolProfile) {
+            <mat-option [value]="symbolProfile.id">
+              {{ symbolProfile.name }}
+              @if (symbolProfile.symbol) {
+                <span class="text-muted">({{ symbolProfile.symbol }})</span>
+              }
+            </mat-option>
+          }
+          @if (hasPermissionToAccessAdminControl) {
+            <mat-option [routerLink]="routerLinkAdminControlMarketData">
+              <div class="align-items-center d-flex">
+                <ion-icon
+                  class="mr-2 text-muted"
+                  name="arrow-forward-outline"
+                />
+                <span i18n>Manage Benchmarks</span>
+              </div>
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
   </div>
 </div>
 <div
@@ -50,12 +81,14 @@
 >
   <span class="align-items-center d-flex mr-3">
     <span class="legend-line legend-line-portfolio mr-1"></span>
-    <span i18n>Portfolio</span>
+    <span>{{ performanceLabel() }}</span>
   </span>
-  @if (benchmark()) {
+  @if (benchmarkDataItems().length) {
     <span class="align-items-center d-flex">
       <span class="legend-line legend-line-benchmark mr-1"></span>
-      <span>{{ benchmark()?.name ?? benchmark()?.symbol }}</span>
+      <span>{{
+        benchmarkLabel() ?? benchmark()?.name ?? benchmark()?.symbol
+      }}</span>
     </span>
   }
 </div>
@@ -71,7 +104,7 @@
   }
   <canvas
     #chartCanvas
-    aria-label="Portfolio and benchmark performance chart"
+    aria-label="Portfolio analytics chart"
     class="h-100"
     i18n-aria-label
     role="img"

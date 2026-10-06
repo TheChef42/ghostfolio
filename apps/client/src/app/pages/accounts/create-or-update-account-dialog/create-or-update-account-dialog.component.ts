@@ -11,12 +11,15 @@ import { validateObjectForForm } from '@ghostfolio/common/utils';
 import { GfCurrencySelectorComponent } from '@ghostfolio/ui/currency-selector';
 import { GfEntityLogoComponent } from '@ghostfolio/ui/entity-logo';
 import { translate } from '@ghostfolio/ui/i18n';
+import { NotificationService } from '@ghostfolio/ui/notifications';
 import { DataService } from '@ghostfolio/ui/services';
 import { GfTagsSelectorComponent } from '@ghostfolio/ui/tags-selector';
 
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   DestroyRef,
   inject
@@ -71,11 +74,14 @@ export class GfCreateOrUpdateAccountDialogComponent {
   protected currencies: string[] = [];
   protected filteredPlatforms: Observable<Platform[]> | undefined;
   protected hasPermissionToCreateOwnTag: boolean;
+  protected inceptionDateError: string | null = null;
+  protected isSubmitting = false;
   protected platforms: Platform[] = [];
   protected tagsAvailable: Tag[] = [];
 
   protected readonly data =
     inject<CreateOrUpdateAccountDialogParams>(MAT_DIALOG_DATA);
+  private readonly changeDetectorRef = inject(ChangeDetectorRef);
   private readonly dataService = inject(DataService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef =
@@ -84,6 +90,7 @@ export class GfCreateOrUpdateAccountDialogComponent {
   private readonly impersonationStorageService = inject(
     ImpersonationStorageService
   );
+  private readonly notificationService = inject(NotificationService);
   private readonly userService = inject(UserService);
 
   protected get selectedPlatform() {
@@ -169,6 +176,18 @@ export class GfCreateOrUpdateAccountDialogComponent {
         }
       });
 
+    this.accountForm
+      .get('inceptionDate')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        if (!this.inceptionDateError) return;
+        this.inceptionDateError = null;
+        const control = this.accountForm.get('inceptionDate');
+        const errors = { ...(control?.errors ?? {}) };
+        delete errors.server;
+        control?.setErrors(Object.keys(errors).length ? errors : null);
+      });
+
     this.dataService.fetchPlatforms().subscribe(({ platforms }) => {
       this.platforms = platforms;
 
@@ -218,6 +237,7 @@ export class GfCreateOrUpdateAccountDialogComponent {
   }
 
   protected async onSubmit() {
+    if (this.isSubmitting) return;
     const account: CreateAccountDto | UpdateAccountDto = {
       balance: this.accountForm.get('balance')?.value,
       comment: getStringOrNull(this.accountForm.get('comment')?.value),
@@ -249,7 +269,7 @@ export class GfCreateOrUpdateAccountDialogComponent {
           object: account
         });
 
-        this.dialogRef.close(account as UpdateAccountDto);
+        this.save(account as UpdateAccountDto);
       } else {
         delete (account as CreateAccountDto).id;
 
@@ -259,11 +279,50 @@ export class GfCreateOrUpdateAccountDialogComponent {
           object: account
         });
 
-        this.dialogRef.close(account as CreateAccountDto);
+        this.save(account as CreateAccountDto);
       }
     } catch (error) {
       console.error(error);
     }
+  }
+
+  private errorMessage(error: HttpErrorResponse) {
+    const message = error.error?.message;
+    if (Array.isArray(message)) return message.join(' ');
+    return typeof message === 'string'
+      ? message
+      : $localize`The account could not be saved.`;
+  }
+
+  private save(account: CreateAccountDto | UpdateAccountDto) {
+    this.inceptionDateError = null;
+    this.isSubmitting = true;
+    const request$: Observable<unknown> = this.data.account.id
+      ? this.dataService.putAccount(account as UpdateAccountDto)
+      : this.dataService.postAccount(account as CreateAccountDto);
+
+    request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      error: (error: HttpErrorResponse) => {
+        const message = this.errorMessage(error);
+        if (
+          error.status === 400 &&
+          /account start date|inceptiondate/i.test(message)
+        ) {
+          this.inceptionDateError = message;
+          const control = this.accountForm.get('inceptionDate');
+          control?.setErrors({ ...(control.errors ?? {}), server: true });
+          control?.markAsTouched();
+        } else {
+          this.notificationService.alert({
+            message,
+            title: $localize`The account could not be saved.`
+          });
+        }
+        this.isSubmitting = false;
+        this.changeDetectorRef.markForCheck();
+      },
+      next: () => this.dialogRef.close(true)
+    });
   }
 
   private autocompleteObjectValidator(): ValidatorFn {

@@ -561,7 +561,7 @@ export class PortfolioValuationTimelineService {
         openingCash.push({
           accountId: account.id,
           currency: account.currency ?? baseCurrency,
-          date: openingDate,
+          date: inceptionDate,
           source: 'ACCOUNT_NOT_YET_IN_EXISTENCE'
         });
         continue;
@@ -570,18 +570,17 @@ export class PortfolioValuationTimelineService {
         .filter(({ date }) => this.date(date) <= openingDate)
         .at(-1);
       if (!anchor) {
-        if (
-          this.canInferZeroOpening({
-            accountId: account.id,
-            from,
-            inputs: timelineInputs
-          })
-        ) {
+        const firstFundingDate = this.getZeroOpeningFundingDate({
+          accountId: account.id,
+          from,
+          inputs: timelineInputs
+        });
+        if (firstFundingDate) {
           cash.set(account.id, new Big(0));
           openingCash.push({
             accountId: account.id,
             currency: account.currency ?? baseCurrency,
-            date: openingDate,
+            date: firstFundingDate,
             source: 'INFERRED_ZERO_FIRST_FUNDING'
           });
           continue;
@@ -791,11 +790,14 @@ export class PortfolioValuationTimelineService {
       to,
       userId
     });
+    const hasBlockingReason = reasons.some(
+      ({ severity }) => (severity ?? 'ERROR') === 'ERROR'
+    );
     const status =
       opening.totalValueInBaseCurrency === null ||
       closing.totalValueInBaseCurrency === null
         ? 'UNAVAILABLE'
-        : reasons.length > 0
+        : hasBlockingReason
           ? 'INCOMPLETE'
           : 'COMPLETE';
 
@@ -875,7 +877,9 @@ export class PortfolioValuationTimelineService {
         })
       ) {
         cash.set(activity.accountId, null);
-      } else cash.set(activity.accountId, current.plus(delta.mul(fx!.value)));
+      } else {
+        cash.set(activity.accountId, current.plus(delta.mul(fx!.value)));
+      }
     }
     for (const flow of flowByDate.get(date) ?? []) {
       if (onlyAccountId && flow.accountId !== onlyAccountId) continue;
@@ -1081,6 +1085,7 @@ export class PortfolioValuationTimelineService {
           this.addReason(reasons, {
             accountId: account.id,
             accountName: account.name ?? undefined,
+            adjustment: residual.toFixed(),
             code: 'CASH_RECONCILIATION_MISMATCH',
             currency: account.currency ?? undefined,
             date,
@@ -1095,6 +1100,7 @@ export class PortfolioValuationTimelineService {
               ({ accountId }) => accountId === account.id
             )?.source,
             reconstructed: reconstructed.toFixed(),
+            severity: 'WARNING',
             tolerance: tolerance.toFixed()
           });
       }
@@ -1249,7 +1255,7 @@ export class PortfolioValuationTimelineService {
     return resolver.resolveFx({ date, fromCurrency, toCurrency });
   }
 
-  private canInferZeroOpening({
+  private getZeroOpeningFundingDate({
     accountId,
     from,
     inputs
@@ -1277,11 +1283,11 @@ export class PortfolioValuationTimelineService {
     ].sort((left, right) => left.date.localeCompare(right.date));
 
     const firstDate = events[0]?.date;
-    return Boolean(
-      firstDate &&
+    return firstDate &&
       firstDate >= from &&
       events.some(({ date, funding }) => date === firstDate && funding)
-    );
+      ? firstDate
+      : null;
   }
 
   private normalizeActivities(
@@ -1331,7 +1337,11 @@ export class PortfolioValuationTimelineService {
     reasons: ValuationCoverageReason[],
     reason: ValuationCoverageReason
   ) {
-    const identity = JSON.stringify(reason);
+    const normalizedReason = {
+      severity: 'ERROR' as const,
+      ...reason
+    };
+    const identity = JSON.stringify(normalizedReason);
     let identities = this.reasonIdentities.get(reasons);
     if (!identities) {
       identities = new Set(reasons.map((item) => JSON.stringify(item)));
@@ -1339,7 +1349,7 @@ export class PortfolioValuationTimelineService {
     }
     if (!identities.has(identity)) {
       identities.add(identity);
-      reasons.push(reason);
+      reasons.push(normalizedReason);
     }
   }
 

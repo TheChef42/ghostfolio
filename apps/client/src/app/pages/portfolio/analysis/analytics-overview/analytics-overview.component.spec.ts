@@ -49,9 +49,12 @@ const twr = (overrides: Partial<AnalyticsTwrResponse> = {}) =>
       {
         boundary: 'SEGMENT_START',
         chainFactor: '1',
+        cumulativeGainLoss: '0',
+        cumulativeNetContributions: '0',
         date: '2025-12-31',
         externalFlow: '0',
         indexLevel: '1',
+        investedCapital: '100',
         portfolioValue: '100',
         segmentId: 1,
         subperiodReturn: null
@@ -59,9 +62,12 @@ const twr = (overrides: Partial<AnalyticsTwrResponse> = {}) =>
       {
         boundary: 'CONTINUE',
         chainFactor: '1.2',
+        cumulativeGainLoss: '20',
+        cumulativeNetContributions: '0',
         date: '2026-06-30',
         externalFlow: '0',
         indexLevel: '1.2',
+        investedCapital: '100',
         portfolioValue: '120',
         segmentId: 1,
         subperiodReturn: '0.2'
@@ -360,6 +366,37 @@ describe('GfAnalyticsOverviewComponent', () => {
     );
   });
 
+  it('defaults to performance and derives every chart mode from the TWR series', () => {
+    initialize();
+
+    expect((component as any).chartMode).toBe('PERFORMANCE');
+    expect((component as any).portfolioChartItems[0].value).toBe(0);
+    expect((component as any).portfolioChartItems.at(-1).value).toBe(
+      Number((component as any).twrResult.periodReturn)
+    );
+
+    (component as any).onChangeChartMode('GAIN_LOSS');
+    expect((component as any).portfolioChartItems).toEqual([
+      { date: '2025-12-31', value: 0 },
+      { date: '2026-06-30', value: 20 }
+    ]);
+    expect((component as any).benchmarkChartItems).toEqual([]);
+
+    (component as any).onChangeChartMode('TOTAL_VALUE');
+    expect((component as any).portfolioChartItems).toEqual([
+      { date: '2025-12-31', value: 100 },
+      { date: '2026-06-30', value: 120 }
+    ]);
+    expect((component as any).benchmarkChartItems).toEqual([
+      { date: '2025-12-31', value: 100 },
+      { date: '2026-06-30', value: 100 }
+    ]);
+    expect((component as any).chartBenchmarkLabel).toBe('Invested capital');
+    expect((component as any).chartHelp).toContain(
+      'opening portfolio value plus cumulative net external contributions'
+    );
+  });
+
   it('adds no data-quality warning for complete coverage', () => {
     initialize();
     expect((component as any).coverageMessages).toEqual([]);
@@ -389,7 +426,7 @@ describe('GfAnalyticsOverviewComponent', () => {
       )
     );
     initialize();
-    expect(fixture.nativeElement.textContent).toContain('Why unavailable?');
+    expect(fixture.nativeElement.textContent).toContain('Blocking data issues');
     expect(fixture.nativeElement.textContent).toContain('Prices');
     expect(fixture.nativeElement.textContent).toContain(
       'Historical price missing for XYZ'
@@ -408,6 +445,7 @@ describe('GfAnalyticsOverviewComponent', () => {
                 reasons: [
                   {
                     accountName: 'Broker cash',
+                    adjustment: '-10',
                     code: 'CASH_RECONCILIATION_MISMATCH',
                     currency: 'DKK',
                     date: '2026-04-01',
@@ -417,13 +455,14 @@ describe('GfAnalyticsOverviewComponent', () => {
                     openingCashDate: '2026-01-01',
                     openingCashSource: 'ACCOUNT_BALANCE',
                     reconstructed: '100',
+                    severity: 'WARNING',
                     tolerance: '0.01'
                   }
                 ],
-                status: 'INCOMPLETE'
+                status: 'COMPLETE'
               },
-              periodReturn: null,
-              reason: 'INCOMPLETE_VALUATION_INPUT'
+              periodReturn: '0.2',
+              reason: null
             })
           : xirr()
       )
@@ -431,11 +470,81 @@ describe('GfAnalyticsOverviewComponent', () => {
     initialize();
     const text = fixture.nativeElement.textContent;
 
-    expect(text).toContain('Broker cash (DKK)');
-    expect(text).toContain('recorded checkpoint cash 90');
-    expect(text).toContain('reconstructed cash 100');
-    expect(text).toContain('tolerance 0.01');
+    expect(text).toContain('Cash reconciliation');
+    expect(text).not.toContain('Blocking data issues');
+    expect(text).toContain('Broker cash');
+    expect(text).toContain('Recorded cash: 90.00 DKK');
+    expect(text).toContain('Reconstructed cash: 100.00 DKK');
+    expect(text).toContain('Checkpoint adjustment: -10.00 DKK');
+    expect(text).toContain('Allowed tolerance: 0.01 DKK');
+    expect(text).toContain(
+      'Cash was reset to the recorded checkpoint for subsequent calculations.'
+    );
+    expect(text).toContain('How opening cash was determined');
+    expect(text).toContain(
+      'Opening cash is based on the recorded account balance on Jan 1, 2026.'
+    );
     expect(text).not.toContain('[object Object]');
+  });
+
+  it('separates account-start and inferred-zero helpers from blockers', () => {
+    dataService.fetchAnalyticsPerformance.mockImplementation(({ method }) =>
+      of(
+        method === 'TWR'
+          ? twr({
+              coverage: {
+                reasons: [
+                  {
+                    accountName: 'New account',
+                    adjustment: '-1',
+                    code: 'CASH_RECONCILIATION_MISMATCH',
+                    currency: 'DKK',
+                    date: '2026-04-01',
+                    difference: '1',
+                    expected: '9',
+                    message: 'technical message',
+                    openingCashDate: '2026-03-01',
+                    openingCashSource: 'ACCOUNT_NOT_YET_IN_EXISTENCE',
+                    reconstructed: '10',
+                    severity: 'WARNING',
+                    tolerance: '0.05'
+                  },
+                  {
+                    accountName: 'Funded account',
+                    adjustment: '-2',
+                    code: 'CASH_RECONCILIATION_MISMATCH',
+                    currency: 'DKK',
+                    date: '2026-04-02',
+                    difference: '2',
+                    expected: '18',
+                    message: 'technical message',
+                    openingCashDate: '2026-03-02',
+                    openingCashSource: 'INFERRED_ZERO_FIRST_FUNDING',
+                    reconstructed: '20',
+                    severity: 'WARNING',
+                    tolerance: '0.05'
+                  }
+                ],
+                status: 'COMPLETE'
+              },
+              periodReturn: '0.2',
+              reason: null
+            })
+          : xirr()
+      )
+    );
+    initialize();
+    const text = fixture.nativeElement.textContent;
+
+    expect(text).toContain(
+      'Opening cash is not required before the account start date.'
+    );
+    expect(text).toContain(
+      'This account is treated as nonexistent before Mar 1, 2026.'
+    );
+    expect(text).toContain(
+      'Opening cash inferred as 0.00 DKK at the first external funding event on Mar 2, 2026.'
+    );
   });
 
   it('displays the interval returned by the analytics backend', () => {

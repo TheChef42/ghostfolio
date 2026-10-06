@@ -288,7 +288,7 @@ describe('PortfolioValuationTimelineService', () => {
     expect(result.openingCash).toContainEqual({
       accountId: 'a',
       currency: 'DKK',
-      date: '2023-12-31',
+      date: from,
       source: 'INFERRED_ZERO_FIRST_FUNDING'
     });
   });
@@ -314,7 +314,7 @@ describe('PortfolioValuationTimelineService', () => {
     expect(result.openingCash).toContainEqual({
       accountId: 'a',
       currency: 'EUR',
-      date: openingDate.toISOString().slice(0, 10),
+      date: '2024-01-02',
       source: 'ACCOUNT_NOT_YET_IN_EXISTENCE'
     });
   });
@@ -595,15 +595,33 @@ describe('PortfolioValuationTimelineService', () => {
     expect(result.reconciliations[0]).toEqual(
       expect.objectContaining({ residual: '-10', status: 'MISMATCH' })
     );
+    expect(result.timeline[1]).toEqual(
+      expect.objectContaining({
+        cashValueInBaseCurrency: '90',
+        totalValueInBaseCurrency: '90'
+      })
+    );
+    expect(result.coverage).toEqual(
+      expect.objectContaining({ status: 'COMPLETE' })
+    );
+    expect(result.coverage.reasons).toContainEqual(
+      expect.objectContaining({
+        adjustment: '-10',
+        code: 'CASH_RECONCILIATION_MISMATCH',
+        severity: 'WARNING'
+      })
+    );
     expect(result.externalFlows).toEqual([]);
   });
 
   it.each([
-    ['100.01', 'MATCH', 'COMPLETE'],
-    ['100.02', 'MISMATCH', 'INCOMPLETE']
+    ['100.013', '0.013', 'MATCH', 'COMPLETE'],
+    ['100.05', '0.05', 'MATCH', 'COMPLETE'],
+    ['100.051', '0.051', 'MISMATCH', 'COMPLETE'],
+    ['101.64', '1.64', 'MISMATCH', 'COMPLETE']
   ] as const)(
-    'reconciles DKK checkpoint %s at the native minor-unit boundary',
-    async (checkpoint, reconciliationStatus, coverageStatus) => {
+    'reconciles DKK checkpoint %s at the five-minor-unit boundary',
+    async (checkpoint, difference, reconciliationStatus, coverageStatus) => {
       const result = await build(
         inputs({
           balances: [
@@ -619,9 +637,9 @@ describe('PortfolioValuationTimelineService', () => {
 
       expect(result.reconciliations[0]).toEqual(
         expect.objectContaining({
-          difference: checkpoint === '100.01' ? '0.01' : '0.02',
+          difference,
           status: reconciliationStatus,
-          tolerance: '0.01'
+          tolerance: '0.05'
         })
       );
       expect(result.coverage.status).toBe(coverageStatus);
@@ -629,10 +647,11 @@ describe('PortfolioValuationTimelineService', () => {
         expect(result.coverage.reasons).toContainEqual(
           expect.objectContaining({
             code: 'CASH_RECONCILIATION_MISMATCH',
-            difference: '0.02',
-            expected: '100.02',
+            difference,
+            expected: checkpoint,
             reconstructed: '100',
-            tolerance: '0.01'
+            severity: 'WARNING',
+            tolerance: '0.05'
           })
         );
       }
@@ -657,6 +676,7 @@ describe('PortfolioValuationTimelineService', () => {
     expect(result.coverage.reasons).toContainEqual(
       expect.objectContaining({
         accountName: 'Broker cash',
+        adjustment: '-10',
         code: 'CASH_RECONCILIATION_MISMATCH',
         date: from,
         difference: '10',
@@ -664,7 +684,8 @@ describe('PortfolioValuationTimelineService', () => {
         openingCashDate: '2023-12-31',
         openingCashSource: 'ACCOUNT_BALANCE',
         reconstructed: '100',
-        tolerance: '0.01'
+        severity: 'WARNING',
+        tolerance: '0.05'
       })
     );
   });
@@ -697,10 +718,59 @@ describe('PortfolioValuationTimelineService', () => {
       expect.objectContaining({
         difference: '0.00375',
         status: 'MATCH',
-        tolerance: '0.01'
+        tolerance: '0.05'
       })
     );
     expect(result.coverage.status).toBe('COMPLETE');
+  });
+
+  it('subtracts the Nordnet fee activities exactly once before reconciling cash', async () => {
+    const feeAmounts = [
+      ['2025-04-08', '19.59'],
+      ['2025-04-08', '78.35'],
+      ['2025-07-09', '19.80'],
+      ['2025-07-09', '79.20'],
+      ['2025-07-31', '0.01'],
+      ['2025-07-31', '0.01']
+    ] as const;
+    const result = await build(
+      inputs({
+        activities: feeAmounts.map(([date, fee], index) =>
+          activity(Type.FEE, date, {
+            fee,
+            id: `fee-${index}`,
+            quantity: '0',
+            unitPrice: '0'
+          })
+        ),
+        balances: [
+          {
+            accountId: 'a',
+            date: new Date('2025-04-07T00:00:00.000Z'),
+            value: 1603.4369195
+          },
+          {
+            accountId: 'a',
+            date: new Date('2025-09-30T00:00:00.000Z'),
+            value: 1403.4
+          }
+        ]
+      }),
+      resolver(),
+      ['a'],
+      'ACCOUNT_SUBSET',
+      { from: '2025-04-08', to: '2025-09-30' }
+    );
+
+    expect(result.reconciliations[0]).toEqual(
+      expect.objectContaining({
+        difference: '3.0769195',
+        observed: '1403.4',
+        reconstructed: '1406.4769195',
+        residual: '-3.0769195',
+        status: 'MISMATCH'
+      })
+    );
   });
 
   it('requires prices only after a late acquisition in a one-year interval', async () => {

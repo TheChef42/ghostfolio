@@ -5,11 +5,7 @@ import {
 } from '@ghostfolio/client/components/account-detail-dialog/interfaces/interfaces';
 import { ImpersonationStorageService } from '@ghostfolio/client/services/impersonation-storage.service';
 import { UserService } from '@ghostfolio/client/services/user/user.service';
-import {
-  CreateAccountDto,
-  TransferBalanceDto,
-  UpdateAccountDto
-} from '@ghostfolio/common/dtos';
+import { TransferBalanceDto } from '@ghostfolio/common/dtos';
 import { AccountResponse, User } from '@ghostfolio/common/interfaces';
 import { hasPermission, permissions } from '@ghostfolio/common/permissions';
 import { internalRoutes } from '@ghostfolio/common/routes/routes';
@@ -170,8 +166,7 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
                 name,
                 platformId,
                 tags
-              },
-              isUpdate: true
+              }
             });
 
             return;
@@ -197,8 +192,7 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
               name: null,
               platformId: null,
               tags: []
-            },
-            isUpdate: false
+            }
           });
         }
       });
@@ -286,17 +280,15 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
 
   private openCreateOrUpdateAccountDialog({
     account,
-    isUpdate,
     user
   }: {
     account: CreateOrUpdateAccountDialogParams['account'];
-    isUpdate: boolean;
     user: User;
   }) {
     const dialogRef = this.dialog.open<
       GfCreateOrUpdateAccountDialogComponent,
       CreateOrUpdateAccountDialogParams,
-      CreateAccountDto | UpdateAccountDto | null
+      boolean | null
     >(GfCreateOrUpdateAccountDialogComponent, {
       data: {
         account,
@@ -312,29 +304,13 @@ export class GfAccountDialogHostComponent implements OnDestroy, OnInit {
       .afterClosed()
       .pipe(takeUntil(this.dialogClosed), takeUntilDestroyed(this.destroyRef))
       .subscribe((result) => {
-        if (!result) {
-          this.navigateBack();
-
-          return;
+        if (result) {
+          // Deliberately not bound to the destroy reference: navigating back
+          // destroys this component and the refreshed user is what makes the
+          // accounts page reload its data
+          this.userService.get(true).subscribe();
         }
-
-        const request$: Observable<unknown> = isUpdate
-          ? this.dataService.putAccount(result as UpdateAccountDto)
-          : this.dataService.postAccount(result as CreateAccountDto);
-
-        request$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-          error: () => {
-            this.navigateBack();
-          },
-          next: () => {
-            // Deliberately not bound to the destroy reference: navigating back
-            // destroys this component and the refreshed user is what makes the
-            // accounts page reload its data
-            this.userService.get(true).subscribe();
-
-            this.navigateBack();
-          }
-        });
+        this.navigateBack();
       });
   }
 

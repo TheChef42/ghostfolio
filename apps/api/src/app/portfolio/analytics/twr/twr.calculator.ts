@@ -60,12 +60,29 @@ export class TwrCalculator {
     const series: TwrIndexPoint[] = [];
     const segments: WorkingSegment[] = [];
     let activeSegment: WorkingSegment | null = null;
+    let cumulativeNetContributions = new Decimal(0);
 
     if (opening.gt(0)) {
       activeSegment = this.startSegment(first.date, false, segments);
-      series.push(this.indexPoint(first, 'SEGMENT_START', activeSegment));
+      series.push(
+        this.indexPoint(
+          first,
+          'SEGMENT_START',
+          activeSegment,
+          opening,
+          cumulativeNetContributions
+        )
+      );
     } else {
-      series.push(this.indexPoint(first, 'UNFUNDED', null));
+      series.push(
+        this.indexPoint(
+          first,
+          'UNFUNDED',
+          null,
+          opening,
+          cumulativeNetContributions
+        )
+      );
     }
 
     for (let index = 1; index < input.points.length; index++) {
@@ -73,6 +90,8 @@ export class TwrCalculator {
       const previousValue = new Decimal(input.points[index - 1].portfolioValue);
       const portfolioValue = new Decimal(point.portfolioValue);
       const externalFlow = new Decimal(point.externalFlow);
+      cumulativeNetContributions =
+        cumulativeNetContributions.plus(externalFlow);
 
       if (previousValue.lt(0) || portfolioValue.lt(0)) {
         return this.unavailable(input, 'ZERO_OR_NEGATIVE_CAPITAL');
@@ -83,7 +102,15 @@ export class TwrCalculator {
           if (!externalFlow.eq(0)) {
             return this.unavailable(input, 'ZERO_OR_NEGATIVE_CAPITAL');
           }
-          series.push(this.indexPoint(point, 'UNFUNDED', null));
+          series.push(
+            this.indexPoint(
+              point,
+              'UNFUNDED',
+              null,
+              opening,
+              cumulativeNetContributions
+            )
+          );
           continue;
         }
         if (externalFlow.lte(0)) {
@@ -95,7 +122,15 @@ export class TwrCalculator {
           segments.length > 0,
           segments
         );
-        series.push(this.indexPoint(point, 'SEGMENT_START', activeSegment));
+        series.push(
+          this.indexPoint(
+            point,
+            'SEGMENT_START',
+            activeSegment,
+            opening,
+            cumulativeNetContributions
+          )
+        );
         continue;
       }
 
@@ -114,7 +149,13 @@ export class TwrCalculator {
         ...point,
         boundary: portfolioValue.eq(0) ? 'SEGMENT_END' : 'CONTINUE',
         chainFactor: factor.toString(),
+        cumulativeGainLoss: portfolioValue
+          .minus(opening)
+          .minus(cumulativeNetContributions)
+          .toString(),
+        cumulativeNetContributions: cumulativeNetContributions.toString(),
         indexLevel: activeSegment.factor.toString(),
+        investedCapital: opening.plus(cumulativeNetContributions).toString(),
         segmentId: activeSegment.id,
         subperiodReturn: factor.minus(1).toString()
       });
@@ -152,13 +193,22 @@ export class TwrCalculator {
   private indexPoint(
     point: TwrPreparedInput['points'][number],
     boundary: TwrIndexPoint['boundary'],
-    segment: WorkingSegment | null
+    segment: WorkingSegment | null,
+    opening: Big,
+    cumulativeNetContributions: Big
   ): TwrIndexPoint {
+    const portfolioValue = new Decimal(point.portfolioValue);
     return {
       ...point,
       boundary,
       chainFactor: segment ? '1' : null,
+      cumulativeGainLoss: portfolioValue
+        .minus(opening)
+        .minus(cumulativeNetContributions)
+        .toString(),
+      cumulativeNetContributions: cumulativeNetContributions.toString(),
       indexLevel: segment ? segment.factor.toString() : null,
+      investedCapital: opening.plus(cumulativeNetContributions).toString(),
       segmentId: segment?.id ?? null,
       subperiodReturn: null
     };

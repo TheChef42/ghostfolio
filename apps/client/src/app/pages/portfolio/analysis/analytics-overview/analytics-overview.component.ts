@@ -1,4 +1,7 @@
-import { GfBenchmarkComparatorComponent } from '@ghostfolio/client/components/benchmark-comparator/benchmark-comparator.component';
+import {
+  type AnalyticsChartMode,
+  GfBenchmarkComparatorComponent
+} from '@ghostfolio/client/components/benchmark-comparator/benchmark-comparator.component';
 import { DEFAULT_DATE_RANGE } from '@ghostfolio/common/config';
 import {
   AnalyticsBenchmarkResponse,
@@ -78,6 +81,7 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
   protected benchmarkResult: AnalyticsTwrBenchmarkResponse | null = null;
   protected cashFlowMatchedResult: AnalyticsCashFlowMatchedResponse | null =
     null;
+  protected chartMode: AnalyticsChartMode = 'PERFORMANCE';
   protected readonly cashFlowMatchedHelp = $localize`Shows what the same deposits and withdrawals, made on the same dates, would be worth in the benchmark. It is an economic comparison and does not reproduce real-world trading costs or taxes.`;
   protected readonly dataQualityHelp = $localize`Historical analytics can be unavailable when cash balances, prices, or exchange rates are missing or too old. The messages below identify the affected data.`;
   protected isLoadingAdvanced = false;
@@ -278,6 +282,15 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
   }
 
   protected get benchmarkChartItems(): LineChartItem[] {
+    if (this.chartMode === 'TOTAL_VALUE') {
+      return (this.twrResult?.series ?? []).map(
+        ({ date, investedCapital }) => ({
+          date,
+          value: Number(investedCapital)
+        })
+      );
+    }
+    if (this.chartMode !== 'PERFORMANCE') return [];
     return (this.benchmarkResult?.series ?? [])
       .filter(({ benchmarkIndex }) => benchmarkIndex !== null)
       .map(({ benchmarkIndex, date }) => ({
@@ -297,27 +310,83 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
     return null;
   }
 
-  protected get coverageMessages(): string[] {
-    if (!this.twrResult || this.twrResult.coverage.status === 'COMPLETE') {
-      return this.twrResult?.reason
-        ? [this.reasonMessage(this.twrResult.reason)]
-        : [];
+  protected get chartBenchmarkLabel() {
+    return this.chartMode === 'TOTAL_VALUE'
+      ? $localize`Invested capital`
+      : (this.benchmark?.name ??
+          this.benchmark?.symbol ??
+          $localize`Benchmark`);
+  }
+
+  protected get chartHelp() {
+    switch (this.chartMode) {
+      case 'GAIN_LOSS':
+        return $localize`Cumulative gain or loss in your base currency. External deposits and withdrawals are excluded.`;
+      case 'TOTAL_VALUE':
+        return $localize`Total holdings and checkpoint-aware cash. Invested capital is the opening portfolio value plus cumulative net external contributions.`;
+      default:
+        return $localize`Time-weighted return. External deposits and withdrawals are excluded from performance.`;
     }
-    return this.coverageGroups.flatMap(({ messages }) => messages);
+  }
+
+  protected get chartPortfolioLabel() {
+    switch (this.chartMode) {
+      case 'GAIN_LOSS':
+        return $localize`Gain / loss`;
+      case 'TOTAL_VALUE':
+        return $localize`Total value`;
+      default:
+        return $localize`Portfolio`;
+    }
+  }
+
+  protected get coverageMessages(): string[] {
+    if (!this.twrResult) {
+      return [];
+    }
+    const messages = [
+      ...this.coverageGroups,
+      ...this.coverageWarningGroups
+    ].flatMap(({ messages }) => messages);
+    return messages.length || !this.twrResult.reason
+      ? messages
+      : [this.reasonMessage(this.twrResult.reason)];
   }
 
   protected get coverageGroups(): CoverageGroup[] {
-    if (!this.twrResult || this.twrResult.coverage.status === 'COMPLETE') {
-      return this.twrResult?.reason
-        ? [
-            {
-              label: this.coverageCategory(this.twrResult.reason),
-              messages: [this.reasonMessage(this.twrResult.reason)]
-            }
-          ]
-        : [];
+    if (!this.twrResult) {
+      return [];
     }
-    return this.groupCoverageReasons(this.twrResult.coverage.reasons);
+    const groups = this.groupCoverageReasons(
+      this.twrResult.coverage.reasons.filter(
+        ({ severity }) => (severity ?? 'ERROR') === 'ERROR'
+      )
+    );
+    if (groups.length || !this.twrResult.reason) {
+      return groups;
+    }
+    return [
+      {
+        label: this.coverageCategory(this.twrResult.reason),
+        messages: [this.reasonMessage(this.twrResult.reason)]
+      }
+    ];
+  }
+
+  protected get coverageWarningGroups(): CoverageGroup[] {
+    return this.groupCoverageReasons(
+      (this.twrResult?.coverage.reasons ?? []).filter(
+        ({ severity }) => severity === 'WARNING'
+      )
+    );
+  }
+
+  protected get coverageInformationMessages(): string[] {
+    const messages = (this.twrResult?.coverage.reasons ?? [])
+      .map((reason) => this.openingCashInformationMessage(reason))
+      .filter((message): message is string => Boolean(message));
+
+    return [...new Set(messages)];
   }
 
   protected get benchmarkCoverageMessages(): string[] {
@@ -370,21 +439,33 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
   }
 
   protected get portfolioChartItems(): LineChartItem[] {
-    const comparison = this.benchmarkResult?.series;
-    if (comparison?.length) {
-      return comparison
-        .filter(({ portfolioIndex }) => portfolioIndex !== null)
-        .map(({ date, portfolioIndex }) => ({
-          date,
-          value: Number(portfolioIndex) - 1
-        }));
-    }
-    return (this.twrResult?.series ?? [])
-      .filter(({ indexLevel }) => indexLevel !== null)
-      .map(({ date, indexLevel }) => ({
-        date,
-        value: Number(indexLevel) - 1
-      }));
+    const series = this.twrResult?.series ?? [];
+    return series.flatMap((point, index) => {
+      if (this.chartMode === 'GAIN_LOSS') {
+        return [{ date: point.date, value: Number(point.cumulativeGainLoss) }];
+      }
+      if (this.chartMode === 'TOTAL_VALUE') {
+        return [{ date: point.date, value: Number(point.portfolioValue) }];
+      }
+      return point.indexLevel === null
+        ? []
+        : [
+            {
+              date: point.date,
+              value:
+                index === 0
+                  ? 0
+                  : index === series.length - 1 &&
+                      this.twrResult?.periodReturn != null
+                    ? Number(this.twrResult.periodReturn)
+                    : Number(point.indexLevel) - 1
+            }
+          ];
+    });
+  }
+
+  protected onChangeChartMode(chartMode: AnalyticsChartMode) {
+    this.chartMode = chartMode;
   }
 
   protected onAdvancedOpened() {
@@ -510,12 +591,8 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
       case 'ACCOUNT_INCEPTION_CONFLICT':
         return `Existing account history predates the configured account start date for ${reason.accountName ?? 'the selected account'}${dateSuffix}.`;
       case 'CASH_RECONCILIATION_MISMATCH': {
-        const account = reason.accountName ?? 'Selected account';
-        const currency = reason.currency ? ` (${reason.currency})` : '';
-        const provenance = reason.openingCashSource
-          ? ` Opening cash: ${reason.openingCashSource === 'ACCOUNT_BALANCE' ? 'account balance' : reason.openingCashSource === 'ACCOUNT_NOT_YET_IN_EXISTENCE' ? 'account not yet in existence' : 'inferred zero at first funding'}${reason.openingCashDate ? ` on ${this.formatAccountingDate(reason.openingCashDate)}` : ''}.`
-          : '';
-        return `${account}${currency}${dateSuffix}: recorded checkpoint cash ${reason.expected ?? '—'}, reconstructed cash ${reason.reconstructed ?? '—'}, difference ${reason.difference ?? '—'}, tolerance ${reason.tolerance ?? '—'}.${provenance}`;
+        const account = reason.accountName ?? $localize`Selected account`;
+        return $localize`${account}:accountName:${dateSuffix}:dateSuffix:. Recorded cash: ${this.formatMoney(reason.expected, reason.currency)}:recordedCash:. Reconstructed cash: ${this.formatMoney(reason.reconstructed, reason.currency)}:reconstructedCash:. Checkpoint adjustment: ${this.formatMoney(reason.adjustment, reason.currency)}:checkpointAdjustment:. Allowed tolerance: ${this.formatMoney(reason.tolerance, reason.currency)}:allowedTolerance:. Cash was reset to the recorded checkpoint for subsequent calculations.`;
       }
       default:
         return this.reasonMessage(reason.code);
@@ -540,6 +617,40 @@ export class GfAnalyticsOverviewComponent implements OnChanges {
       }).format(new Date(`${date}T00:00:00Z`));
     } catch {
       return date;
+    }
+  }
+
+  private formatMoney(value?: string, currency?: string) {
+    if (!value || !currency) return value ?? '—';
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return `${value} ${currency}`;
+    try {
+      const currencyOptions = new Intl.NumberFormat('en', {
+        currency,
+        style: 'currency'
+      }).resolvedOptions();
+      const formatted = new Intl.NumberFormat(this.user.settings.locale, {
+        maximumFractionDigits: currencyOptions.maximumFractionDigits,
+        minimumFractionDigits: currencyOptions.minimumFractionDigits
+      }).format(amount);
+      return `${formatted} ${currency}`;
+    } catch {
+      return `${value} ${currency}`;
+    }
+  }
+
+  private openingCashInformationMessage(reason: AnalyticsCoverageReason) {
+    if (!reason.openingCashSource) return null;
+    const date = reason.openingCashDate
+      ? this.formatAccountingDate(reason.openingCashDate)
+      : null;
+    switch (reason.openingCashSource) {
+      case 'ACCOUNT_NOT_YET_IN_EXISTENCE':
+        return `Opening cash is not required before the account start date.${date ? ` This account is treated as nonexistent before ${date}.` : ''}`;
+      case 'INFERRED_ZERO_FIRST_FUNDING':
+        return `Opening cash inferred as ${this.formatMoney('0', reason.currency)} at the first external funding event${date ? ` on ${date}` : ''}.`;
+      case 'ACCOUNT_BALANCE':
+        return `Opening cash is based on the recorded account balance${date ? ` on ${date}` : ''}.`;
     }
   }
 

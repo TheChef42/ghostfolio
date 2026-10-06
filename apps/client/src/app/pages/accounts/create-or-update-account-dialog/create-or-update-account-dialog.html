@@ -51,6 +51,9 @@
           The date this account first economically existed. Analytics treats the
           account as nonexistent before this date.
         </mat-hint>
+        @if (inceptionDateError) {
+          <mat-error>{{ inceptionDateError }}</mat-error>
+        }
       </mat-form-field>
     </div>
     <div [class.d-none]="platforms?.length < 1">
@@ -134,7 +137,7 @@
       color="primary"
       mat-flat-button
       type="submit"
-      [disabled]="!(accountForm.dirty && accountForm.valid)"
+      [disabled]="isSubmitting || !(accountForm.dirty && accountForm.valid)"
     >
       <ng-container i18n>Save</ng-container>
     </button>

@@ -25,6 +25,7 @@ export type ValuationCoverageReasonCode =
   | 'UNSUPPORTED_LIABILITY_OR_SHORT';
 
 export interface ValuationCoverageReason {
+  adjustment?: string;
   accountId?: string;
   accountName?: string;
   assetId?: string;
@@ -40,6 +41,7 @@ export interface ValuationCoverageReason {
   openingCashDate?: string;
   openingCashSource?: OpeningCashDiagnostic['source'];
   reconstructed?: string;
+  severity?: 'ERROR' | 'INFO' | 'WARNING';
   sourceDate?: string;
   symbol?: string;
   targetCurrency?: string;

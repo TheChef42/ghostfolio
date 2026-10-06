@@ -102,6 +102,76 @@ describe('TwrCalculator', () => {
       '1.1',
       '1.1'
     ]);
+    expect(result.series.at(-1)).toMatchObject({
+      cumulativeGainLoss: '10',
+      cumulativeNetContributions: '50',
+      investedCapital: '150'
+    });
+  });
+
+  it('keeps gain/loss unchanged for a pure deposit and withdrawal', () => {
+    const result = calculator.calculate(
+      input([
+        point('2023-12-31', '100'),
+        point('2024-01-01', '150', '50'),
+        point('2024-01-02', '110', '-40')
+      ])
+    );
+    expect(
+      result.series.map(
+        ({ cumulativeGainLoss, investedCapital, portfolioValue }) => ({
+          cumulativeGainLoss,
+          investedCapital,
+          portfolioValue
+        })
+      )
+    ).toEqual([
+      {
+        cumulativeGainLoss: '0',
+        investedCapital: '100',
+        portfolioValue: '100'
+      },
+      {
+        cumulativeGainLoss: '0',
+        investedCapital: '150',
+        portfolioValue: '150'
+      },
+      {
+        cumulativeGainLoss: '0',
+        investedCapital: '110',
+        portfolioValue: '110'
+      }
+    ]);
+  });
+
+  it('reflects a checkpoint adjustment as performance without a flow', () => {
+    const result = calculator.calculate(
+      input([point('2023-12-31', '100'), point('2024-01-01', '99')])
+    );
+    expect(result).toMatchObject({ periodReturn: '-0.01', reason: null });
+    expect(result.series.at(-1)).toMatchObject({
+      cumulativeGainLoss: '-1',
+      cumulativeNetContributions: '0',
+      externalFlow: '0',
+      indexLevel: '0.99',
+      investedCapital: '100'
+    });
+  });
+
+  it('starts at zero and ends at the exact card return', () => {
+    const result = calculator.calculate(
+      input([
+        point('2023-12-31', '100'),
+        point('2024-01-01', '110'),
+        point('2024-01-02', '160', '50')
+      ])
+    );
+    expect(new Decimal(result.series[0].indexLevel!).minus(1).toString()).toBe(
+      '0'
+    );
+    expect(
+      new Decimal(result.series.at(-1)!.indexLevel!).minus(1).toString()
+    ).toBe(result.periodReturn);
   });
 
   it('removes a deposit before chaining a later gain', () => {
