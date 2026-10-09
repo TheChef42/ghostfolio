@@ -275,6 +275,9 @@ export class PortfolioValuationTimelineService {
           currencies: [
             ...accounts.map(({ currency }) => currency ?? baseCurrency),
             ...requiredAssets.map(({ currency }) => currency),
+            ...scopedActivities
+              .filter((activity) => this.activityCashDelta(activity) !== null)
+              .map(({ currency }) => currency),
             ...flows
               .filter(({ accountId, date }) => {
                 const inceptionDate = inceptionByAccountId.get(accountId);

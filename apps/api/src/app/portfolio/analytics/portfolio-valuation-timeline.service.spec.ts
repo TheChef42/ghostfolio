@@ -1,5 +1,15 @@
-import { DataSource, ExternalCashFlowType, Prisma, Type } from '@prisma/client';
+import { DataProviderService } from '@ghostfolio/api/services/data-provider/data-provider.service';
+import { MarketDataService } from '@ghostfolio/api/services/market-data/market-data.service';
 
+import {
+  DataSource,
+  ExternalCashFlowType,
+  MarketDataState,
+  Prisma,
+  Type
+} from '@prisma/client';
+
+import { HistoricalValuationResolverService } from './historical-valuation-resolver.service';
 import { PerformanceScopeResolver } from './performance-scope.resolver';
 import { PortfolioValuationTimelineService } from './portfolio-valuation-timeline.service';
 import type {
@@ -550,6 +560,155 @@ describe('PortfolioValuationTimelineService', () => {
     expect(result.coverage.reasons).toEqual(
       expect.arrayContaining([expect.objectContaining({ code: 'MISSING_FX' })])
     );
+  });
+
+  it('uses same-day UTC FX for cash reconstruction of an intraday foreign order', async () => {
+    const requestedSymbols = new Set<string>();
+    const marketDataItems = jest.fn(async ({ take, where }) => {
+      if (take === 1) return [];
+
+      const identifiers = where.OR as {
+        dataSource: DataSource;
+        symbol: string;
+      }[];
+      for (const { symbol } of identifiers) requestedSymbols.add(symbol);
+      return identifiers.flatMap(({ dataSource, symbol }) => {
+        if (symbol === 'USDDKK') {
+          return [
+            {
+              dataSource,
+              date: new Date('2025-10-24T00:00:00.000Z'),
+              isCarriedForward: false,
+              marketPrice: 6.45,
+              state: MarketDataState.CLOSE,
+              symbol
+            }
+          ];
+        }
+        if (symbol === 'DKK-ASSET') {
+          return [
+            {
+              dataSource,
+              date: new Date('2025-10-31T00:00:00.000Z'),
+              isCarriedForward: false,
+              marketPrice: 100,
+              state: MarketDataState.CLOSE,
+              symbol
+            }
+          ];
+        }
+        return [];
+      });
+    });
+    const historicalResolver = new HistoricalValuationResolverService(
+      {
+        getDataSourceForExchangeRates: () => DataSource.YAHOO
+      } as DataProviderService,
+      { marketDataItems } as unknown as MarketDataService
+    );
+    const usdProfile = {
+      currency: 'USD',
+      dataSource: DataSource.YAHOO,
+      id: 'usd-asset',
+      symbol: 'USD-ASSET'
+    };
+    const dkkProfile = {
+      currency: 'DKK',
+      dataSource: DataSource.YAHOO,
+      id: 'dkk-asset',
+      symbol: 'DKK-ASSET'
+    };
+    const order = ({
+      date,
+      id,
+      profile,
+      type
+    }: {
+      date: string;
+      id: string;
+      profile: typeof usdProfile;
+      type: Type;
+    }) => ({
+      accountId: 'a',
+      accountUserId: userId,
+      comment: null,
+      createdAt: new Date(),
+      currency: profile.currency,
+      date: new Date(date),
+      fee: new Prisma.Decimal(0),
+      id,
+      quantity: new Prisma.Decimal(1),
+      symbolProfileId: profile.id,
+      tags: [],
+      type,
+      unitPrice: new Prisma.Decimal(10),
+      updatedAt: new Date(),
+      userId,
+      SymbolProfile: profile
+    });
+    const prisma = {
+      account: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ currency: 'DKK', id: 'a', tags: [], userId }])
+      },
+      accountBalance: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            accountId: 'a',
+            date: new Date('2025-10-23T00:00:00.000Z'),
+            value: new Prisma.Decimal(1000)
+          }
+        ])
+      },
+      assetProfileSplit: { findMany: jest.fn().mockResolvedValue([]) },
+      externalCashFlow: { findMany: jest.fn().mockResolvedValue([]) },
+      order: {
+        findMany: jest.fn().mockResolvedValue([
+          order({
+            date: '2025-10-23T12:00:00.000Z',
+            id: 'dkk-buy',
+            profile: dkkProfile,
+            type: Type.BUY
+          }),
+          order({
+            date: '2025-10-24T12:00:00.000Z',
+            id: 'usd-buy',
+            profile: usdProfile,
+            type: Type.BUY
+          }),
+          order({
+            date: '2025-10-25T12:00:00.000Z',
+            id: 'usd-sell',
+            profile: usdProfile,
+            type: Type.SELL
+          })
+        ])
+      }
+    };
+    const timelineService = new PortfolioValuationTimelineService(
+      historicalResolver,
+      new PerformanceScopeResolver(),
+      prisma as never
+    );
+
+    const result = await timelineService.getTimeline({
+      baseCurrency: 'DKK',
+      from: '2025-11-01',
+      to: '2025-11-02',
+      userId
+    });
+
+    expect(result.coverage.reasons).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'MISSING_FX' })])
+    );
+    expect(result.coverage.reasons).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: 'MISSING_OPENING_CASH' })
+      ])
+    );
+    expect(result.opening.totalValueInBaseCurrency).not.toBeNull();
+    expect(requestedSymbols).toContain('USDDKK');
   });
 
   it('uses a prior non-trading-day close and exposes its source date', async () => {

@@ -92,6 +92,39 @@ describe('HistoricalValuationResolverService', () => {
     );
   });
 
+  it('resolves FX by UTC accounting date when market data is earlier on the same day', async () => {
+    marketDataItems.mockResolvedValueOnce([
+      {
+        dataSource: DataSource.YAHOO,
+        date: new Date('2025-10-24T00:00:00.000Z'),
+        marketPrice: 6.45,
+        state: MarketDataState.CLOSE,
+        symbol: 'USDDKK'
+      }
+    ]);
+
+    await expect(
+      service.resolveFx({
+        date: '2025-10-24',
+        fromCurrency: 'USD',
+        toCurrency: 'DKK'
+      })
+    ).resolves.toEqual({
+      requestedDate: '2025-10-24',
+      sourceDate: '2025-10-24',
+      stalenessDays: 0,
+      value: '6.45'
+    });
+    expect(marketDataItems).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          date: { lte: new Date('2025-10-24T23:59:59.999Z') },
+          symbol: 'USDDKK'
+        })
+      })
+    );
+  });
+
   it('returns null instead of using a current FX fallback', async () => {
     marketDataItems.mockResolvedValue([]);
 
