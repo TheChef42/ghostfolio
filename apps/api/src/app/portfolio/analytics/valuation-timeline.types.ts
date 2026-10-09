@@ -141,6 +141,7 @@ export interface PortfolioValuationTimeline {
 export interface TimelineActivity {
   accountId: string | null;
   assetId: string;
+  cashCurrency?: string;
   currency: string;
   dataSource: DataSource;
   date: Date;

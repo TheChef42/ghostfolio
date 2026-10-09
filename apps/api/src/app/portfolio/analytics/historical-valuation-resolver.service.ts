@@ -1,6 +1,9 @@
 import { DataProviderService } from '@ghostfolio/api/services/data-provider/data-provider.service';
 import { MarketDataService } from '@ghostfolio/api/services/market-data/market-data.service';
-import { DEFAULT_CURRENCY } from '@ghostfolio/common/config';
+import {
+  DEFAULT_CURRENCY,
+  DERIVED_CURRENCIES
+} from '@ghostfolio/common/config';
 
 import { Injectable, Logger } from '@nestjs/common';
 import { DataSource, MarketData, MarketDataState } from '@prisma/client';
@@ -28,6 +31,33 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
   }
 
   public async resolveFx({
+    date,
+    fromCurrency,
+    toCurrency
+  }: {
+    date: string;
+    fromCurrency: string;
+    toCurrency: string;
+  }): Promise<ValuationSource | null> {
+    const normalized = this.normalizeCurrencyPair({
+      fromCurrency,
+      toCurrency
+    });
+    const source = await this.resolveRootFx({
+      date,
+      fromCurrency: normalized.fromCurrency,
+      toCurrency: normalized.toCurrency
+    });
+
+    return source
+      ? {
+          ...source,
+          value: new Big(source.value).mul(normalized.factor).toFixed()
+        }
+      : null;
+  }
+
+  private async resolveRootFx({
     date,
     fromCurrency,
     toCurrency
@@ -66,12 +96,12 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
     }
 
     const [fromBase, baseTo] = await Promise.all([
-      this.resolveFx({
+      this.resolveRootFx({
         date,
         fromCurrency,
         toCurrency: DEFAULT_CURRENCY
       }),
-      this.resolveFx({
+      this.resolveRootFx({
         date,
         fromCurrency: DEFAULT_CURRENCY,
         toCurrency
@@ -130,6 +160,8 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
       identifiers.set(this.key({ dataSource, symbol }), { dataSource, symbol });
     };
     const addCurrencyPair = (fromCurrency: string, toCurrency: string) => {
+      fromCurrency = this.normalizeCurrency(fromCurrency).currency;
+      toCurrency = this.normalizeCurrency(toCurrency).currency;
       if (fromCurrency === toCurrency) return;
       addIdentifier(exchangeDataSource, `${fromCurrency}${toCurrency}`);
       addIdentifier(exchangeDataSource, `${toCurrency}${fromCurrency}`);
@@ -279,11 +311,15 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
         value: item.marketPrice.toString()
       });
     };
-    const resolveFx: HistoricalValueResolver['resolveFx'] = async ({
+    const resolveRootFx = async ({
       date,
       fromCurrency,
       toCurrency
-    }) => {
+    }: {
+      date: string;
+      fromCurrency: string;
+      toCurrency: string;
+    }): Promise<ValuationSource | null> => {
       if (fromCurrency === toCurrency) {
         return this.source({ date, sourceDate: date, value: '1' });
       }
@@ -308,12 +344,12 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
         return null;
       }
       const [fromBase, baseTo] = await Promise.all([
-        resolveFx({
+        resolveRootFx({
           date,
           fromCurrency,
           toCurrency: DEFAULT_CURRENCY
         }),
-        resolveFx({
+        resolveRootFx({
           date,
           fromCurrency: DEFAULT_CURRENCY,
           toCurrency
@@ -328,6 +364,27 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
             : baseTo.sourceDate,
         value: new Big(fromBase.value).mul(baseTo.value).toFixed()
       });
+    };
+    const resolveFx: HistoricalValueResolver['resolveFx'] = async ({
+      date,
+      fromCurrency,
+      toCurrency
+    }) => {
+      const normalized = this.normalizeCurrencyPair({
+        fromCurrency,
+        toCurrency
+      });
+      const source = await resolveRootFx({
+        date,
+        fromCurrency: normalized.fromCurrency,
+        toCurrency: normalized.toCurrency
+      });
+      return source
+        ? {
+            ...source,
+            value: new Big(source.value).mul(normalized.factor).toFixed()
+          }
+        : null;
     };
 
     return {
@@ -345,6 +402,34 @@ export class HistoricalValuationResolverService implements HistoricalValueResolv
     symbol: string;
   }) {
     return `${dataSource}\u0000${symbol}`;
+  }
+
+  private normalizeCurrency(currency: string) {
+    const derived = DERIVED_CURRENCIES.find(
+      ({ currency: derivedCurrency }) => derivedCurrency === currency
+    );
+    return derived
+      ? {
+          currency: derived.rootCurrency,
+          factor: new Big(1).div(derived.factor)
+        }
+      : { currency, factor: new Big(1) };
+  }
+
+  private normalizeCurrencyPair({
+    fromCurrency,
+    toCurrency
+  }: {
+    fromCurrency: string;
+    toCurrency: string;
+  }) {
+    const from = this.normalizeCurrency(fromCurrency);
+    const to = this.normalizeCurrency(toCurrency);
+    return {
+      factor: from.factor.div(to.factor),
+      fromCurrency: from.currency,
+      toCurrency: to.currency
+    };
   }
 
   private source({

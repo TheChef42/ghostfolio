@@ -291,7 +291,7 @@ export class PortfolioValuationTimelineService {
             ...requiredAssets.map(({ currency }) => currency),
             ...scopedActivities
               .filter((activity) => this.activityCashDelta(activity) !== null)
-              .map(({ currency }) => currency),
+              .map((activity) => this.getActivityCashCurrency(activity)),
             ...flows
               .filter(({ accountId, date }) => {
                 const inceptionDate = inceptionByAccountId.get(accountId);
@@ -870,10 +870,11 @@ export class PortfolioValuationTimelineService {
       if (!delta) continue;
       if (delta.eq(0)) continue;
       const account = accountById.get(activity.accountId)!;
-      const accountCurrency = account.currency ?? activity.currency;
+      const activityCurrency = this.getActivityCashCurrency(activity);
+      const accountCurrency = account.currency ?? activityCurrency;
       const fx = await this.resolveFx({
         date,
-        fromCurrency: activity.currency,
+        fromCurrency: activityCurrency,
         resolver,
         toCurrency: accountCurrency
       });
@@ -884,7 +885,7 @@ export class PortfolioValuationTimelineService {
             accountId: activity.accountId,
             accountName: account.name ?? undefined,
             assetId: activity.assetId,
-            currency: activity.currency,
+            currency: activityCurrency,
             dataSource: activity.dataSource,
             symbol: activity.symbol,
             targetCurrency: accountCurrency
@@ -1332,7 +1333,8 @@ export class PortfolioValuationTimelineService {
       return {
         accountId: order.accountId,
         assetId: order.symbolProfileId,
-        currency: order.currency ?? order.SymbolProfile.currency,
+        cashCurrency: order.currency ?? order.SymbolProfile.currency,
+        currency: order.SymbolProfile.currency,
         dataSource: order.SymbolProfile.dataSource,
         date: order.date,
         fee: order.fee.toString(),
@@ -1349,6 +1351,10 @@ export class PortfolioValuationTimelineService {
           .toFixed()
       };
     });
+  }
+
+  private getActivityCashCurrency(activity: TimelineActivity) {
+    return activity.cashCurrency ?? activity.currency;
   }
 
   private addReason(

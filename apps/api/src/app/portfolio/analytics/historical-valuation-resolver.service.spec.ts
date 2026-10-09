@@ -34,6 +34,30 @@ describe('HistoricalValuationResolverService', () => {
     expect(marketDataItems).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['GBp', 'GBP', '0.01'],
+    ['ILA', 'ILS', '0.01'],
+    ['ZAc', 'ZAR', '0.01'],
+    ['GBP', 'GBp', '100']
+  ])(
+    'normalizes the derived currency %s to %s without market data',
+    async (fromCurrency, toCurrency, value) => {
+      await expect(
+        service.resolveFx({
+          date: '2025-07-30',
+          fromCurrency,
+          toCurrency
+        })
+      ).resolves.toEqual({
+        requestedDate: '2025-07-30',
+        sourceDate: '2025-07-30',
+        stalenessDays: 0,
+        value
+      });
+      expect(marketDataItems).not.toHaveBeenCalled();
+    }
+  );
+
   it('uses the latest eligible prior close and exposes staleness', async () => {
     marketDataItems.mockResolvedValueOnce([
       {
@@ -188,5 +212,47 @@ describe('HistoricalValuationResolverService', () => {
       expect.objectContaining({ sourceDate: '2024-01-04', value: '110' })
     );
     expect(marketDataItems).toHaveBeenCalledTimes(2);
+  });
+
+  it('normalizes a derived currency before prepared historical FX conversion', async () => {
+    const requestedSymbols = new Set<string>();
+    marketDataItems.mockImplementation(({ take, where }) => {
+      if (take === 1) return Promise.resolve([]);
+      const identifiers = where.OR as { symbol: string }[];
+      for (const { symbol } of identifiers) requestedSymbols.add(symbol);
+      return Promise.resolve(
+        identifiers.some(({ symbol }) => symbol === 'GBPDKK')
+          ? [
+              {
+                dataSource: DataSource.YAHOO,
+                date: new Date('2025-07-30T00:00:00.000Z'),
+                marketPrice: 8.5,
+                state: MarketDataState.CLOSE,
+                symbol: 'GBPDKK'
+              }
+            ]
+          : []
+      );
+    });
+
+    const prepared = await service.prepare({
+      baseCurrency: 'DKK',
+      currencies: ['GBp'],
+      from: '2025-07-30',
+      prices: [],
+      to: '2025-07-30'
+    });
+
+    await expect(
+      prepared.resolveFx({
+        date: '2025-07-30',
+        fromCurrency: 'GBp',
+        toCurrency: 'DKK'
+      })
+    ).resolves.toEqual(
+      expect.objectContaining({ sourceDate: '2025-07-30', value: '0.085' })
+    );
+    expect(requestedSymbols).toContain('GBPDKK');
+    expect(requestedSymbols).not.toContain('GBpDKK');
   });
 });

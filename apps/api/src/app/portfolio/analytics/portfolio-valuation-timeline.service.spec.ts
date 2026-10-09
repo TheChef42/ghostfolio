@@ -12,6 +12,8 @@ import {
 import { HistoricalValuationResolverService } from './historical-valuation-resolver.service';
 import { PerformanceScopeResolver } from './performance-scope.resolver';
 import { PortfolioValuationTimelineService } from './portfolio-valuation-timeline.service';
+import { TwrTimelineAdapter } from './twr/twr-timeline.adapter';
+import { TwrCalculator } from './twr/twr.calculator';
 import type {
   HistoricalValueResolver,
   TimelineActivity,
@@ -270,6 +272,123 @@ describe('PortfolioValuationTimelineService', () => {
     );
     expect(result.closing.cashValueInBaseCurrency).toBe('100');
     expect(result.closing.holdingsValueInBaseCurrency).toBe('0');
+  });
+
+  it('keeps derived market-price currency separate from order settlement currency', async () => {
+    const resolveFx = jest.fn(async ({ date, fromCurrency, toCurrency }) =>
+      source(
+        date,
+        fromCurrency === 'GBp' && toCurrency === 'GBP' ? '0.01' : '1'
+      )
+    );
+    const priceResolver = {
+      prepare: jest.fn(async () => priceResolver),
+      resolveFx,
+      resolvePrice: async ({ date }: { date: string }) => source(date, '1785')
+    };
+    const profile = {
+      currency: 'GBp',
+      dataSource: DataSource.YAHOO,
+      id: 'bae-systems',
+      symbol: 'BA.L'
+    };
+    const order = ({
+      date,
+      id,
+      type,
+      unitPrice
+    }: {
+      date: string;
+      id: string;
+      type: Type;
+      unitPrice: string;
+    }) => ({
+      accountId: 'a',
+      accountUserId: userId,
+      comment: null,
+      createdAt: new Date(),
+      currency: 'GBP',
+      date: new Date(`${date}T12:00:00.000Z`),
+      fee: new Prisma.Decimal(0),
+      id,
+      quantity: new Prisma.Decimal(9),
+      symbolProfileId: profile.id,
+      tags: [],
+      type,
+      unitPrice: new Prisma.Decimal(unitPrice),
+      updatedAt: new Date(),
+      userId,
+      SymbolProfile: profile
+    });
+    const timelineService = new PortfolioValuationTimelineService(
+      priceResolver as never,
+      new PerformanceScopeResolver(),
+      {
+        account: {
+          findMany: jest
+            .fn()
+            .mockResolvedValue([{ currency: 'GBP', id: 'a', tags: [], userId }])
+        },
+        accountBalance: {
+          findMany: jest.fn().mockResolvedValue([
+            {
+              accountId: 'a',
+              date: new Date('2025-07-29T00:00:00.000Z'),
+              value: new Prisma.Decimal(200)
+            }
+          ])
+        },
+        assetProfileSplit: { findMany: jest.fn().mockResolvedValue([]) },
+        externalCashFlow: { findMany: jest.fn().mockResolvedValue([]) },
+        order: {
+          findMany: jest.fn().mockResolvedValue([
+            order({
+              date: '2025-07-30',
+              id: 'bae-buy',
+              type: Type.BUY,
+              unitPrice: '17.925'
+            }),
+            order({
+              date: '2025-07-31',
+              id: 'bae-sell',
+              type: Type.SELL,
+              unitPrice: '17.85'
+            })
+          ])
+        }
+      } as never
+    );
+
+    const timeline = await timelineService.getTimeline({
+      baseCurrency: 'GBP',
+      from: '2025-07-30',
+      to: '2025-07-31',
+      userId
+    });
+    const acquisition = timeline.timeline.find(
+      ({ date }) => date === '2025-07-30'
+    )!;
+
+    expect(acquisition.holdingsValueInBaseCurrency).toBe('160.65');
+    expect(acquisition.cashValueInBaseCurrency).toBe('38.675');
+    expect(acquisition.totalValueInBaseCurrency).toBe('199.325');
+    expect(timeline.closing.totalValueInBaseCurrency).toBe('199.325');
+    expect(resolveFx).toHaveBeenCalledWith(
+      expect.objectContaining({ fromCurrency: 'GBp', toCurrency: 'GBP' })
+    );
+    expect(resolveFx).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        date: '2025-07-30',
+        fromCurrency: 'GBP',
+        toCurrency: 'GBP'
+      })
+    );
+
+    const twr = new TwrCalculator().calculate(
+      new TwrTimelineAdapter().fromTimeline(timeline)
+    );
+    expect(twr.periodReturn).toBe('-0.003375');
+    expect(twr.series.at(-1)?.indexLevel).toBe('0.996625');
   });
 
   it('marks missing opening cash unavailable instead of assuming zero', async () => {
