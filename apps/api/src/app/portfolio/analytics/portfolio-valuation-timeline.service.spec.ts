@@ -573,8 +573,9 @@ describe('PortfolioValuationTimelineService', () => {
       }[];
       for (const { symbol } of identifiers) requestedSymbols.add(symbol);
       return identifiers.flatMap(({ dataSource, symbol }) => {
+        const items = [];
         if (symbol === 'USDDKK') {
-          return [
+          items.push(
             {
               dataSource,
               date: new Date('2025-10-24T00:00:00.000Z'),
@@ -582,22 +583,29 @@ describe('PortfolioValuationTimelineService', () => {
               marketPrice: 6.45,
               state: MarketDataState.CLOSE,
               symbol
-            }
-          ];
-        }
-        if (symbol === 'DKK-ASSET') {
-          return [
+            },
             {
               dataSource,
-              date: new Date('2025-10-31T00:00:00.000Z'),
+              date: new Date('2025-12-31T00:00:00.000Z'),
               isCarriedForward: false,
-              marketPrice: 100,
+              marketPrice: 6.4,
               state: MarketDataState.CLOSE,
               symbol
             }
-          ];
+          );
+        } else if (symbol === 'USD-ASSET') {
+          items.push({
+            dataSource,
+            date: new Date('2025-12-31T00:00:00.000Z'),
+            isCarriedForward: false,
+            marketPrice: 100,
+            state: MarketDataState.CLOSE,
+            symbol
+          });
         }
-        return [];
+        return items.filter(
+          ({ date }) => date >= where.date.gte && date <= where.date.lte
+        );
       });
     });
     const historicalResolver = new HistoricalValuationResolverService(
@@ -611,12 +619,6 @@ describe('PortfolioValuationTimelineService', () => {
       dataSource: DataSource.YAHOO,
       id: 'usd-asset',
       symbol: 'USD-ASSET'
-    };
-    const dkkProfile = {
-      currency: 'DKK',
-      dataSource: DataSource.YAHOO,
-      id: 'dkk-asset',
-      symbol: 'DKK-ASSET'
     };
     const order = ({
       date,
@@ -656,7 +658,7 @@ describe('PortfolioValuationTimelineService', () => {
         findMany: jest.fn().mockResolvedValue([
           {
             accountId: 'a',
-            date: new Date('2025-10-23T00:00:00.000Z'),
+            date: new Date('2025-09-30T00:00:00.000Z'),
             value: new Prisma.Decimal(1000)
           }
         ])
@@ -666,22 +668,10 @@ describe('PortfolioValuationTimelineService', () => {
       order: {
         findMany: jest.fn().mockResolvedValue([
           order({
-            date: '2025-10-23T12:00:00.000Z',
-            id: 'dkk-buy',
-            profile: dkkProfile,
-            type: Type.BUY
-          }),
-          order({
             date: '2025-10-24T12:00:00.000Z',
             id: 'usd-buy',
             profile: usdProfile,
             type: Type.BUY
-          }),
-          order({
-            date: '2025-10-25T12:00:00.000Z',
-            id: 'usd-sell',
-            profile: usdProfile,
-            type: Type.SELL
           })
         ])
       }
@@ -694,8 +684,8 @@ describe('PortfolioValuationTimelineService', () => {
 
     const result = await timelineService.getTimeline({
       baseCurrency: 'DKK',
-      from: '2025-11-01',
-      to: '2025-11-02',
+      from: '2026-01-01',
+      to: '2026-01-02',
       userId
     });
 
@@ -709,6 +699,117 @@ describe('PortfolioValuationTimelineService', () => {
     );
     expect(result.opening.totalValueInBaseCurrency).not.toBeNull();
     expect(requestedSymbols).toContain('USDDKK');
+  });
+
+  it('starts opening cash reconstruction from the latest eligible checkpoint', async () => {
+    const resolveFx = jest.fn(async ({ date }) =>
+      date === '2021-03-19' ? null : source(date, '6.5')
+    );
+    const prepare = jest.fn(async () => ({
+      resolveFx,
+      resolvePrice: async ({ date }: { date: string }) => source(date, '100')
+    }));
+    const accountBalanceFindMany = jest.fn().mockResolvedValue([
+      {
+        accountId: 'a',
+        date: new Date('2025-09-30T00:00:00.000Z'),
+        id: 'balance-2025-09-30',
+        value: new Prisma.Decimal('1403.40')
+      },
+      {
+        accountId: 'a',
+        date: new Date('2021-01-28T00:00:00.000Z'),
+        id: 'balance-2021-01-28',
+        value: new Prisma.Decimal(0)
+      },
+      {
+        accountId: 'a',
+        date: new Date('2021-02-11T00:00:00.000Z'),
+        id: 'balance-2021-02-11',
+        value: new Prisma.Decimal(25000)
+      }
+    ]);
+    const catProfile = {
+      currency: 'USD',
+      dataSource: DataSource.YAHOO,
+      id: 'cat',
+      symbol: 'CAT'
+    };
+    const prisma = {
+      account: {
+        findMany: jest
+          .fn()
+          .mockResolvedValue([{ currency: 'DKK', id: 'a', tags: [], userId }])
+      },
+      accountBalance: { findMany: accountBalanceFindMany },
+      assetProfileSplit: { findMany: jest.fn().mockResolvedValue([]) },
+      externalCashFlow: { findMany: jest.fn().mockResolvedValue([]) },
+      order: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            accountId: 'a',
+            accountUserId: userId,
+            comment: null,
+            createdAt: new Date(),
+            currency: 'USD',
+            date: new Date('2021-03-19T12:00:00.000Z'),
+            fee: new Prisma.Decimal(0),
+            id: 'cat-buy',
+            quantity: new Prisma.Decimal(1),
+            symbolProfileId: catProfile.id,
+            tags: [],
+            type: Type.BUY,
+            unitPrice: new Prisma.Decimal(100),
+            updatedAt: new Date(),
+            userId,
+            SymbolProfile: catProfile
+          }
+        ])
+      }
+    };
+    const timelineService = new PortfolioValuationTimelineService(
+      {
+        getRevision: () => 0,
+        prepare,
+        resolveFx,
+        resolvePrice: async ({ date }: { date: string }) => source(date, '100')
+      } as never,
+      new PerformanceScopeResolver(),
+      prisma as never
+    );
+
+    const result = await timelineService.getTimeline({
+      baseCurrency: 'DKK',
+      from: '2025-10-10',
+      to: '2025-10-11',
+      userId
+    });
+
+    expect(accountBalanceFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        orderBy: [{ date: 'asc' }, { id: 'asc' }],
+        where: expect.objectContaining({
+          date: { lte: new Date('2025-10-11T23:59:59.999Z') }
+        })
+      })
+    );
+    expect(prepare).toHaveBeenCalledWith(
+      expect.objectContaining({ from: '2025-09-30' })
+    );
+    expect(result.openingCash).toContainEqual(
+      expect.objectContaining({
+        accountId: 'a',
+        date: '2025-09-30',
+        source: 'ACCOUNT_BALANCE'
+      })
+    );
+    expect(resolveFx).not.toHaveBeenCalledWith(
+      expect.objectContaining({ date: '2021-03-19' })
+    );
+    expect(result.coverage.reasons).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ code: 'MISSING_FX' })])
+    );
+    expect(result.opening.totalValueInBaseCurrency).not.toBeNull();
   });
 
   it('uses a prior non-trading-day close and exposes its source date', async () => {

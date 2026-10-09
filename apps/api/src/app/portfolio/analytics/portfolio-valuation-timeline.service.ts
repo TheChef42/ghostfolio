@@ -264,6 +264,20 @@ export class PortfolioValuationTimelineService {
           this.date(date) >= inceptionByAccountId.get(accountId)!)
       );
     });
+    const openingDate = this.shiftDate(resolvedFrom, -1);
+    const latestOpeningBalanceByAccount = this.getLatestBalanceByAccount({
+      balances: balances.filter(({ accountId, date }) => {
+        const inceptionDate = inceptionByAccountId.get(accountId);
+        return !inceptionDate || this.date(date) >= inceptionDate;
+      }),
+      openingDate
+    });
+    const cashReconstructionFrom = [
+      openingDate,
+      ...[...latestOpeningBalanceByAccount.values()].map(({ date }) =>
+        this.date(date)
+      )
+    ].sort()[0];
     const requiredAssets = this.getRequiredAssets({
       activities: scopedActivities,
       from: resolvedFrom,
@@ -288,7 +302,7 @@ export class PortfolioValuationTimelineService {
               })
               .map(({ currency }) => currency)
           ],
-          from: this.shiftDate(resolvedFrom, -1),
+          from: cashReconstructionFrom,
           prices: requiredAssets.map(({ dataSource, symbol }) => ({
             dataSource,
             symbol
@@ -569,9 +583,10 @@ export class PortfolioValuationTimelineService {
         });
         continue;
       }
-      const anchor = (balanceByAccount.get(account.id) ?? [])
-        .filter(({ date }) => this.date(date) <= openingDate)
-        .at(-1);
+      const anchor = this.getLatestBalanceByAccount({
+        balances: balanceByAccount.get(account.id) ?? [],
+        openingDate
+      }).get(account.id);
       if (!anchor) {
         const firstFundingDate = this.getZeroOpeningFundingDate({
           accountId: account.id,
@@ -1400,6 +1415,25 @@ export class PortfolioValuationTimelineService {
       const group = result.get(itemKey);
       if (group) group.push(item);
       else result.set(itemKey, [item]);
+    }
+    return result;
+  }
+
+  private getLatestBalanceByAccount({
+    balances,
+    openingDate
+  }: {
+    balances: TimelineInputs['balances'];
+    openingDate: string;
+  }) {
+    const result = new Map<string, TimelineInputs['balances'][number]>();
+    for (const balance of balances) {
+      const balanceDate = this.date(balance.date);
+      if (balanceDate > openingDate) continue;
+      const current = result.get(balance.accountId);
+      if (!current || this.date(current.date) <= balanceDate) {
+        result.set(balance.accountId, balance);
+      }
     }
     return result;
   }
